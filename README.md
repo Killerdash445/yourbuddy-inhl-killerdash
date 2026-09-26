@@ -86,7 +86,7 @@ The project is an SDK-style class library targeting **.NET Standard 2.1**, so no
 
 ## Configuration
 
-General settings (section `General`). The debug level, the bundled nav graph and the node editor keys are NPC.Core's, in `com.bytenull1.npccore.cfg` ([its README](https://github.com/bytenull1/npc-core-inhl#configuration)); a first start copies over what you had set here.
+The buddy's settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, section `General` (listed below). The debug level, the bundled nav graph and the node editor keys belong to NPC.Core and live in its own file, `com.bytenull1.npccore.cfg` ([its README](https://github.com/bytenull1/npc-core-inhl#configuration)). On first start NPC.Core copies over any of those values you had set in the YourBuddy file.
 
 <details>
 <summary>Show all settings</summary>
@@ -155,6 +155,7 @@ You can change these values in the config file or via console commands (see belo
 | `buddy_node` / `buddy_gates` | | NPC.Core's `npc_node` and `npc_gates` under their old names ([NPC.Core commands](https://github.com/bytenull1/npc-core-inhl#console-commands)); `node_editor` and `debug_level` are NPC.Core's too. |
 | `ai_disable` | `[buddy\|monster\|all] [on\|off]` | NPC.Core's. Debug: freeze the buddies' AI (every NPC mod's), the Breathless's, or both. Nothing is written to your save, so a reload always clears it. |
 | `ai_notarget` | `[on\|off]` | NPC.Core's. Debug: the Breathless stops noticing **you** - it keeps wandering, and it still hunts the buddy. |
+| `buddy_skin` | `<name\|default> [@who]` | Debug: put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
 | `buddy_debug` | `[on/off]` | Toggle debug visuals (path, probes, target markers). |
 | `buddy_hud` | `[on/off]` | Toggle status HUD. It shows the buddy commands go to. |
 
@@ -229,28 +230,17 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 ## Plans
 
 **Priority 0 - Fixes**
-- [x] Fix DebugVisuals. Switching works in the config, but not through the console.
-- [x] Fix the sell task: limit trash boxes for intermediate stations, order from player ignores skip list, more precise placement, sales queue. Fix the physics and overall levitation.
-- [x] Check the wall next to the ShipyardStation sales area that leads to the stairs. NavProbe doesn’t always seem to detect it.
+- All done.
 
 **Priority 1 - Improvements**
-- [x] Clean up the Debug HUD. Reduce the amount of information slightly or remove duplicates, move HUD to the background so it doesn't cover the console.
-- [x] Use meaningful room names instead of node numbers for the dialog `goto`; the console keeps node indices.
-- [x] Add a `snack` command to BuddyDialogCommands. Need comparing it to how often the player eats, I think 20 minutes is too long.
-- [x] Simplify NodeEditor. Automatic connections and connections like Block and Priority should be removed, as they are inefficient, outdated workarounds, or unused functionality.
-- [x] Improve footstep sounds. They can be heard from too far away, and they don’t change based on the floor under the NPC. Need to determine which index corresponds to a specific floor in the serialized `footstepEvents` array.
-- [x] Experiment with longer distance tasks. If stability is low, add intermediate logistics points to the planning.
-- [x] Remove redundant stairs checks. Not sure all of them are needed.
-- [x] Check optimization and analyze performance. In particular, consider changing how rooms adjacent to NPC are loaded. View hot paths (calculations every frame, tick, high allocations).
+- All done.
 
 **Priority 2 - Major features**
-- [x] Add support for multiple NPCs.
-- [x] Convert the mod into a public library for NPC mods. Separate the core from the buddy-specific code, move it to a separate repository, and use the core as a dependency: [NPC.Core](https://github.com/bytenull1/npc-core-inhl).
-- [ ] Add EVA suit support for dangerous atmospheres and space walks through FuelStation. A redrawn pilot suit texture is needed, since the game doesn’t have an isolated suit skin for the player model, only an item texture (I can't do that yet).
+- [ ] Add EVA suit support for dangerous atmospheres and space walks through FuelStation. A redrawn pilot suit texture is needed, since the game doesn’t have an isolated suit skin for the player model, only an item texture.
 
 **Priority 3 - Other**
-- [ ] Add Russian and other language translations.
 - [ ] Add funny, strange, or scary events involving the NPC.
+- [ ] Add Russian and other language translations (not sure).
 
 ---
 

@@ -154,6 +154,15 @@ namespace YourBuddy
                 Print("Debug visuals: " + (YourBuddyPlugin.ConfigDebugVisuals.Value ? "ON (yellow=path, green/red=probe, cyan=target)" : "OFF"));
             };
 
+            commands["buddy_skin"] = args => ForTargets(args, (b, rest) =>
+            {
+                if (rest.Length >= 1) return BuddySkin.Apply(b, rest[0]);
+
+                List<string> names = BuddySkin.Available();
+                return "Usage: buddy_skin <name|default> [@who] - skins in " + BuddySkin.Folder + ": "
+                    + (names.Count == 0 ? "none" : string.Join(", ", names));
+            });
+
             commands["buddy_hud"] = delegate (string[] args)
             {
                 if (args.Length > 0 && bool.TryParse(args[0], out bool enable))

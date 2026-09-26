@@ -44,8 +44,8 @@ More on logs: [docs/logging.md](docs/logging.md).
 4. Copy `YourBuddy/bin/Release/netstandard2.1/YourBuddy.dll` to `BepInEx/plugins/`, with NPC.Core's
    `NPC.Core.dll` beside it (close the game first - it locks the file).
 
-Optional, for reading the game's own code and scene: [decompiled/README.md](decompiled/README.md).
-The decompile is the game developer's code and must never be committed.
+Optional, for reading the game's own code and scene: [docs/game-sources.md](docs/game-sources.md).
+The decompile and exports are the game developer's work and must never be committed.
 
 ---
 

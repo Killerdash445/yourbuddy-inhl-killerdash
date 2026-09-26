@@ -429,7 +429,8 @@ FodyWeavers.xsd
 *.msp
 
 # Unity/BepInEx libs
-YourBuddy/lib/*.dll
+YourBuddy/lib/*
+!/YourBuddy/lib/README.md
 
 # JetBrains Rider cache/options directory
 .idea/

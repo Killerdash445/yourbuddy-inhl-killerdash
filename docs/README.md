@@ -22,6 +22,7 @@ and the rules several NPC mods share are
 | [items.md](items.md) | carrying, tidying, selling trash boxes, idle play |
 | [lifecare.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/lifecare.md) (NPC.Core) | the scanner terminal and the game's player-icon bug |
 | [game-model.md](game-model.md) | how the *game* works where only the buddy needs it: the cryo room; the rest, atmosphere and footsteps included, is [NPC.Core's](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/game-model.md) |
+| [game-sources.md](game-sources.md) | reading the game's code, scene and assets: the decompile, `unityscene.py`, AssetRipper |
 | [logging.md](logging.md) | debug levels, log tags, capturing and trimming logs |
 | [troubleshooting.md](troubleshooting.md) | from a symptom (stuck, door loop, `On: world`, missing icon) to the log line and the doc |
 | [reference.md](reference.md) | tuning constants, debug commands |
