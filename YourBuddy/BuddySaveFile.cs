@@ -125,6 +125,11 @@ namespace YourBuddy
         /// npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
         /// </summary>
         public bool Outside { get; init; }
+        /// <summary>
+        /// The gravity out there, the ExitGravity of the airlock it went through: 0 loads it floating.
+        /// Missing (an older sidecar) loads it on a walkable surface. npc-core:docs/agent.md#8-floating
+        /// </summary>
+        public float? Gravity { get; init; }
     }
 
 }

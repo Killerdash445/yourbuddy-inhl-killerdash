@@ -1,5 +1,6 @@
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
+using NPC.Core.World;
 using Space;
 using UnityEngine;
 
@@ -24,6 +25,8 @@ namespace YourBuddy
             if (player == null || player.Controller == null) return Vector3.zero;
 
             Transform playerTransform = player.Controller.CachedTransform;
+
+            if (agent.Floating) return FollowFloating(player, playerTransform, out wantMove);
 
             // If the player went EVA, the buddy politely waits inside - unless it is suited and
             // came out with them. docs/eva.md
@@ -52,6 +55,28 @@ namespace YourBuddy
             agent.ReleasePlan();
             return Vector3.zero;
         }
+
+        /// <summary>
+        /// Floating: after you, and all the way into an airlock's chamber when you float into one - short
+        /// of it, the cycle would leave it outside or shut a door on it. With you back in, it hovers
+        /// until you come out for it; NPC.Core pulls it aboard if the ship moves off. docs/eva.md#7-floating
+        /// </summary>
+        private Vector3 FollowFloating(Player player, Transform playerTransform, out bool wantMove)
+        {
+            if (!NpcAgent.IsPlayerInSpace(player)) return agent.Hover(out wantMove);
+
+            if (NpcDoors.ChamberAt(playerTransform.position, withShip: true) is { } airlock &&
+                GameInternals.AirlockAccess.GetOuterDoor(airlock) is { Opened: true })
+            {
+                return agent.FlyTo(EvaRun.StandPoint(airlock), ChamberHoldArrival, out wantMove);
+            }
+            return agent.FlyFollow(player, out wantMove);
+        }
+
+        /// <summary>
+        /// How near the stand point a floating buddy holds in the chamber with you.
+        /// </summary>
+        private const float ChamberHoldArrival = 0.3f;
 
         /// <summary>
         /// Floor to floor, not an XZ test: npc-core:docs/invariants.md#follow-arrival-is-level-aware

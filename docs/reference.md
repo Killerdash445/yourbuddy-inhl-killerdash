@@ -19,6 +19,7 @@ Walking, doors, wandering, reach, carrying, spacing, air and footsteps are NPC.C
 | Constant | Value | Meaning |
 |---|---|---|
 | `FollowStartDistance` / `FollowStopDistance` | 2.0 / 1.8 m | Follow hysteresis (XZ) |
+| `ChamberHoldArrival` | 0.3 m | floating, how near the chamber's stand point it holds when you float into an airlock ([eva.md §7](eva.md#7-floating)) |
 
 ### Fear - `BuddyBehaviour.cs`
 

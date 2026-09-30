@@ -63,6 +63,14 @@ namespace YourBuddy
             Environment env = GameManager.Instance.PlayerShip!.Environment;
             if (env == null || env.Data == null) return false;
 
+            return Dangerous(env);
+        }
+
+        /// <summary>
+        /// This air is dangerous to the buddy without a suit: the bands the decider fixes the ship's air by.
+        /// </summary>
+        public bool Dangerous(Environment env)
+        {
             int temperature = body.FeltTemperature(env);
             return env.Data.Oxygen < OxygenDangerBelow ||
                    temperature < ColdDangerBelow || temperature > HeatDangerAbove;

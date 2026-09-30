@@ -24,6 +24,11 @@ namespace YourBuddy
         /// </summary>
         private static readonly string[] OutsideNames = ["Follow", "Wander", "Stay", "Inside", "Goto", "Decide"];
 
+        /// <summary>
+        /// Floating there is nothing to walk on: no wander, no goto. docs/eva.md#7-floating
+        /// </summary>
+        private static readonly string[] FloatingNames = ["Follow", "Stay", "Inside", "Decide"];
+
         private static readonly Dictionary<bool, string[]> InsideNames = [];
 
         /// <summary>
@@ -32,7 +37,7 @@ namespace YourBuddy
         /// </summary>
         internal static IReadOnlyList<string> NamesFor(BuddyBehaviour buddy)
         {
-            if (buddy.IsOutside) return OutsideNames;
+            if (buddy.IsOutside) return buddy.Floating ? FloatingNames : OutsideNames;
 
             bool suited = buddy.SuitSuited;
             if (!InsideNames.TryGetValue(suited, out string[]? names))

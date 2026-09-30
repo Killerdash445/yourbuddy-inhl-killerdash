@@ -23,7 +23,8 @@ the player (`InDialog`). The title is the buddy's name, and the first line "Stan
 
 NPC.Core draws it ([interaction.md §2](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#2-the-panel)). The commands page lists
 `BuddyDialogCommands.NamesFor(buddy)`: inside, Follow, Wander, Stay, Hide, Outside, Unsuit (only while suited), Tidy,
-Sell, Play, Snack, Goto, Decide, Password; outside, Follow, Wander, Stay, Inside, Goto, Decide.
+Sell, Play, Snack, Goto, Decide, Password; outside, Follow, Wander, Stay, Inside, Goto, Decide; floating,
+Follow, Stay, Inside, Decide ([eva.md §7](eva.md#7-floating)).
 
 ---
 
@@ -47,7 +48,7 @@ is a goto that names a room, which is tried right after "decide" ("go to the wor
 | decide / yourself / your call | `buddy_auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
 | unsuit / take off the suit / remove the suit | `buddy_suit off` | take the worn suit off - never outside or in an airlock ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)); before the airlock orders |
 | inside / come in / back in | `buddy_inside` | from outside, walk into an airlock's chamber and wait for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the outside order |
-| outside / eva / space walk | `buddy_outside` | suit up if a spare is free, then wait in the docked station's exit airlock for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |
+| outside / eva / space walk | `buddy_outside` | suit up if a spare is free, then wait in an airlock (a station's, or the ship's own while undocked) for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |
 | hide / closet / locker / conceal | `buddy_hide` | hide and stay until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
 | follow / come | `buddy_follow` | `ApplyOrder(Follow)` |
 | wander / job | `buddy_wander` | `ApplyOrder(Wander)` |

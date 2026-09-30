@@ -29,9 +29,9 @@ Config: `EvaSuit`, `SuitFetch` (General, default on). Commands: `buddy_outside`,
   ([NPC.Core's game model](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/game-model.md#an-airlock-moves-only-the-player)).
   After `Enter` the surface's floor content (`FuelStation.asteroidRoom`) is switched off. A docking
   leaves the stuff airlock open inside and the refinery airlock open to the surface.
-- **`Airlock.ExitGravity`** is the game's own signal for "outside is walkable ground": the
-  FuelStation airlocks have 0.5, the Shipyard's exit airlock has 0. Zero-g is vacuum the buddy's
-  walking cannot handle, so it is refused.
+- **`Airlock.ExitGravity`** is the player's gravity outside (`Airlock.Exit` sets it): 0.5 at the
+  FuelStation's two airlocks, a surface to walk; 0 at the ship's own, Oxygen's two, Solar's and the
+  Shipyard's, where the player floats. The buddy walks the first and flies the second (§7).
 
 ## 2. The suit on the buddy
 
@@ -51,8 +51,10 @@ Wearing mirrors the game's own equip (`BuddySuit.Wear`/`TakeOff`):
   when that room is switched off.
 
 Why the suit is on is kept (`BuddySuit.SuitReason`): **ordered** (the "outside" order, or
-`buddy_suit on`) or **survival** (the deadly-air urge). Only the survival suit comes off by itself;
-an ordered one waits for "unsuit" until it dies or is despawned. The sidecar stores the worn item's
+`buddy_suit on`) or **survival** (the deadly-air urge). Only the survival suit comes off by itself.
+Coming back in from outside by any way - your cycle, "inside", pulled aboard, a rescue - turns an
+ordered suit into a survival one: the walk out is over. So only a suit you ordered on inside
+(`buddy_suit on`) waits for "unsuit", or death, or a despawn. The sidecar stores the worn item's
 id (`SuitId`), why it is on (`SuitReason`) and the side of the airlocks (`Outside`), so a save
 and load gives all three back - a survival suit loaded aboard in safe air comes off at the watcher's
 next look. A sidecar without a reason restores survival.
@@ -75,11 +77,11 @@ one crossing each:
 
 | | "outside", "eva", "space walk" (`buddy_outside`) | "inside", "come in", "back in" (`buddy_inside`) |
 |---|---|---|
-| airlock | the one you stand in, else the nearest the buddy can walk to | the same |
+| airlock | the one you stand in, else the nearest the buddy can walk to: a station's, or the ship's own while undocked | the one you stand in; floating, the nearest chamber; else as going out |
 | first | a spare suit, unless already suited | - |
 | door into the chamber | the inner door | the outer door |
 | waits for | the outer door to open: you cycled out | the inner door to open: you cycled in |
-| refused when | already outside; the docked station's exit airlock is zero-g | already inside |
+| refused when | already outside; the ship is moving (its airlock is locked) | already inside |
 
 The walkable test matters at the FuelStation: its refinery is reached from the rest of the station
 only across the surface, so from the refinery the only airlock the buddy can walk to is the
@@ -93,19 +95,21 @@ refinery's own. An airlock counts as walkable when a route toward it ends within
    more than 6 m off; within 6 m it walks straight on and never gives up. Waiting is the leg's
    work, so the agent's idle recovery leaves it be (`ErrandLeg.Waits`). While the door
    into the chamber is shut it waits beside it: only your cycle opens it. The buddy never opens an
-   airlock door.
+   airlock door. Floating, it flies to the stand point instead (§7).
 3. **Waiting** - in the chamber, with a throttled log, until your cycle opens the far door.
 4. **Crossing leg** - straight through the open far door, a couple of metres clear, never planned
-   on the graph. The buddy is then on the new side, and the run ends: the mode in force takes over.
+   on the graph; floating, it flies out at its own height. The buddy is then on the new side, and
+   the run ends: the mode in force takes over.
    If the far door shuts first, the run goes back to the stand point and waits for the next cycle.
    The run only ends by crossing, by another order, or far from the airlock with no route to it -
    never by falling back to Follow while it waits.
 
 Following needs no order. A suited buddy follows you into the chamber while its door is open, and
-the cycle moves whoever stands in the chamber - NPC.Core sees the buddy's side change there. Outside,
+the cycle moves whoever stands in the chamber - NPC.Core moves the buddy with you, and gives it the
+airlock's gravity. Outside,
 the decider only weighs Follow and Wander, and switches to Follow the moment you step into an
-airlock's chamber. A buddy left outside when you cycle in loses its floor with the surface content
-and NPC.Core's fall rescue (25 m below the player) teleports it to its last safe inside spot.
+airlock's chamber. A buddy left on the surface when you cycle in loses its floor with the surface
+content, and NPC.Core's fall rescue (25 m below the player) teleports it to its last safe inside spot.
 
 Orders that stay on the buddy's side: a goto to a node on the other side is refused ("tell it to
 go outside first" / "come inside first"), a room goto is refused outside, and every job order
@@ -121,7 +125,8 @@ and wins the first round), and a spare suit is free. Once the air is killing the
 whatever it is doing - the walk to a terminal included - to put a spare on (`TrySaveOwnLife`, log
 `[suit] Buddy is suffocating - suiting up now`). The buddy walks to the suit, wears it, and
 shelters aboard - it keeps trying the terminal while suited - and takes the suit off when the
-watcher sees it is back aboard in breathable air (`BuddySuit.Update`). Only this survival suit
+watcher sees it breathing safe air again, aboard or on a station, out of any airlock chamber
+(`BuddySuit.Update`, the terminal's danger bands on `NpcAgent.Air`). Only this survival suit
 comes off by itself; an ordered one waits for "unsuit" ([§2](#2-the-suit-on-the-buddy)).
 
 "Unsuit" / "take the suit off" ([dialog.md](dialog.md)), or `buddy_suit off`, takes the suit off
@@ -155,10 +160,36 @@ Once the fetch is due, the HUD's `Fetch suit:` line says what the last look saw 
 at 0 s (`due - 4 isolated suit(s): 1 to fetch, 1 already aboard, 2 on a station you are not docked at`); at level 2 the
 same line is logged as `[suit] Buddy suit fetch: ...` whenever it changes.
 
-## 7. Known limitations
+## 7. Floating
 
-- No zero-g EVA: outside the Shipyard the buddy stays inside.
+Out of a zero-g airlock - the ship's own while undocked (the wreck, or wherever the ship stopped),
+Oxygen's, Solar's or the Shipyard's - the buddy floats, as you do. How it flies and finds its way is
+NPC.Core's ([agent.md §8](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md#8-floating)):
+with inertia like yours, straight at you when it can see you, else along the path you took. There are
+no nodes out there.
+
+- **Going out** is the same run (§4): suit, chamber, your cycle. The cycle takes it out with you, and
+  it floats out through the door and follows you.
+- **Following**, it keeps 2.2 to 3 m from you. When you float into a chamber whose outer door is
+  open, it follows you all the way in to the stand point and holds still there: short of it, your
+  cycle would leave it outside, or shut the door on it (a door that hits something fails to close).
+- **Coming in**: "inside" flies it into the nearest airlock and waits for your cycle. Once it is in and
+  the air is safe, it takes the suit off by itself (§2). Floating into the chamber yourself does the same without an order.
+- **Only Follow, Stay and Inside.** The decider only follows. Wander and goto are refused (`... has
+  nothing to walk on out here`), no flee starts, and Stay hovers where it is. The HUD shows
+  `[OUTSIDE, ZERO-G]`.
+- **Left outside**, it hovers where it is until you come out for it. Once the ship moves - you undock
+  or fly off - NPC.Core moves it into the ship's airlock.
+- **Stuck or lost**: getting nowhere for 4 s, or 40 m behind you, it is moved onto your path behind
+  you, with a warning in the log.
+- A save made while it floats loads it floating (`BuddyState.Gravity`).
+
+## 8. Known limitations
+
 - The surface is walkable only where the graph has Outdoor nodes; without them the buddy stands at
   the exit pad.
+- Floating, the buddy does no jobs and carries nothing.
+- It finds its way outside only along your path: to an airlock your path does not pass, it flies
+  straight and slides along whatever is in the way.
 - A buddy left outside when the ship undocks parks with the station, like any NPC.
 - The buddy does not model suit charge.

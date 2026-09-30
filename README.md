@@ -151,8 +151,8 @@ You can change these values in the config file or via console commands (see belo
 | `buddy_mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play / Fetch suit lines). |
 | `buddy_bout` | `[@who]` | End the current follow or wander stretch now, so the other one weighs full at its next decision (for testing). |
 | `buddy_terminal` | `<oxygen\|climate> [@who]` | Make the buddy switch that unit on now, whatever the air (for testing; only if it is off and not broken or faulted). |
-| `buddy_outside` | `[@who]` | Send the buddy outside: it puts a spare suit on (never your only one), walks into the docked station's exit airlock and waits for you to cycle it. Works where the surface has gravity (the FuelStation); an EVA skin is drawn while it wears the suit. |
-| `buddy_inside` | `[@who]` | Bring the buddy back in from outside: it walks into the airlock you stand in (or the nearest) and waits for you to cycle it. |
+| `buddy_outside` | `[@who]` | Send the buddy outside: it puts a spare suit on (never your only one), walks into an airlock (a station's, or the ship's own while undocked) and waits for you to cycle it. On the FuelStation's surface it walks; out of the other airlocks it floats and flies after you. An EVA skin is drawn while it wears the suit. |
+| `buddy_inside` | `[@who]` | Bring the buddy back in from outside: it walks, or flies, into the airlock you stand in (else the nearest) and waits for you to cycle it. Back inside in breathable air, it takes the suit off by itself. |
 | `buddy_suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
 | `buddy_fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
 | `buddy_auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
@@ -227,7 +227,7 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 ## Known Issues / Limitations
 
 - Navigation is good, but not perfect - the buddy can still get stuck sometimes.
-- It will not follow you on a spacewalk, and it dies if it ends up in space.
+- Outside in zero gravity it only follows, stays or comes back in, and it finds its way along the path you took. Without a suit it cannot go outside at all.
 - Sometimes, doors may not close behind NPCs.
 - Room names in the HUD are unreliable - you may see `Front_M00` for most of the ship. The game has no room volumes; a "room" is whichever doorway sensor you last walked through. Cosmetic only, and not fixable.
 
@@ -242,7 +242,7 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 - All done.
 
 **Priority 2 - Major features**
-- [ ] Add EVA suit support for dangerous atmospheres and space walks through FuelStation. A redrawn pilot suit texture is needed, since the game doesn’t have an isolated suit skin for the player model, only an item texture.
+- [x] Add EVA suit support for dangerous atmospheres and space walks through FuelStation. A redrawn pilot suit texture is needed, since the game doesn’t have an isolated suit skin for the player model, only an item texture.
 
 **Priority 3 - Other**
 - [ ] Add funny, strange, or scary events involving the NPC.

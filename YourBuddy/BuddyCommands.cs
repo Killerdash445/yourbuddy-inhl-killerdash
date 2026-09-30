@@ -35,6 +35,7 @@ namespace YourBuddy
         public static string Wander(BuddyBehaviour buddy)
         {
             if (Dead(buddy) is { } dead) return dead;
+            if (buddy.Floating) return buddy.Name + " has nothing to walk on out here - it can follow you or stay";
 
             return buddy.ApplyOrder(BuddyMode.Wander)
                 ? buddy.Name + " now does its own thing (uses nav nodes as points of interest)"
@@ -58,6 +59,7 @@ namespace YourBuddy
             {
                 return "Node index out of range (0-" + (NavGraph.NodeCount - 1) + ")";
             }
+            if (buddy.Floating) return buddy.Name + " is floating - there are no nodes out here";
             // A goto stays on the buddy's side: npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
             bool outdoor = NavGraph.GetNodeType(nodeIndex) == NodeType.Outdoor;
             if (outdoor && !buddy.IsOutside)

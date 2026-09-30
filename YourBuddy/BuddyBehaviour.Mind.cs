@@ -350,9 +350,15 @@ namespace YourBuddy
         private void ScoreOutside(Player player)
         {
             Transform? playerTransform = player.Controller != null ? player.Controller.CachedTransform : null;
-            if (playerTransform != null && NpcDoors.ChamberAt(playerTransform.position) != null)
+            if (playerTransform != null && NpcDoors.ChamberAt(playerTransform.position, withShip: true) != null)
             {
                 if (mode != BuddyMode.Follow) Add(Urge.Follow, 1f, 1f, 1f, 1f, "you are in the airlock, heading back in");
+                return;
+            }
+            // Nothing to wander on while floating: it keeps with you. docs/eva.md#7-floating
+            if (agent.Floating)
+            {
+                if (mode != BuddyMode.Follow) Add(Urge.Follow, 1f, 1f, 1f, 1f, "floating out here, it keeps with you");
                 return;
             }
             ScoreCompany(player);

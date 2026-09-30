@@ -64,7 +64,8 @@ It **stands down** (logged at level 2 every 15 s) while:
 | the player is on a spacewalk and the buddy is inside | Follow already waits inside ([eva.md §4](eva.md#4-through-the-airlock)) |
 
 Outside the airlocks every job is out of reach, so only Follow and Wander are weighed there - and
-only Follow while you stand in an airlock's chamber, heading in (`ScoreOutside`).
+only Follow while you stand in an airlock's chamber, heading in, or while the buddy floats
+(`ScoreOutside`, [eva.md §7](eva.md#7-floating)).
 
 ### Why utility scoring
 
@@ -271,7 +272,7 @@ is dropped while the decider is standing down.
 
 - **Autonomous Wander stays on the owner it started on**, and is not chosen with no active node
   within `DecideNodeOwnerRadius`. Near a docking collar the nearest node may be the other vessel's.
-- **Nothing is chosen during a spacewalk.**
+- **Nothing is chosen while parked aboard during a spacewalk**, and floating outside only Follow.
 - **A running task is not interrupted** by a better opportunity; the decider stands down until it
   ends.
 - **Opportunity uses straight-line distance**, not walk length. The plan attempt finds out the rest.

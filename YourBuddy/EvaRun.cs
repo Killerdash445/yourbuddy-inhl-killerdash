@@ -122,6 +122,12 @@ namespace YourBuddy
             phase = Phase.ToChamber;
 
             ChamberLeg leg = new(this, body, airlock, outward, StandPoint(airlock));
+            // Floating, there is no graph: the leg flies. docs/eva.md#7-floating
+            if (body.Floating)
+            {
+                body.Walk(leg, null);
+                return null;
+            }
             if (body.PlanRoute(leg.TargetPoint, mayGoOutside: true, out NavPath plan) == null)
             {
                 body.Walk(leg, plan);
@@ -149,7 +155,7 @@ namespace YourBuddy
         /// volume nearest the centre), else the volume's centre. Standing on the node you placed
         /// puts it where you expect it, clear of both doors.
         /// </summary>
-        private static Vector3 StandPoint(Airlock airlock)
+        internal static Vector3 StandPoint(Airlock airlock)
         {
             Vector3 center = NpcDoors.ChamberCenter(airlock);
             NavGraph.CollectActiveNodes(NodeBuffer);
@@ -158,7 +164,7 @@ namespace YourBuddy
             bool bestInside = false;
             foreach (Vector3 node in NodeBuffer)
             {
-                bool inside = NpcDoors.ChamberAt(node) == airlock;
+                bool inside = NpcDoors.ChamberAt(node, withShip: true) == airlock;
                 float sqr = Items.FlatDistanceSq(node, center);
                 if (!inside && (sqr > StandNodeFallbackDist * StandNodeFallbackDist || Mathf.Abs(node.y - center.y) > 2f)) continue;
                 if (bestInside && !inside) continue;
@@ -219,8 +225,8 @@ namespace YourBuddy
         internal void Crossed()
         {
             Active = false;
-            body.SetOutside(outward, outward ? "walked out through the airlock's outer door"
-                                             : "walked in through the airlock's inner door");
+            body.SetOutside(outward, outward ? "went out through the airlock's outer door"
+                                             : "walked in through the airlock's inner door", airlock.ExitGravity);
             body.FinishRoute();
             YourBuddyPlugin.Log.LogInfo("[suit] " + body.Name + (outward ? " is outside" : " is back inside"));
         }
@@ -367,22 +373,11 @@ namespace YourBuddy
             public override Vector3 Approach(out bool wantMove)
             {
                 wantMove = false;
+                if (body.Floating) return Float(out wantMove);
 
                 float dist = FlatDistance();
                 arrived = dist < (arrived ? InChamberLeave : InChamberArrival);
-                if (arrived)
-                {
-                    if (FarDoor is { Opened: true })
-                    {
-                        run.Cross();
-                        return Vector3.zero;
-                    }
-
-                    // Standing still is the job; say so now and then. docs/logging.md §4
-                    Trace("waits in the airlock for you to cycle it (" + NearName + " door " +
-                          (NearDoor is { Opened: true } ? "open" : "shut") + ")");
-                    return Vector3.zero;
-                }
+                if (arrived) return Arrived();
 
                 bool beside = dist <= StraightEnterMaxDist;
                 // The way in is shut: only the player's cycle opens it.
@@ -409,6 +404,42 @@ namespace YourBuddy
                 return to.sqrMagnitude < 0.0001f ? Vector3.zero : to.normalized * body.WalkSpeed;
             }
 
+            /// <summary>
+            /// On the stand point: through once the far door is open, else waiting for your cycle.
+            /// </summary>
+            private Vector3 Arrived()
+            {
+                if (FarDoor is { Opened: true })
+                {
+                    run.Cross();
+                    return Vector3.zero;
+                }
+
+                // Standing still is the job; say so now and then. docs/logging.md §4
+                Trace("waits in the airlock for you to cycle it (" + NearName + " door " +
+                      (NearDoor is { Opened: true } ? "open" : "shut") + ")");
+                return Vector3.zero;
+            }
+
+            /// <summary>
+            /// Floating in from outside: flown to the stand point, straight or along your trail, and held
+            /// there; a shut door into the chamber is waited out beside it. docs/eva.md#7-floating
+            /// </summary>
+            private Vector3 Float(out bool wantMove)
+            {
+                wantMove = false;
+                float dist = Vector3.Distance(body.Transform.position, TargetPoint);
+                arrived = dist < (arrived ? InChamberLeave : InChamberArrival);
+                if (arrived) return Arrived();
+
+                if (dist <= StraightEnterMaxDist && NearDoor is not { Opened: true } && !InsideChamber())
+                {
+                    Trace("waits by the airlock for its " + NearName + " door to open");
+                    return Vector3.zero;
+                }
+                return body.FlyTo(TargetPoint, InChamberArrival * 0.5f, out wantMove);
+            }
+
             private void Trace(string line)
             {
                 if (Time.time < traceAt) return;
@@ -427,7 +458,7 @@ namespace YourBuddy
             /// <summary>
             /// Past the near door already, in the chamber's own volume.
             /// </summary>
-            private bool InsideChamber() => NpcDoors.ChamberAt(body.Transform.position) == airlock;
+            private bool InsideChamber() => NpcDoors.ChamberAt(body.Transform.position, withShip: true) == airlock;
 
             /// <summary>
             /// Near enough to walk straight in, or to wait at the door into the chamber.
@@ -482,6 +513,19 @@ namespace YourBuddy
                 {
                     run.CrossingBlocked();
                     return Vector3.zero;
+                }
+
+                if (body.Floating)
+                {
+                    // Out through the door at its own height: there is nothing to stand on out there.
+                    Vector3 clear = TargetPoint;
+                    clear.y = body.Transform.position.y;
+                    if ((clear - body.Transform.position).sqrMagnitude < ClearArrival * ClearArrival)
+                    {
+                        run.Crossed();
+                        return Vector3.zero;
+                    }
+                    return body.FlyTo(clear, 0.1f, out wantMove);
                 }
 
                 Vector3 to = TargetPoint - body.Transform.position;

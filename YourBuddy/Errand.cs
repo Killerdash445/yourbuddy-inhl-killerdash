@@ -75,9 +75,18 @@ namespace YourBuddy
         /// </summary>
         float WalkSpeed { get; }
         /// <summary>
-        /// The buddy walked through an airlock door and knows which side it came out on.
+        /// Outside with no gravity: it flies, and a leg steers with FlyTo. npc-core:docs/agent.md#8-floating
         /// </summary>
-        void SetOutside(bool outside, string why);
+        bool Floating { get; }
+        /// <summary>
+        /// The agent's flight to a point: straight, or along the player's trail. Zero once within `arrival`.
+        /// </summary>
+        Vector3 FlyTo(Vector3 point, float arrival, out bool wantMove);
+        /// <summary>
+        /// The buddy went through an airlock door and knows which side it came out on, and the airlock's
+        /// gravity out there.
+        /// </summary>
+        void SetOutside(bool outside, string why, float gravity);
         Player? PilotPlayer();
         /// <summary>
         /// Another buddy's leg or hide holds `what`: docs/invariants.md#one-buddy-per-target
@@ -89,6 +98,10 @@ namespace YourBuddy
         bool AnotherBuddyWhere(System.Func<Vector3, bool> test);
         bool IsAboardPlayerShip();
         int FeltTemperature(Environment env);
+        /// <summary>
+        /// The air it breathes where it stands, null in space.
+        /// </summary>
+        Environment? Air { get; }
         /// <summary>
         /// Where an item at `pos` belongs (the room or station interior under it), or null: where
         /// anything it takes off goes, as UnequipSuit does for the player's suit. docs/eva.md

@@ -47,6 +47,11 @@ namespace YourBuddy
         /// On the outside of the airlocks. npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
         /// </summary>
         internal bool IsOutside => agent.IsOutside;
+
+        /// <summary>
+        /// Outside with no gravity: npc-core:docs/agent.md#8-floating
+        /// </summary>
+        internal bool Floating => agent.Floating;
         internal string SuitNow(string onOff) => suit.SuitNow(onOff);
         internal string UnsuitNow() => suit.UnsuitNow();
 
@@ -149,12 +154,15 @@ namespace YourBuddy
         string? IErrandBody.BusyForAirlockCommand() => BusyForCommand(outsideOk: true);
         bool IErrandBody.IsOutside => agent.IsOutside;
         float IErrandBody.WalkSpeed => agent.WalkSpeed;
-        void IErrandBody.SetOutside(bool outside, string why) => agent.SetOutside(outside, why);
+        bool IErrandBody.Floating => agent.Floating;
+        Vector3 IErrandBody.FlyTo(Vector3 point, float arrival, out bool wantMove) => agent.FlyTo(point, arrival, out wantMove);
+        void IErrandBody.SetOutside(bool outside, string why, float gravity) => agent.SetOutside(outside, why, gravity);
         Player? IErrandBody.PilotPlayer() => PilotPlayer();
         bool IErrandBody.TakenByAnother(Transform what) => BuddyManager.TakenByAnother(what, this);
         bool IErrandBody.AnotherBuddyWhere(System.Func<Vector3, bool> test) => BuddyManager.AnotherBuddyWhere(test, this);
         bool IErrandBody.IsAboardPlayerShip() => agent.IsAboardPlayerShip();
         int IErrandBody.FeltTemperature(Environment env) => agent.FeltTemperature(env);
+        Environment? IErrandBody.Air => agent.Air;
         Transform? IErrandBody.ItemParentAt(Vector3 pos) => agent.ItemParentAt(pos);
     }
 }

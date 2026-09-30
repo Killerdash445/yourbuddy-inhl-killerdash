@@ -256,7 +256,14 @@ namespace YourBuddy
                 AttachToOwner(buddy, state.Owner);
                 BuddyCryoSpawn.ResumeSleep(buddy, state.SleepingCapsule);
                 if (state.SuitId != 0) buddy.RestoreWornSuit(state.SuitId, state.SuitReason);
-                if (state.Outside) buddy.Agent.SetOutside(true, "it was outside when the game was saved");
+                if (state.Outside && state.Gravity is { } gravity)
+                {
+                    buddy.Agent.SetOutside(true, "it was outside when the game was saved", gravity);
+                }
+                else if (state.Outside)
+                {
+                    buddy.Agent.SetOutside(true, "it was outside when the game was saved");
+                }
             }
             if (data.KnownPinCodes != null) foreach (int code in data.KnownPinCodes) NpcDoors.LearnCode(code);
         }
@@ -382,7 +389,8 @@ namespace YourBuddy
                 SleepingCapsule = BuddyCryoSpawn.SleepingCapsuleOf(buddy),
                 SuitId = buddy.WornSuitId,
                 SuitReason = buddy.WornSuitReason,
-                Outside = buddy.IsOutside
+                Outside = buddy.IsOutside,
+                Gravity = buddy.IsOutside ? buddy.Agent.Gravity : null
             };
         }
 

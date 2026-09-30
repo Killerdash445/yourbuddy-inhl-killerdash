@@ -205,18 +205,6 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// SpaceStation: the airlock its docking opens to the outside, which an EVA run walks to.
-        /// docs/eva.md
-        /// </summary>
-        internal static class SpaceStationAccess
-        {
-            private static readonly FieldInfo? ExitAirlock = Field<Airlock>(typeof(SpaceStation), "exitAirlock",
-                "the buddy going outside through the docked station's exit airlock");
-
-            internal static Airlock? GetExitAirlock(SpaceStation? station) => Get<Airlock>(ExitAirlock, station);
-        }
-
-        /// <summary>
         /// Airlock: its two doors. NPC.Core reflects the same fields for gate detection; these
         /// are for the EVA run's own waiting in the chamber.
         /// </summary>

@@ -248,10 +248,11 @@ namespace YourBuddy
 
             if (fearState == FearState.Scared)
             {
-                // A level, not an edge: a flee held back by the dialog starts once it closes.
+                // A level, not an edge: a flee held back by the dialog starts once it closes. Floating,
+                // there are no nodes to run along: it keeps with you. docs/eva.md#7-floating
                 if (mode != BuddyMode.Flee)
                 {
-                    if (!InDialog) StartFlee(panic);
+                    if (!InDialog && !agent.Floating) StartFlee(panic);
                 }
                 else if (panic && fleePhase != FleePhase.Retreat && Time.time >= fleeRetryAt)
                 {

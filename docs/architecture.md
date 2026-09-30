@@ -193,7 +193,8 @@ Space protection, riding a station and being parked with it are the agent's
 A parked buddy is inactive: no update, HUD, lifecare icon or atmosphere damage. The same happens aboard
 during a spacewalk away from a station. Docked, a buddy aboard stays awake while you are on the station,
 though the game switches the ship's rooms off then ([an-unloaded-ship-parks-the-npc](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-unloaded-ship-parks-the-npc)).
-The buddy will not follow you onto a spacewalk.
+A suited buddy standing in the chamber when you cycle out goes out with you, and floats in zero
+gravity ([eva.md §7](eva.md#7-floating)).
 
 ---
 
@@ -204,7 +205,7 @@ The buddy will not follow you onto a spacewalk.
 | `FindPath` signature or `NavPath` | NPC.Core's agent, and here `UpdateFlee` / `TryPlanRetreat` / `PlanKeepsClear` / `EndFlee`, `WalkToHide`, `BuddyCommands.GoToNode`. Every construction must fill `WaypointFloorY`. `==` on a `NavPath` compares list references |
 | an order the player can give | `BuddyCommands.cs`, via `ApplyOrder` / `ApplyRouteOrder`, never `SetMode` ([an-order-is-not-a-mode](invariants.md#an-order-is-not-a-mode)); and `BuddyDialogCommands.Names` **and its match order** |
 | an urge the buddy can choose | `Mind.cs`: the `Urge` enum, `ScoreUrges` (its weight), `ActOn`, `ErrandOf`, `UrgeName`; a new errand is an `Errand` subclass created in `BuddyBehaviour.Errands.cs` |
-| the buddy and the outside (space, airlocks, the suit) | `BuddySuit` / `EvaRun` / `SuitFetchErrand` ([eva.md](eva.md)); NPC.Core reads the suit through `BuddyAgentSettings.Suited` / `MayGoOutside`, and owns the side of the airlocks (`NpcAgent.IsOutside`) |
+| the buddy and the outside (space, airlocks, the suit) | `BuddySuit` / `EvaRun` / `SuitFetchErrand` ([eva.md](eva.md)); NPC.Core reads the suit through `BuddyAgentSettings.Suited` / `MayGoOutside`, and owns the side of the airlocks (`NpcAgent.IsOutside`, `Gravity`) and flight (`Floating`, `FlyFollow`, `FlyTo`) |
 | what an errand may do to the buddy | only through `IErrandBody` (`Errand.cs`); a new need is a new member there, never a buddy field made internal |
 | a search radius | its owner filter, the agent's `OnMyVessel` ([behaviour.md §3](behaviour.md#range)) |
 | a `BuddyMode`, or anything writing `mode` | every site in [behaviour.md §4](behaviour.md#4-every-place-that-reads-mode-outside-the-dispatch-switch), above all `INpcBrain.Activity`, and [fear-owns-the-buddy](invariants.md#fear-owns-the-buddy) |

@@ -310,8 +310,8 @@ namespace YourBuddy
         // ------------------------------------------------------------------
 
         /// <summary>
-        /// The EVA order: suit up if a spare is free, then wait in the docked station's exit
-        /// airlock for the player to cycle it. Returns the reply line.
+        /// The EVA order: suit up if a spare is free, then wait in an airlock - a station's, or the
+        /// ship's own while undocked - for the player to cycle it. Returns the reply line.
         /// </summary>
         internal string StartOutsideNow()
         {
@@ -320,10 +320,10 @@ namespace YourBuddy
 
             if (body.IsOutside) return body.Name + " is already outside";
 
-            if (WhyNoSurface() is { } why) return body.Name + " cannot go outside: " + why;
+            if (WhyNoWayOut() is { } why) return body.Name + " cannot go outside: " + why;
 
             Airlock? airlock = PickAirlock();
-            if (airlock == null) return body.Name + " cannot go outside: no airlock opens onto the surface";
+            if (airlock == null) return body.Name + " cannot go outside: no airlock here opens to the outside";
 
             EndRun();
             run = new EvaRun(this, body);
@@ -357,30 +357,36 @@ namespace YourBuddy
         private static readonly List<Airlock> AirlockBuffer = [];
 
         /// <summary>
-        /// The airlock for a trip: the one the player stands in, else the nearest the buddy can walk
-        /// to from where it is - a station's interior can reach only some of its airlocks (the
-        /// FuelStation refinery opens onto the surface alone). Else the nearest, or null.
+        /// The airlock for a trip: the one the player stands in; floating, the nearest chamber;
+        /// walking, the nearest the buddy can walk to from where it
+        /// is - a station's interior can reach only some of its airlocks (the FuelStation refinery opens
+        /// onto the surface alone). Else the nearest, or null.
         /// </summary>
         private Airlock? PickAirlock()
         {
             Player? pilot = NpcPlayer.Pilot;
             if (pilot != null && pilot.Controller != null &&
-                NpcDoors.ChamberAt(pilot.Controller.CachedTransform.position) is { ExitGravity: > 0f } withPlayer)
+                NpcDoors.ChamberAt(pilot.Controller.CachedTransform.position, withShip: true) is { } withPlayer &&
+                OpensOutside(withPlayer))
             {
                 return withPlayer;
             }
 
-            Airlock? shipAirlock = GameManager.Instance != null && GameManager.Instance.PlayerShip != null
-                ? GameManager.Instance.PlayerShip.Airlock
-                : null;
             Vector3 here = body.Transform.position;
             AirlockBuffer.Clear();
             foreach (Airlock airlock in UnityEngine.Object.FindObjectsOfType<Airlock>())
             {
-                if (airlock == null || airlock == shipAirlock || airlock.ExitGravity <= 0f) continue;
-
-                AirlockBuffer.Add(airlock);
+                if (airlock != null && OpensOutside(airlock)) AirlockBuffer.Add(airlock);
             }
+
+            // Nothing to walk out there: the nearest chamber. docs/eva.md#7-floating
+            if (body.Floating)
+            {
+                AirlockBuffer.Sort((a, b) => (NpcDoors.ChamberCenter(a) - here).sqrMagnitude
+                    .CompareTo((NpcDoors.ChamberCenter(b) - here).sqrMagnitude));
+                return AirlockBuffer.Count > 0 ? AirlockBuffer[0] : null;
+            }
+
             AirlockBuffer.Sort((a, b) => Items.FlatDistanceSq(a.transform.position, here)
                 .CompareTo(Items.FlatDistanceSq(b.transform.position, here)));
 
@@ -399,14 +405,24 @@ namespace YourBuddy
         }
 
         /// <summary>
+        /// Every station airlock opens to the outside; the ship's own only while undocked - docked, it
+        /// is the way into the station and both its doors stand open.
+        /// </summary>
+        private static bool OpensOutside(Airlock airlock)
+        {
+            SpaceShip? ship = GameManager.Instance != null ? GameManager.Instance.PlayerShip : null;
+            return ship == null || airlock != ship.Airlock || string.IsNullOrEmpty(ship.Autopilot.DockedStation);
+        }
+
+        /// <summary>
         /// Why the suit must stay on where the buddy stands, or null: outside, or in an airlock
-        /// chamber the next cycle may open to space. docs/eva.md
+        /// chamber the next cycle may open to space, the ship's included. docs/eva.md
         /// </summary>
         private string? WhyKeepSuitOn()
         {
             if (body.IsOutside) return "there is no air out here";
 
-            return NpcDoors.ChamberAt(body.Transform.position) != null ? "it is standing in an airlock" : null;
+            return NpcDoors.ChamberAt(body.Transform.position, withShip: true) != null ? "it is standing in an airlock" : null;
         }
 
         /// <summary>
@@ -464,24 +480,15 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Why there is no surface to walk out onto, or null: the ship must be docked at a station
-        /// whose exit airlock has gravity outside - zero-g is vacuum the buddy cannot walk in.
+        /// Why no airlock will let the buddy out now, or null. An airlock locks while the ship is
+        /// moving (Airlock.Tick), so nobody cycles out then.
         /// </summary>
-        private static string? WhyNoSurface()
+        private static string? WhyNoWayOut()
         {
             GameManager? gm = GameManager.Instance;
             if (gm == null || gm.PlayerShip == null) return "there is no ship";
 
-            foreach (SpaceStation station in UnityEngine.Object.FindObjectsOfType<SpaceStation>())
-            {
-                if (station == null || station.Docker == null || station.Docker.DockedShip != gm.PlayerShip) continue;
-
-                Airlock? exit = GameInternals.SpaceStationAccess.GetExitAirlock(station);
-                if (exit == null) return "its exit airlock cannot be found";
-
-                return exit.ExitGravity <= 0f ? "outside is zero-g vacuum, not a surface to walk" : null;
-            }
-            return "the ship is not docked at a station";
+            return gm.IsStaticWorldPosition && gm.IsStaticWorldRotation ? null : "the ship is moving, and the airlock stays locked";
         }
 
         /// <summary>
@@ -515,12 +522,38 @@ namespace YourBuddy
                 }
             }
 
-            // Only the survival suit comes off by itself: an ordered one stays on until you say
-            // "unsuit", wherever the buddy is and however good the air is. docs/eva.md
-            if (reason == SuitReason.Survival && body.IsAboardPlayerShip() && !lifeSupport.AirIsDangerous())
+            // Back in from outside, by any way (a cycle, "inside", pulled aboard, a rescue), the walk out
+            // is over: the suit comes off like a survival suit once the air is safe. docs/eva.md#2-the-suit-on-the-buddy
+            bool outside = body.IsOutside;
+            bool cameIn = wasOutside && !outside;
+            if (cameIn && reason == SuitReason.Ordered)
+            {
+                reason = SuitReason.Survival;
+                YourBuddyPlugin.Log.LogInfo("[suit] " + body.Name + " is back inside - the suit comes off once the air is safe");
+            }
+            wasOutside = outside;
+
+            // Only the survival suit comes off by itself: one you ordered on inside stays on until you
+            // say "unsuit". Not in an airlock chamber, which the next cycle may vent, and not on the look
+            // it came in: its air is read afresh only at the agent's next slow phase 0. docs/eva.md
+            if (reason == SuitReason.Survival && !outside && !cameIn && WhyKeepSuitOn() == null && AirIsSafeHere())
             {
                 TakeOff("the air is safe again");
             }
+        }
+
+        /// <summary>
+        /// Updated by the watcher: coming back in is the edge that ends a walk outside.
+        /// </summary>
+        private bool wasOutside;
+
+        /// <summary>
+        /// The air where the buddy stands, aboard or on a station, is one it can breathe unsuited.
+        /// </summary>
+        private bool AirIsSafeHere()
+        {
+            Environment? air = body.Air;
+            return air != null && air.Data != null && !lifeSupport.Dangerous(air);
         }
 
         private float nextSkinCheckAt;

@@ -359,7 +359,7 @@ namespace YourBuddy
             text.Append("Mode: ").Append(parked ? "parked" : Asleep ? "asleep" : mode.ToString());
             if (DescribeReachTask() is { } task) text.Append(" (").Append(task).Append(')');
             if (suit.Suited) text.Append(" [SUITED]");
-            if (agent.IsOutside) text.Append(" [OUTSIDE]");
+            if (agent.IsOutside) text.Append(agent.Floating ? " [OUTSIDE, ZERO-G]" : " [OUTSIDE]");
             if (IsDead) text.Append(" [DEAD]");
             // "none" is the resting state, not news: the Mind line already says it is deciding.
             if (orderedMode.HasValue) text.Append("\nOrders: ").Append(DescribeOrders());
