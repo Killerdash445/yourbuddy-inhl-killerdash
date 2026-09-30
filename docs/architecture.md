@@ -41,7 +41,6 @@ the buddy through a few `internal` members, never its fields.
 | `SellErrand.cs` | a selling run: nearby trash boxes into one sell station, one press per load | `IErrandBody`, `Items`, NPC.Core's `SellPens`, `GameInternals` | [items](items.md) |
 | `PlayErrand.cs` | a play session: carry near, carry far, or throw and fetch | `IErrandBody`, `Items`, `NavProbe` | [items](items.md) |
 | `Items.cs` | item rules every errand shares: `IsTrash`, `IsPlaything`, `TakeBlocker`, containers and their doors, `ShuffleNearest`, the item-reach constants | `GameInternals` | [items](items.md) |
-| `SellRoomsKeeper.cs` | keeps rooms holding a sell station loaded, through NPC.Core's `NpcRooms` | `NpcRooms`, `NpcDoors`, `SellPens` | [invariants](invariants.md#a-sell-station-room-stays-loaded) |
 | `SkipList.cs` | what a task leaves out for a while, per object: `Skip`, `Has`, `Prune` | - | [items](items.md) |
 | `GameInternals.cs` | **every** reflection accessor YourBuddy needs into game types (NPC.Core has its own) | - | [game-model](game-model.md) |
 | `BuddyConversation.cs` | the buddy's side of NPC.Core's talk window: when it can talk, its title, commands and answers | `BuddyDialogCommands`, `BuddyManager` | [dialog](dialog.md) |
@@ -61,7 +60,7 @@ YourBuddy patches nothing: every game hook it needs is NPC.Core's
 
 ```
 NPC.Core (NpcEvents, NpcAgent) ──▶ BuddyManager, BuddyBehaviour (INpcBrain, INpcHider),
-                                   BuddyConversation, SellRoomsKeeper, the '.buddy' callback
+                                   BuddyConversation, the '.buddy' callback
 BuddyManager ──▶ BuddyBehaviour.* ──▶ NpcAgent and the rest of NPC.Core (NavGraph, NavProbe, NpcRegistry, World)
       │                  │
       └──────────────────┴──▶ GameInternals
@@ -113,7 +112,7 @@ The planning loop behind Follow is the agent's `Pursue`
 
 | Cache | Where | Invalidated by |
 |---|---|---|
-| Rooms holding a sell station | `SellRoomsKeeper.SellRooms` | rebuilt on the next read after `NpcDoors.DetectorsVersion` changes |
+| Every sell station, switched off or not | `SellErrand._allStations` | swept again every `SellStationRescan` (30 s) |
 | Scene arrays for the collectors | `SceneScan.ThisFrame` | every frame |
 
 NPC.Core's own caches (gates, graph edges, probes, doorway sensors, airlocks, pin panels, sell pens,
@@ -192,7 +191,8 @@ Space protection, riding a station and being parked with it are the agent's
 ([NPC.Core's agent.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md),
 [an-npc-rides-its-own-floor](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-npc-rides-its-own-floor)).
 A parked buddy is inactive: no update, HUD, lifecare icon or atmosphere damage. The same happens aboard
-during a spacewalk, and while you are on a docked station (the game switches the ship off then) ([an-unloaded-ship-parks-the-npc](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-unloaded-ship-parks-the-npc)).
+during a spacewalk away from a station. Docked, a buddy aboard stays awake while you are on the station,
+though the game switches the ship's rooms off then ([an-unloaded-ship-parks-the-npc](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-unloaded-ship-parks-the-npc)).
 The buddy will not follow you onto a spacewalk.
 
 ---

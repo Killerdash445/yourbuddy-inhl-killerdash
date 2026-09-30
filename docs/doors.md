@@ -32,4 +32,3 @@ Beyond the agent's door rule
 | Room | Loaded when |
 |---|---|
 | an errand's box or sell station room | the errand needs it (`IErrandBody.LoadRoomOf`) |
-| a room holding a sell station | always, while `SellTrash` is on: loaded in the brain's slow phase 0, and kept on through `SellRoomsKeeper` ([a-sell-station-room-stays-loaded](invariants.md#a-sell-station-room-stays-loaded)) |

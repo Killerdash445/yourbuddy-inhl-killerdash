@@ -70,7 +70,8 @@ namespace YourBuddy
             }
             foreach (EquipmentHolder holder in UnityEngine.Object.FindObjectsOfType<EquipmentHolder>(true))
             {
-                if (holder != null && holder.Item is Suit displayed && displayed.Isolated) SuitBuffer.Add(displayed);
+                // Not a locker on a station you are not docked at. docs/eva.md
+                if (holder != null && holder.Item is Suit { Isolated: true } displayed && Items.Loadable(holder)) SuitBuffer.Add(displayed);
             }
             return SuitBuffer.Count;
         }

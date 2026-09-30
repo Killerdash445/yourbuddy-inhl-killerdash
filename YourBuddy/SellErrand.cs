@@ -71,9 +71,15 @@ namespace YourBuddy
         /// </summary>
         private const float SellReopenedAfter = 1.5f;
         private const float SellConfirmSeconds = 10f;
+        /// <summary>
+        /// Sell stations are scene objects: the list of them, switched off or not, is swept this seldom.
+        /// </summary>
+        private const float SellStationRescan = 30f;
 
         private static readonly List<SellCandidate> SellCandidates = [];
         private static readonly List<SellStationParts> SellStations = [];
+        private static SellStation[] _allStations = [];
+        private static float _allStationsAt = -1f;
 
         public override bool Enabled => YourBuddyPlugin.ConfigSellTrash.Value;
         public override float Interval => SellCheckInterval;
@@ -107,7 +113,15 @@ namespace YourBuddy
 
             public bool Usable => Station != null && Station.isActiveAndEnabled && Zone != null && Button != null && Gate != null;
 
-            public Vector3 LoadPoint => Zone.bounds.center;
+            /// <summary>
+            /// Off only with its room's content, which StationBlocker loads again - not an undocked station.
+            /// </summary>
+            public bool Loadable => Station != null && Station.enabled && Zone != null && Items.Loadable(Station);
+
+            /// <summary>
+            /// From the zone's transform: a switched-off collider has empty bounds.
+            /// </summary>
+            public Vector3 LoadPoint => Zone.transform.TransformPoint(Zone.center);
 
             public Vector3 ButtonPoint => ColliderBounds(Button.gameObject, out Bounds bounds) ? bounds.center : Button.transform.position;
 
@@ -419,6 +433,13 @@ namespace YourBuddy
                     failure = "the sell station is already full";
                     continue;
                 }
+                // Its walls, fences and button take part in the checks below.
+                string? blocked = StationBlocker(parts);
+                if (blocked != null)
+                {
+                    failure = blocked;
+                    continue;
+                }
                 // Every leg's end is checked before setting off; only the first is walked now.
                 if (!Body.HasReachNode(new SellTask(this, run, SellLeg.Button)) ||
                     (run.Current != null && !Body.HasReachNode(new SellTask(this, run, SellLeg.Load))))
@@ -535,10 +556,11 @@ namespace YourBuddy
             Vector3 here = Here;
             float floorY = Body.FloorUnderBuddy().y;
 
-            foreach (SellStation station in SceneScan.ThisFrame<SellStation>())
+            // A station whose room is off counts: its room is loaded when a run uses it. docs/items.md §4
+            foreach (SellStation station in AllStations())
             {
-                SellStationParts? parts = SellStationParts.Read(station);
-                if (parts is { Usable: true }) SellStations.Add(parts);
+                SellStationParts? parts = station != null ? SellStationParts.Read(station) : null;
+                if (parts != null && (parts.Usable || parts.Loadable)) SellStations.Add(parts);
             }
             CollectContainerContents(here, SellSearchRadius + SnackContainerMargin);
             foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>())
@@ -571,6 +593,15 @@ namespace YourBuddy
 
             SellCandidates.Sort((a, b) => FlatDistanceSq(a.Box.transform.position, here).CompareTo(FlatDistanceSq(b.Box.transform.position, here)));
             ShuffleNearest(SellCandidates);
+        }
+
+        private static SellStation[] AllStations()
+        {
+            if ((_allStationsAt > 0f && Time.time < _allStationsAt) || !SceneScan.MayRescan(_allStationsAt <= 0f)) return _allStations;
+
+            _allStationsAt = Time.time + SellStationRescan;
+            _allStations = UnityEngine.Object.FindObjectsOfType<SellStation>(true);
+            return _allStations;
         }
 
         private static SellStationParts? SellStationOf(ItemDetector detector)
@@ -1152,8 +1183,8 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Null when the station can be used. The game switches its room off once nobody is in it; the run
-        /// holds the station, so that room is loaded again. Undocked, the room cannot load: gone.
+        /// Null when the station can be used. The game switches its room off once nobody is in it; a run
+        /// loads it before it plans and whenever it finds it off. Undocked, the room cannot load: gone.
         /// docs/invariants.md#a-selling-run-keeps-its-boxes
         /// </summary>
         private string? StationBlocker(SellStationParts parts)

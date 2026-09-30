@@ -151,13 +151,6 @@ namespace YourBuddy
         {
             switch (phase)
             {
-                case 0:
-                    // A save can restore one switched off.
-                    if (YourBuddyPlugin.ConfigSellTrash.Value)
-                    {
-                        foreach (Room room in SellRoomsKeeper.Rooms) agent.LoadRoom(room, "it holds a sell station");
-                    }
-                    break;
                 case 2:
                     UpdateFear();
                     break;

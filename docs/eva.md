@@ -61,7 +61,8 @@ next look. A sidecar without a reason restores survival.
 [the-buddy-never-takes-your-last-suit](invariants.md#the-buddy-never-takes-your-last-suit):
 a candidate is an enabled, ungrabbed, **isolated** `Suit` (a Pilot_Suit would not protect in
 vacuum), lying free or displayed in a locker - a displayed suit is released through its
-`EquipmentHolder.TryDropItem`, the game's own way. While you wear a suit, one free suit is a spare;
+`EquipmentHolder.TryDropItem`, the game's own way. Never a locker on a station you are not docked
+at (`Items.Loadable`). While you wear a suit, one free suit is a spare;
 while you do not, two must be free - **unless you ordered the run**, where your order is the
 consent. The rule is checked when a suit is chosen and again at the suit itself.
 
@@ -139,14 +140,17 @@ ship's inner airlock door - not in the chamber, whose next cycle would carry it 
 at the airlock's own transform, which no node can see (the walk home was refused: `no way back to the
 ship`). It looks only while the buddy is aboard. A suit counts as left on the station by the room
 the game filed it under, else the floor under it - station rooms whose content is off while you are
-aboard included; the buddy loads the room when it gets there. It stops once two isolated suits are
+aboard included; the buddy loads the room when it gets there. A suit on a station you are not docked
+at is never a target: all four station interiors lie in the same place behind the ship, so it would
+lie inside the docked one, and its room cannot load (`Items.Loadable`). A suit it gave up on is left
+out for `FetchSkipSeconds`, so the next try takes another. It stops once two isolated suits are
 already yours or aboard (`EnoughSuitsAtHome`): the one you wear or carry (hands, belt, backpack),
-any lying aboard or shown in a locker aboard, and any a buddy aboard wears. While you are on the station, a buddy
-aboard is parked with the ship and does not fetch. Skipped while you hold the suit or stand within
+any lying aboard or shown in a locker aboard, and any a buddy aboard wears. It fetches while you
+are on the station too. Skipped while you hold the suit or stand within
 2 m of it. A suit outside stays there - the buddy does not cross an airlock on its own.
 
 Once the fetch is due, the HUD's `Fetch suit:` line says what the last look saw instead of a timer
-at 0 s (`due - 2 isolated suit(s): 0 to fetch, 1 already aboard, 1 held or taken`); at level 2 the
+at 0 s (`due - 4 isolated suit(s): 1 to fetch, 1 already aboard, 2 on a station you are not docked at`); at level 2 the
 same line is logged as `[suit] Buddy suit fetch: ...` whenever it changes.
 
 ## 7. Known limitations

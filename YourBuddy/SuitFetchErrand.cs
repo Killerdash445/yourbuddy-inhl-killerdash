@@ -37,8 +37,9 @@ namespace YourBuddy
         private int CollectStranded(out float nearest)
         {
             Stranded.Clear();
+            Skips.Prune();
             nearest = float.MaxValue;
-            int seen = 0, aboard = 0, outside = 0, taken = 0, nearYou = 0, noFloor = 0;
+            int seen = 0, aboard = 0, outside = 0, taken = 0, nearYou = 0, noFloor = 0, elsewhere = 0, skipped = 0;
             if (!Body.IsAboardPlayerShip())
             {
                 NoteScan("I only fetch from aboard your ship");
@@ -68,6 +69,8 @@ namespace YourBuddy
                 seen++;
                 if (suit.IsGrabbed || suit.restrictGrab) { taken++; continue; }
                 if (space != null && suit.transform.IsChildOf(space.ContentParent)) { outside++; continue; }
+                // Another station's rooms cannot load, and its interior lies where the docked one is.
+                if (!Items.Loadable(suit)) { elsewhere++; continue; }
 
                 // The room the game filed it under says whose it is - a floor probe can find no
                 // floor in a switched-off room; the probe answers when the filing does not.
@@ -80,6 +83,7 @@ namespace YourBuddy
 
                 if (pilot != null && Items.FlatDistanceSq(suit.transform.position, playerPos) <
                     BuddySuit.PlayerNearSuitDist * BuddySuit.PlayerNearSuitDist) { nearYou++; continue; }
+                if (Skips.Has(suit.transform)) { skipped++; continue; }
 
                 Stranded.Add(suit);
                 nearest = Mathf.Min(nearest, Mathf.Sqrt(Items.FlatDistanceSq(suit.transform.position, here)));
@@ -88,7 +92,8 @@ namespace YourBuddy
             NoteScan(seen == 0 ? "no isolated suit lying anywhere"
                 : $"{seen} isolated suit(s): {Stranded.Count} to fetch" + Part(aboard, "already aboard") +
                   Part(outside, "outside") + Part(taken, "held or taken") + Part(nearYou, "near you") +
-                  Part(noFloor, "on no floor I can tell"));
+                  Part(noFloor, "on no floor I can tell") + Part(elsewhere, "on a station you are not docked at") +
+                  Part(skipped, "left out for now after a failed try"));
             return Stranded.Count;
         }
 

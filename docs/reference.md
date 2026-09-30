@@ -152,6 +152,7 @@ NPC.Core's ([its reference](https://github.com/bytenull1/npc-core-inhl/blob/main
 | `SellSkipSeconds` | 600 s | a box or station with no clear way to it |
 | `SellRetrySeconds` | 90 s | one that failed this time only |
 | `SellSearchRadius` / `SellStationRadius` | 30 m / 80 m | boxes from the buddy when a run is chosen; a station from the box |
+| `SellStationRescan` | 30 s | how often every sell station, switched off or not, is swept again |
 | `SellMaxBoxes` / `SellZoneMaxItems` | 4 / 4 | boxes per press; most items the zone may hold |
 | `SellMaxBoxesTransit` | 2 | boxes per press at the Oxygen, Solar and Fuel stations |
 | `SellSlotMargin` / `SellSlotGap` / `SellDropHeight` | 0.02 / 0.02 / 0.03 m | box slots in the zone: from its walls, from each other, above the floor or box below |

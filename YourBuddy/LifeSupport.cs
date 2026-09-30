@@ -140,6 +140,9 @@ namespace YourBuddy
 
             // A null blocker means both were found.
             TerminalTask task = new(this, kind, controller!, powerSwitch!);
+            // Docked with you on the station, the ship's rooms are off.
+            // npc-core:docs/invariants.md#an-unloaded-ship-parks-the-npc
+            body.LoadRoomOf(task.Controller.transform);
             if (body.InReach(task))
             {
                 report = "switched on the " + TerminalName(kind) + " right here";

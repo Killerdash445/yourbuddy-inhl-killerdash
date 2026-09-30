@@ -174,30 +174,18 @@ under the gate trips its `AntiCrasher` and the sale silently fails.
 **Enforced in.** `SellErrand.PressButton` (with `IErrandBody.AnotherBuddyWhere`) and `TryStart`,
 `SellTask.StandAllowed`.
 
-### a-sell-station-room-stays-loaded
-
-**Rule.** While a buddy exists and `SellTrash` is on, a room whose content holds a `SellStation` is
-never switched off, by any NPC or by the game: YourBuddy keeps it through NPC.Core
-([a-kept-room-stays-loaded](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#a-kept-room-stays-loaded)). The buddy also switches one back
-on if it finds it off (a save restores it that way).
-
-**Why.** `FindObjectsOfType` skips a switched-off station, so the sell run found "no sell station
-within 80m" of four boxes. The game switches YardHallway off at its doorways, on docking
-(`Docker.Dock`) and on leaving by the Shipyard airlock (`ShipyardStation.DisableHallway`).
-
-**Enforced in.** `SellRoomsKeeper` (`ReasonToKeep`, `Rooms`), `SellPens.HoldsSellStation`, the brain's slow
-phase 0 (`INpcBrain.SlowPhase`), and the agent's `ReasonToKeepLoaded`.
-
 ### a-selling-run-keeps-its-boxes
 
 **Rule.** The search radius and the vessel filter choose a run's boxes; they never end it. A queued
 box leaves the run only when it is gone, taken, loaded, or has no way to it, and each exit is logged.
-A box in an unloaded room is still queued, and the run's station is reloaded if its room goes off.
+A box in an unloaded room is still queued. A station whose room is off is still a candidate: its room
+is loaded before a run plans at it, and again whenever the run finds it off.
 
 **Why.** After a load the buddy stands at the station. A fresh search from there cannot see boxes
 left on the ship: they are on another vessel, and their room may be unloaded, so `FindObjectsOfType`
 skips them. The run then ended after one box of four. And the Shipyard's station unloads with its
-hallway as soon as the buddy leaves for the next box.
+hallway as soon as the buddy leaves for the next box; `FindObjectsOfType` without `true` skipped it
+too ("no sell station within 80m" of four boxes).
 
 **Enforced in.** `SellErrand.ConfirmSale`, `TryNextBox`, `FetchBlocker`, `StationBlocker`; `Items.InUnloadedRoom`.
 

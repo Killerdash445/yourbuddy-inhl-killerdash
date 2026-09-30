@@ -112,7 +112,8 @@ a `SellTask`.
    buddy's vessel, not in a container or other machine. A box **already in a sell station** counts
    too - it just needs the button. "Already in" (`SellStationParts.HasBox`) means listed by the
    `ItemDetector` **or** inside the zone bounds: the detector's list is cleared by every sale, so a
-   box can sit there unlisted. A loose box needs a station within `SellStationRadius`.
+   box can sit there unlisted. A loose box needs a station within `SellStationRadius` - one whose
+   room is switched off counts (see Unloaded rooms).
 2. **The run** (`BuildSellRun`): the chosen box plus every other candidate for the same station.
    Boxes already inside go straight into `Loaded`. One load is capped by `SellMaxBoxes` (4;
    `SellMaxBoxesTransit` (2) at the Oxygen, Solar and Fuel stations, whose sales area is smaller) and
@@ -163,13 +164,20 @@ A gate that reopens logs the zone size and the offsets of the worst box and the 
 **Unloaded rooms.** The game switches a room's content off when the player walks on
 (`EntryDetector`, `optimize`), with everything in it. The Shipyard's sell station is content of
 `YardHallway`, so it goes off once the buddy carries a box away and nobody is left in the hallway.
+Nothing keeps a sell station's room loaded.
+
+- Stations are found switched off too (`FindObjectsOfType<SellStation>(true)`, own `activeSelf` on,
+  its room's object active; swept every `SellStationRescan`). The load point comes from the zone's
+  transform, so the nearest station is chosen without loading anything.
+- The chosen station's room is loaded before the run checks its reach nodes (`StationBlocker`). It goes
+  off again by the door rule once the buddy has left.
 
 - A box in such a room (`Items.InUnloadedRoom`: its own `activeSelf` still on) stays in the run. In
   reach, the buddy switches its room back on (`IErrandBody.LoadRoomOf`). A sold or trashed item clears
   its own flag and counts as gone.
 - The run's station is loaded again whenever a leg finds it off (`StationBlocker`), and before a load
-  or button leg is measured: a switched-off collider has no bounds. Undocked, its room cannot load, and
-  the run ends.
+  or button leg is measured: a switched-off collider has no bounds. Undocked, its room cannot load:
+  the station is not a candidate, and a run already on it ends.
 
 **One box's failure is not the run's.** `AbandonBox` (a blocked leg, a failed `PickUp`, a box
 that never seated, a reach that gave up) drops that box, then fetches the next or presses for what is
@@ -187,7 +195,7 @@ genuinely walkable points outside the zone.
 **Fences.** No task stands inside a sell station's fences, except that station's own sell legs
 ([a-fenced-sell-station-is-not-somewhere-to-stand](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#a-fenced-sell-station-is-not-somewhere-to-stand)).
 The pen is the `Fence*` colliders plus the item zone plus `SellStationClearance`, re-measured every
-`SellPenRefresh` (fences load with their room). Follow and Wander don't use reach tasks, so a buddy
+`SellPenRefresh`, and as soon as a station's room switches on or off (fences load with their room). Follow and Wander don't use reach tasks, so a buddy
 inside a pen that can't get closer to a target outside it for 3 s is teleported clear by
 the agent's `EmergencyUnstick` (`[ai] Penned in a sell station's fences … - climbing out`), never into another
 pen. The fence colliders are never touched.

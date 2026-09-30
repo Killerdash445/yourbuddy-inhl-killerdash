@@ -104,6 +104,24 @@ namespace YourBuddy
             item != null && item.gameObject.activeSelf && !item.gameObject.activeInHierarchy;
 
         /// <summary>
+        /// Active, or off only with its room's content, which LoadRoomOf switches back on. Not on a station
+        /// you are not docked at: its interior lies in the docked one's place, and its rooms cannot load.
+        /// </summary>
+        public static bool Loadable(Component thing)
+        {
+            if (thing.gameObject.activeInHierarchy) return true;
+
+            Room? room = thing.GetComponentInParent<Room>(true);
+            if (room == null || !room.gameObject.activeInHierarchy || room.ContentEnabled) return false;
+
+            for (Transform? t = thing.transform; t != null && t != room.ContentParent; t = t.parent)
+            {
+                if (!t.gameObject.activeSelf) return false;
+            }
+            return thing.transform.IsChildOf(room.ContentParent);
+        }
+
+        /// <summary>
         /// A wrapper, can, empty seed pack or broken loot box the game turned to trash, or a trash item:
         /// never something still useful. CanTrash alone is not trash - first-aid kits have it. docs/items.md §1
         /// </summary>

@@ -163,7 +163,6 @@ namespace YourBuddy
             NpcEvents.GameStarting += BuddyCryoSpawn.OnGameStarting;
             NpcEvents.SaveLoaded += BuddyManager.ArmPendingSpawn;
             NpcSaves.RegisterSidecar(BuddyBehaviour.ModName, BuddyManager.SidecarExtension, BuddyManager.SidecarContents);
-            SellRoomsKeeper.Register();
 
             BuddyConsole.Register();
 

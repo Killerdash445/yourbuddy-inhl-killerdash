@@ -34,6 +34,7 @@ From the decider, as the `Terminal` urge ([behaviour.md §3](behaviour.md#3-the-
    above 32 °C as felt in a PilotSuit (room + 1 °C). Oxygen is checked first;
 3. the unit must pass `TerminalBlocker` - present, room built, not broken, powered, not running,
    switch found and **off** ([a-terminal-is-only-switched-on](invariants.md#a-terminal-is-only-switched-on));
+   the unit's room is then loaded - docked, the ship's rooms are off while you are on the station;
 4. the agent's `FindReachNode` picks the nearest active node within 8 m of the switch that has a clear walk
    (`WalkLos`) to a stand point 0.8 / 1.1 / 1.4 m in front of it, from which the switch is visible
    (`CanSee`);
