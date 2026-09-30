@@ -30,6 +30,7 @@ every NPC mod ([NPC.Core logging](https://github.com/bytenull1/npc-core-inhl/blo
 | `[ai]` | NPC.Core's `NpcAgent`; `BuddyBehaviour.*` | the agent: replans, doors, rooms loaded, stuck recovery, step-offs, blockers, riding and parking, death; the brain: routes finished or given up |
 | `[fear]` | `BuddyBehaviour.Fear.cs` | fear state, stress trace, holding back, retreats |
 | `[mind]` | `Autonomy.cs`, `Mind.cs` | decisions, orders revoked or expired, why the decider stood down |
+| `[suit]` | `BuddySuit.cs`, `EvaRun.cs`, `SuitFetchErrand.cs` | suiting up and down, the airlock trips, waiting for your cycle, a lost EVA skin, the suit fetch |
 | `[nav]` | NPC.Core `NavGraph` | seeding, route chains, path failures |
 | `[probe]` | NPC.Core `NavProbe`, `SceneScan` | probe mask, gate inventory, gate-frame audits, full buffers, scene rescans |
 | `[mgr]` | `BuddyManager`, `BuddyCryoSpawn` | spawns, restoring buddies from a save, the new-game wake-up |

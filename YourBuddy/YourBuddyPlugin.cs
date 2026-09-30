@@ -45,6 +45,7 @@ namespace YourBuddy
         public static ConfigEntry<bool> ConfigFear;
         public static ConfigEntry<bool> ConfigAutonomy;
         public static ConfigEntry<bool> ConfigTerminals;
+        public static ConfigEntry<bool> ConfigEvaSuit;
         public static ConfigEntry<bool> ConfigSnacks;
         public static ConfigEntry<float> ConfigSnackIntervalMinutes;
         public static ConfigEntry<bool> ConfigTidying;
@@ -99,8 +100,14 @@ namespace YourBuddy
                 "Tell it 'decide for yourself' (or 'buddy_auto on') to hand control back after an order.");
             ConfigTerminals = Config.Bind("General", "Terminals", true,
                 "When the air aboard turns dangerous (low oxygen, too cold or too hot) and the oxygen generator or " +
-                "climate control is switched off, the buddy walks over and switches it on. Only while it decides for " +
-                "itself (Autonomy, no order in force); it never switches anything off and never clears a fault.");
+                "climate control is switched off, the buddy walks over and switches it on - even under an order, since " +
+                "deadly air outranks one (Autonomy must be on). It never switches anything off and never clears a fault.");
+            ConfigEvaSuit = Config.Bind("General", "EvaSuit", true,
+                "The buddy can put on an EVA suit: it takes a spare Space_Suit item (never your only one), wears it drawn " +
+                "with the mod's own EVA skin, and can then be ordered outside - it walks into the docked station's exit " +
+                "airlock and waits for you to cycle it - and back inside the same way. It also suits up by itself when " +
+                "the air aboard turns deadly and no terminal can fix it, and brings a suit you forgot on the docked " +
+                "station back to the ship. 'buddy_outside', 'buddy_inside' and 'buddy_suit' trigger it now. docs/eva.md");
             ConfigSnacks = Config.Bind("General", "Snacks", true,
                 "Now and then the buddy opens a nearby fridge, cabinet, chest or locker and eats or drinks one thing " +
                 "from it, then closes it again. It does not need to eat. Only while it decides for itself, never while " +
@@ -346,7 +353,7 @@ namespace YourBuddy
                 FootstepEvents = NpcPlayer.FootstepEvents()
             };
             NpcAgent agent = NpcAgent.Attach(npcGo, new NpcIdentity(BuddyBehaviour.ModName, buddyName, buddyNumber), body,
-                BuddyAgentSettings.Instance, buddy);
+                new BuddyAgentSettings(buddy), buddy);
             buddy.Init(agent);
             BuddyManager.Register(buddy);
             NpcInteraction.Register(new BuddyConversation(buddy));

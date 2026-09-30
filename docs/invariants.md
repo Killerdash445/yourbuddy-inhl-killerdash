@@ -38,6 +38,24 @@ buddy's own choices or overrule the player's.
 
 **Enforced in.** `BuddyBehaviour.Autonomy.cs`; `SetMode` and `StartRoute` are private.
 
+### survival-outranks-an-order
+
+**Rule.** When the air aboard turns deadly (`LifeSupport.AirIsDangerous`), an order in force -
+Follow, Wander or Stay - does not keep the decider out of its two survival urges: switch a unit on,
+or when none can be tried, put a spare suit on. Once the air is killing the buddy
+(`NpcAgent.LifeInDanger`), the suit comes first and outranks everything but fear, a catch and a
+closet: the order, an errand, a walk to a terminal - checked every second. Everything else still
+waits for the order. The task ends in the ordered mode again (`ModeAfterTask`). Autonomy off still
+means it never acts on its own.
+
+**Why.** Under a Follow order the buddy followed the player, suited, to its own death beside a free
+suit - the decider was standing down for the order. Then, with no order, it chose the terminal at a
+death counter of 5/5 and died on the way: a switched-on generator refills the air far slower than
+the six ticks the counter leaves.
+
+**Enforced in.** `BuddyBehaviour.TrySaveOwnLife`, `UpdateAutonomy` / `TrySurvival`,
+`StandDownReason(ignoreOrder)`; the `Suit` urge's weight in `ScoreUrges`.
+
 ### a-terminal-is-only-switched-on
 
 **Rule.** The buddy flips a life-support power `Switch` only when it is **off**, on a unit that is
@@ -118,6 +136,26 @@ goto) is not an errand and still stands.
 pre-empts today (`BusyForCommand(whileAlert: true, preemptErrand: true)`).
 
 **Enforced in.** `BusyForCommand`, `StartHideNow`, `BeginHide`.
+
+---
+
+## The suit
+
+### the-buddy-never-takes-your-last-suit
+
+**Rule.** A suit the buddy takes is an enabled, ungrabbed, isolated `Suit` item - lying free in the
+world, or displayed in a locker (`EquipmentHolder.Item`, released through its own `TryDropItem`) -
+and it is taken only while you wear a suit yourself (then anything free is a spare), while two or
+more are free, or while you explicitly ordered the run (`buddy_outside`, `buddy_suit on`): you are
+right there and consented. The rule is checked when the suit is chosen and again at the suit, right
+before it is worn.
+
+**Why.** The buddy wearing your only suit leaves you stranded at the airlock: you cannot follow it
+out, and the game's own `Equipment.Equip` refuses to double-equip. A suit left on the station is
+always fetchable - carrying it home never strands you.
+
+**Enforced in.** `BuddySuit.TakeableSuit`, re-checked in `EvaRun.SuitLeg.Approach`. The fetch skips
+a suit within `PlayerNearSuitDist` (2 m) of you.
 
 ---
 

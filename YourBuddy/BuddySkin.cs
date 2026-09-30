@@ -59,17 +59,43 @@ namespace YourBuddy
                 if (failure != null) return failure;
             }
 
-            int changed = 0;
-            foreach (SkinnedMeshRenderer renderer in buddy.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-            {
-                foreach (Material material in renderer.materials)
-                {
-                    if (restore ? Restore(material) : Set(material, skin!)) changed++; // skin is set whenever not restoring
-                }
-            }
+            int changed = restore ? RestoreAll(buddy) : ApplyTexture(buddy, skin!); // skin is set whenever not restoring
             if (changed == 0) return buddy.Name + " has no material that takes a skin";
 
             return buddy.Name + (restore ? " skin restored" : " skin: " + name);
+        }
+
+        /// <summary>
+        /// Puts a ready texture on every skinned material of the body: how the buddy wears its
+        /// EVA suit. docs/eva.md. The count of materials changed.
+        /// </summary>
+        internal static int ApplyTexture(Component body, Texture2D skin)
+        {
+            int changed = 0;
+            foreach (SkinnedMeshRenderer renderer in body.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                foreach (Material material in renderer.materials)
+                {
+                    if (Set(material, skin)) changed++;
+                }
+            }
+            return changed;
+        }
+
+        /// <summary>
+        /// Puts every skinned material's original look back. The count of materials restored.
+        /// </summary>
+        internal static int RestoreAll(Component body)
+        {
+            int changed = 0;
+            foreach (SkinnedMeshRenderer renderer in body.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                foreach (Material material in renderer.materials)
+                {
+                    if (Restore(material)) changed++;
+                }
+            }
+            return changed;
         }
 
         private static string? Load(string name, out Texture2D? skin)
@@ -92,6 +118,28 @@ namespace YourBuddy
             Loaded[name] = texture;
             skin = texture;
             return null;
+        }
+
+        /// <summary>
+        /// Whether every skinned material that takes a skin now shows `skin`. False when something
+        /// rewrote the body's materials, so the wearer can put the skin back.
+        /// </summary>
+        internal static bool IsApplied(Component body, Texture2D skin)
+        {
+            foreach (SkinnedMeshRenderer renderer in body.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                foreach (Material material in renderer.materials)
+                {
+                    bool hasBase = material.HasProperty(BaseMap);
+                    bool hasMain = material.HasProperty(MainTex);
+                    if (!hasBase && !hasMain) continue; // never took a skin at all
+
+                    if (hasBase && material.GetTexture(BaseMap) == skin) continue;
+                    if (hasMain && material.GetTexture(MainTex) == skin) continue;
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static bool Set(Material material, Texture2D skin)

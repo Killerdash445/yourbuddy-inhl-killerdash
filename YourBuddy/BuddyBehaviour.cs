@@ -164,6 +164,7 @@ namespace YourBuddy
                 case 3:
                     UpdateAutonomy(player);
                     lifeSupport.Update();
+                    if (!IsDead) suit.Update();
                     break;
             }
         }
@@ -233,8 +234,9 @@ namespace YourBuddy
                     case BuddyMode.Wander:
                         return new NpcActivity(NpcRecovery.DropPlanAndPause, true, free, true);
                     case BuddyMode.Route:
-                        // A mid-route buddy clears a doorway on its own.
-                        return new NpcActivity(NpcRecovery.SkipWaypoint, true, false, false);
+                        // A mid-route buddy clears a doorway on its own; a leg whose work is to
+                        // wait is not a stall.
+                        return new NpcActivity(NpcRecovery.SkipWaypoint, reachTask is not { Waits: true }, false, false);
                     case BuddyMode.Flee:
                         // The run to the player is Follow's own planning, so it gets Follow's recovery.
                         NpcRecovery recovery = fleePhase switch
@@ -287,7 +289,11 @@ namespace YourBuddy
 
         void INpcBrain.OnInterrupted(string why) => ForceLeaveHidingSpot(why);
 
-        void INpcBrain.OnDied() => mode = BuddyMode.Dead;
+        void INpcBrain.OnDied()
+        {
+            suit.OnDied();
+            mode = BuddyMode.Dead;
+        }
 
         /// <summary>
         /// A goto's goal is a world point of the old layout, so it ends rather than resumes.
@@ -359,6 +365,8 @@ namespace YourBuddy
             StringBuilder text = HudText.Clear();
             text.Append("Mode: ").Append(parked ? "parked" : Asleep ? "asleep" : mode.ToString());
             if (DescribeReachTask() is { } task) text.Append(" (").Append(task).Append(')');
+            if (suit.Suited) text.Append(" [SUITED]");
+            if (agent.IsOutside) text.Append(" [OUTSIDE]");
             if (IsDead) text.Append(" [DEAD]");
             // "none" is the resting state, not news: the Mind line already says it is deciding.
             if (orderedMode.HasValue) text.Append("\nOrders: ").Append(DescribeOrders());
@@ -377,7 +385,7 @@ namespace YourBuddy
                 if (DescribeHudMind() is { } mind) text.Append('\n').Append(mind);
                 text.Append("\nAir: ").Append(lifeSupport.Describe()).Append("\nSnack: ").Append(snacks.Describe())
                     .Append("\nTidy: ").Append(tidying.Describe()).Append("\nSell: ").Append(selling.Describe())
-                    .Append("\nPlay: ").Append(play.Describe());
+                    .Append("\nPlay: ").Append(play.Describe()).Append("\nFetch suit: ").Append(suitFetch.Describe());
             }
             if (agent.MoveTarget is { } target)
             {

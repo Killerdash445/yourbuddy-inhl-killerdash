@@ -106,6 +106,12 @@ namespace YourBuddy
             commands["buddy_sell"] = args => ForTargets(args, (b, _) => BuddyCommands.Sell(b));
             commands["buddy_play"] = args => ForTargets(args, (b, _) => BuddyCommands.Play(b));
             commands["buddy_hide"] = args => ForTargets(args, (b, _) => BuddyCommands.Hide(b));
+            commands["buddy_outside"] = args => ForTargets(args, (b, _) => BuddyCommands.GoOutside(b));
+            commands["buddy_inside"] = args => ForTargets(args, (b, _) => BuddyCommands.GoInside(b));
+            commands["buddy_suit"] = args => ForTargets(args, (b, rest) =>
+                rest.Length < 1
+                    ? "Usage: buddy_suit <on|off> [@who] - put a spare suit on, or take the worn one off"
+                    : BuddyCommands.Suit(b, rest[0]));
             commands["buddy_mind"] = args => ForTargets(args, (b, _) => BuddyCommands.Mind(b));
             commands["buddy_bout"] = args => ForTargets(args, (b, _) => BuddyCommands.EndBout(b));
             commands["buddy_terminal"] = args => ForTargets(args, (b, rest) =>

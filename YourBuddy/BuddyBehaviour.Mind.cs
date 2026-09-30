@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using NPC.Core;
 using NPC.Core.Navigation;
+using NPC.Core.World;
 using Space;
 using UnityEngine;
 
@@ -14,9 +15,9 @@ namespace YourBuddy
     public sealed partial class BuddyBehaviour
     {
         // The utility decider: what the buddy might want, and how much. docs/behaviour.md §3
-        private enum Urge { None, Terminal, Snack, Sell, Tidy, Play, Wander, Follow }
+        private enum Urge { None, Terminal, Suit, SuitFetch, Snack, Sell, Tidy, Play, Wander, Follow }
 
-        private const int UrgeCount = 8;
+        private const int UrgeCount = 10;
 
         /// <summary>
         /// What a collector last found for one urge: how many candidates, and how far the nearest was.
@@ -90,7 +91,7 @@ namespace YourBuddy
         /// <summary>
         /// The fetch-and-carry urges, in the order the scan budget rotates through them.
         /// </summary>
-        private static readonly Urge[] Errands = [Urge.Sell, Urge.Tidy, Urge.Snack, Urge.Play];
+        private static readonly Urge[] Errands = [Urge.Sell, Urge.Tidy, Urge.Snack, Urge.Play, Urge.SuitFetch];
 
         /// <summary>
         /// Weighs everything the buddy might want and acts on one of them. True when something started.
@@ -158,6 +159,8 @@ namespace YourBuddy
             {
                 case Urge.Terminal:
                     return lifeSupport.TryStart();
+                case Urge.Suit:
+                    return suit.TryStartSurvivalSuitUp();
                 case Urge.Snack:
                     return TryErrand(snacks, "Fancied a snack, but ");
                 case Urge.Sell:
@@ -166,6 +169,8 @@ namespace YourBuddy
                     return TryErrand(tidying, "Thought of tidying up, but ");
                 case Urge.Play:
                     return TryErrand(play, "Thought of playing with something, but ");
+                case Urge.SuitFetch:
+                    return TryErrand(suitFetch, "Looked for a forgotten suit, but ");
                 case Urge.Wander:
                     string? owner = NavGraph.NearestActiveNodeOwner(transform.position, DecideNodeOwnerRadius);
                     if (owner == null) return false;
@@ -211,8 +216,26 @@ namespace YourBuddy
             TrackBout();
             int scans = 0;
 
+            // Outside, every job is out of reach: only following and wandering are weighed. docs/eva.md
+            if (agent.IsOutside)
+            {
+                ScoreOutside(player);
+                return;
+            }
+
             // Bad air is the one thing never left to a die roll: it scores 1 and wins outright.
-            if (lifeSupport.AirIsDangerous()) Add(Urge.Terminal, 1f, 1f, 1f, 1f, "the air aboard is dangerous");
+            if (lifeSupport.AirIsDangerous())
+            {
+                Add(Urge.Terminal, 1f, 1f, 1f, 1f, "the air aboard is dangerous");
+                // A little under the terminal, so fixing the air wins while there is time; once the
+                // air is killing the buddy, over it - the air comes back too slowly. docs/eva.md
+                if (!suit.Suited && suit.SpareSuitAvailable())
+                {
+                    Add(Urge.Suit, agent.LifeInDanger ? 1.2f : 0.9f, 1f, 1f, 1f, agent.LifeInDanger
+                        ? "the air is killing me and a spare suit is free"
+                        : "the air aboard is dangerous and a spare suit is free");
+                }
+            }
 
             // Rotated, so the scan budget cannot keep the same urge waiting for a fresh count.
             urgeScanCursor = (urgeScanCursor + 1) % Errands.Length;
@@ -224,6 +247,7 @@ namespace YourBuddy
                     Urge.Sell => 0.75f,
                     Urge.Tidy => 0.65f,
                     Urge.Snack => 0.55f,
+                    Urge.SuitFetch => 0.5f,
                     _ => 0.35f,
                 };
                 ScoreErrand(urge, ErrandOf(urge), weight, ref scans);
@@ -319,6 +343,21 @@ namespace YourBuddy
                               : $"no node within {DecideNodeOwnerRadius:0}m");
         }
 
+        /// <summary>
+        /// Outside: Follow and Wander as usual, and only Follow once you stand in an airlock's
+        /// chamber - you are heading in, and the cycle takes whoever is in there with you.
+        /// </summary>
+        private void ScoreOutside(Player player)
+        {
+            Transform? playerTransform = player.Controller != null ? player.Controller.CachedTransform : null;
+            if (playerTransform != null && NpcDoors.ChamberAt(playerTransform.position) != null)
+            {
+                if (mode != BuddyMode.Follow) Add(Urge.Follow, 1f, 1f, 1f, 1f, "you are in the airlock, heading back in");
+                return;
+            }
+            ScoreCompany(player);
+        }
+
         private void Add(Urge urge, float weight, float need, float opportunity, float readiness, string why)
         {
             float score = weight * need * opportunity * readiness;
@@ -360,6 +399,7 @@ namespace YourBuddy
             Urge.Sell => selling,
             Urge.Tidy => tidying,
             Urge.Snack => snacks,
+            Urge.SuitFetch => suitFetch,
             _ => play,
         };
 
@@ -370,6 +410,8 @@ namespace YourBuddy
         private static string UrgeName(Urge urge) => urge switch
         {
             Urge.Terminal => "life support",
+            Urge.Suit => "putting a suit on",
+            Urge.SuitFetch => "fetching your suit",
             Urge.Snack => "a snack",
             Urge.Sell => "selling",
             Urge.Tidy => "tidying up",

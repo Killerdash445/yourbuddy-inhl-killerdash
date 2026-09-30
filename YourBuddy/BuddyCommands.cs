@@ -58,15 +58,32 @@ namespace YourBuddy
             {
                 return "Node index out of range (0-" + (NavGraph.NodeCount - 1) + ")";
             }
+            // A goto stays on the buddy's side: npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
+            bool outdoor = NavGraph.GetNodeType(nodeIndex) == NodeType.Outdoor;
+            if (outdoor && !buddy.IsOutside)
+            {
+                return "Node #" + nodeIndex + " is outside - tell " + buddy.Name + " to go outside first";
+            }
+            if (!outdoor && buddy.IsOutside)
+            {
+                return "Node #" + nodeIndex + " is inside - tell " + buddy.Name + " to come inside first";
+            }
 
             return WalkTo(buddy, [nodeIndex], "node #" + nodeIndex);
         }
 
         /// <summary>
         /// The dialog's goto: a room by name, through the first of its nodes the buddy can reach.
+        /// Rooms are inside.
         /// </summary>
-        internal static string GoToRoom(BuddyBehaviour buddy, StationRooms.Entry room) =>
-            Dead(buddy) ?? WalkTo(buddy, room.Nodes, room.Name);
+        internal static string GoToRoom(BuddyBehaviour buddy, StationRooms.Entry room)
+        {
+            if (Dead(buddy) is { } dead) return dead;
+
+            return buddy.IsOutside
+                ? buddy.Name + " is outside - tell it to come inside first"
+                : WalkTo(buddy, room.Nodes, room.Name);
+        }
 
         private static string WalkTo(BuddyBehaviour buddy, int[] nodes, string label)
         {
@@ -74,7 +91,7 @@ namespace YourBuddy
             for (int i = 0; i < Math.Min(nodes.Length, MaxRoomTries); i++)
             {
                 Vector3 target = NavGraph.GetNodeWorld(nodes[i]);
-                NavPath? plan = NavGraph.FindPath(buddy.Agent.FloorUnderNpc(), target);
+                NavPath? plan = NavGraph.FindPath(buddy.Agent.FloorUnderNpc(), target, mayGoOutside: buddy.IsOutside);
                 if (plan is not { Count: > 0 }) continue;
 
                 return buddy.ApplyRouteOrder(plan.Value, target)
@@ -153,6 +170,28 @@ namespace YourBuddy
         /// What the decider waits for and when it acts next: the HUD's Mind / Air / Snack lines. docs/behaviour.md §3
         /// </summary>
         public static string Mind(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.Name + ": " + buddy.DescribeTimers();
+
+        /// <summary>
+        /// The EVA order: suit up if a spare is free, then wait in the docked station's exit
+        /// airlock for the player to cycle it. docs/eva.md
+        /// </summary>
+        public static string GoOutside(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartOutsideNow();
+
+        /// <summary>
+        /// The way back: from outside, into an airlock's chamber to wait for the player's cycle,
+        /// then inside. docs/eva.md
+        /// </summary>
+        public static string GoInside(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartInsideNow();
+
+        /// <summary>
+        /// buddy_suit on|off: wear a spare suit now, or take the worn one off. docs/eva.md
+        /// </summary>
+        public static string Suit(BuddyBehaviour buddy, string onOff) => Dead(buddy) ?? buddy.SuitNow(onOff);
+
+        /// <summary>
+        /// Take the worn suit off, whatever the air and wherever the buddy stands. docs/eva.md
+        /// </summary>
+        public static string Unsuit(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.UnsuitNow();
 
         /// <summary>
         /// Ends the follow or wander bout now, for testing the switch. docs/behaviour.md §3

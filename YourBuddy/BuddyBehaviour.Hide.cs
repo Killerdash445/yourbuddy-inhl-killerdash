@@ -319,7 +319,7 @@ namespace YourBuddy
                 agent.AdvancePlan();
                 if (agent.HasPlanLeft)
                 {
-                    return agent.HeadAlongPlan(agent.MoveSpeed * (hideFromFear ? FleeSpeedFactor : 1f), out wantMove);
+                    return agent.HeadAlongPlan(agent.WalkSpeed * (hideFromFear ? FleeSpeedFactor : 1f), out wantMove);
                 }
                 agent.DropPlan();
             }
@@ -358,7 +358,7 @@ namespace YourBuddy
 
             wantMove = true;
             agent.SetMoveTarget(target);
-            return step.normalized * (agent.MoveSpeed * (hideFromFear ? FleeSpeedFactor : 1f));
+            return step.normalized * (agent.WalkSpeed * (hideFromFear ? FleeSpeedFactor : 1f));
         }
 
         /// <summary>

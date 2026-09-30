@@ -24,6 +24,7 @@ namespace YourBuddy
         public float[]? WorldPosition { get; init; }
         public float[]? Rotation { get; init; }
         public string? SleepingCapsule { get; init; }
+        public uint SuitId { get; init; }
 
         /// <summary>
         /// The door codes, which NPC.Core also saves in its own '.npccore'. A sidecar from before NPC.Core
@@ -49,7 +50,8 @@ namespace YourBuddy
                     ShipLocalPosition = buddies[0].ShipLocalPosition,
                     WorldPosition = buddies[0].WorldPosition,
                     Rotation = buddies[0].Rotation,
-                    SleepingCapsule = buddies[0].SleepingCapsule
+                    SleepingCapsule = buddies[0].SleepingCapsule,
+                    SuitId = buddies[0].SuitId
                 };
             return data with { Buddies = [.. buddies], KnownPinCodes = codes, OpenedCapsule = openedCapsule };
         }
@@ -74,7 +76,8 @@ namespace YourBuddy
                     ShipLocalPosition = data.ShipLocalPosition,
                     WorldPosition = data.WorldPosition,
                     Rotation = data.Rotation,
-                    SleepingCapsule = data.SleepingCapsule
+                    SleepingCapsule = data.SleepingCapsule,
+                    SuitId = data.SuitId
                 }
             ];
         }
@@ -107,6 +110,21 @@ namespace YourBuddy
         /// The prop capsule the buddy was still asleep in; it sleeps on after a load.
         /// </summary>
         public string? SleepingCapsule { get; init; }
+        /// <summary>
+        /// The suit the buddy was wearing, by the game item's id: the worn item is inactive, so a
+        /// load needs the id to give it back. docs/eva.md
+        /// </summary>
+        public uint SuitId { get; init; }
+        /// <summary>
+        /// Why that suit was on (`Ordered`, `Survival`): only a survival suit comes off by itself,
+        /// so a load must not forget it. Missing restores as survival. docs/eva.md
+        /// </summary>
+        public string? SuitReason { get; init; }
+        /// <summary>
+        /// On the outside of the airlocks: only a cycle would tell it again after the load.
+        /// npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
+        /// </summary>
+        public bool Outside { get; init; }
     }
 
 }

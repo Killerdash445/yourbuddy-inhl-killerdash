@@ -17,7 +17,37 @@ namespace YourBuddy
         /// The list shown on the commands page, in the order it is drawn.
         /// </summary>
         internal static readonly string[] Names =
-            ["Follow", "Wander", "Stay", "Hide", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
+            ["Follow", "Wander", "Stay", "Hide", "Outside", "Inside", "Unsuit", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
+
+        /// <summary>
+        /// What only makes sense outside: every other job is inside. docs/eva.md
+        /// </summary>
+        private static readonly string[] OutsideNames = ["Follow", "Wander", "Stay", "Inside", "Goto", "Decide"];
+
+        private static readonly Dictionary<bool, string[]> InsideNames = [];
+
+        /// <summary>
+        /// The commands page for one buddy: outside only what works out there; inside, "Unsuit"
+        /// only while it wears a suit.
+        /// </summary>
+        internal static IReadOnlyList<string> NamesFor(BuddyBehaviour buddy)
+        {
+            if (buddy.IsOutside) return OutsideNames;
+
+            bool suited = buddy.SuitSuited;
+            if (!InsideNames.TryGetValue(suited, out string[]? names))
+            {
+                List<string> list = [];
+                foreach (string name in Names)
+                {
+                    if (name == "Inside" || (name == "Unsuit" && !suited)) continue;
+
+                    list.Add(name);
+                }
+                InsideNames[suited] = names = [.. list];
+            }
+            return names;
+        }
 
         private static readonly string[] GotoWords = ["goto", "go to", "walk", "move to"];
         /// <summary>
@@ -37,6 +67,19 @@ namespace YourBuddy
 
             // First: "decide for yourself whether to follow" is not a follow order.
             if (Has(lower, "decide", "yourself", "autonom", "your call", "own mind")) return ForAll(targets, BuddyCommands.DecideForYourself);
+
+            // Before the outside order: "take the suit off outside" is an unsuit order.
+            // docs/eva.md
+            if (Has(lower, "unsuit", "take off the suit", "take the suit off", "remove the suit", "out of the suit"))
+            {
+                return ForAll(targets, BuddyCommands.Unsuit);
+            }
+
+            // Before the room goto: "go outside" and "come inside" are airlock walks, not rooms.
+            // docs/eva.md
+            if (Has(lower, "inside", "come in", "back in")) return ForAll(targets, BuddyCommands.GoInside);
+
+            if (Has(lower, "outside", "eva", "space walk", "spacewalk")) return ForAll(targets, BuddyCommands.GoOutside);
 
             // Before the rest, so "go to the workshop" is not a wander order ("work"). A goto that
             // names no room falls through, so "stay, do not walk" is still a stay order.
@@ -81,7 +124,7 @@ namespace YourBuddy
                 return BuddyCommands.GivePassword(bare.ToString(CultureInfo.InvariantCulture));
             }
 
-            return "I don't know that one. Try: " + string.Join(", ", Names);
+            return "I don't know that one. Try: " + string.Join(", ", NamesFor(buddy));
         }
 
         /// <summary>

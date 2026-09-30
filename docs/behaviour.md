@@ -56,12 +56,15 @@ It **stands down** (logged at level 2 every 15 s) while:
 
 | Reason | Why |
 |---|---|
-| an order is in force | that is what an order means |
+| an order is in force | that is what an order means - except deadly air: [survival-outranks-an-order](invariants.md#survival-outranks-an-order) |
 | being caught, or talked to | `Update` holds the buddy still anyway |
 | fear above Calm, or fleeing | [fear-owns-the-buddy](invariants.md#fear-owns-the-buddy) |
 | walking a route | a goto, a resumed route, or an errand in progress |
 | hiding | hiding owns the buddy ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
-| the player is on a spacewalk | Follow already waits inside |
+| the player is on a spacewalk and the buddy is inside | Follow already waits inside ([eva.md §4](eva.md#4-through-the-airlock)) |
+
+Outside the airlocks every job is out of reach, so only Follow and Wander are weighed there - and
+only Follow while you stand in an airlock's chamber, heading in (`ScoreOutside`).
 
 ### Why utility scoring
 
@@ -87,9 +90,11 @@ Any factor at zero vetoes; anything under `UrgeFloor` is not worth doing.
 | Urge | Weight | Need | Opportunity | Readiness |
 |---|---|---|---|---|
 | `Terminal` | 1.00 | air in a band a unit could fix (`LifeSupport.AirIsDangerous`) | - | - |
+| `Suit` | 0.90 | the air is dangerous, no terminal is being tried, a spare suit is free ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)) | - | - |
 | `Sell` | 0.75 | `0.4 + 0.2 ×` boxes | nearest box | since last look / `SellCheckInterval` |
 | `Tidy` | 0.65 | `0.5 + 0.25 ×` (pieces − 1) | nearest piece | since last round / `TidyIntervalMinutes` |
 | `Snack` | 0.55 | 1 | nearest food | since last snack / `SnackIntervalMinutes` |
+| `SuitFetch` | 0.50 | 1 | nearest suit left on the station ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) | since last look / 30 s |
 | `Play` | 0.35 | 1 | nearest plaything | since last session / `ItemPlayIntervalMinutes` |
 | `Wander` | 0.30 | 1 | an active node owner within `DecideNodeOwnerRadius` | Follow bout so far |
 | `Follow` | 0.30 | rises with distance to the player; 1 off their deck | the player reachable | Wander bout so far |

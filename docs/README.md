@@ -18,6 +18,7 @@ and the rules several NPC mods share are
 | [behaviour.md](behaviour.md) | orders vs. modes, the decider, bouts |
 | [fear.md](fear.md) | seeing the Breathless, stress, fleeing, hiding |
 | [terminals.md](terminals.md) | switching on oxygen and climate control |
+| [eva.md](eva.md) | the EVA suit, going outside and back in through a station airlock, fetching a forgotten suit home |
 | [snacks.md](snacks.md) | eating from containers and loose food |
 | [items.md](items.md) | carrying, tidying, selling trash boxes, idle play |
 | [lifecare.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/lifecare.md) (NPC.Core) | the scanner terminal and the game's player-icon bug |

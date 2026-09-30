@@ -106,4 +106,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The EVA suit skin, applied while the buddy wears a suit: docs/eva.md -->
+    <EmbeddedResource Include="Resources\PilotSuit_eva.png" />
+  </ItemGroup>
+
 </Project>

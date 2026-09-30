@@ -89,6 +89,22 @@ See [behaviour.md §3](behaviour.md#3-the-decider).
 | `TerminalRetryDelay` | 60 s | per unit, after a flip |
 | `TerminalVerifyDelay` | 1.5 s | then it checks the unit runs |
 
+### The EVA suit - `BuddySuit.cs`, `EvaRun.cs`, `SuitFetchErrand.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `PlayerNearSuitDist` | 2 m | a stranded suit within this of you is left alone |
+| `AirlockReachedWithin` | 6 m | an airlock the buddy's route ends this near is one it can walk to |
+| `EnoughSuitsAtHome` | 2 | the fetch stops once this many isolated suits are yours or aboard |
+| `HomeInsideInnerDoor` / `HomeAboveFloor` | 1.5 m / 0.5 m | where a fetched suit is set down: this far inside the ship's inner airlock door, targeted this high over the floor |
+| `InChamberArrival` / `InChamberLeave` | 0.3 m / 0.8 m | arrived on the chamber's stand point within this, flat; still there until this far off |
+| `StandNodeFallbackDist` | 1.5 m | without a node inside the chamber volume, a node this near its centre is the stand point |
+| `SuitedPace` | 1.3 | times the suit's `MovementSpeedModifier`: keeps up with a sprinting suited player (1.8 m/s) |
+| `StraightEnterMaxDist` | 6 m | the straight walk into the chamber starts within this, and a shut door into it is waited beside |
+| `ClearDistance` / `ClearArrival` | 2.2 m / 1.4 m | the crossing leg walks to this far beyond the opened door, and is through within this of it |
+| `WaitTraceSeconds` | 15 s | the throttled "waits in the airlock" log line |
+| `FetchInterval` / `FetchRetryDelay` / `FetchSkipSeconds` | 30 s / 60 s / 45 s | the suit-fetch errand's schedule |
+
 ### Snacks - `SnackErrand.cs`
 
 The item-reach constants every errand shares (`SnackStandOffs`, `SnackReachDist`, `SnackReachBelow`,

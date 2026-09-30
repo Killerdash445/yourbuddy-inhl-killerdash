@@ -57,8 +57,10 @@ replan and any order ends it. The HUD shows `Mode: Route (switching on the …)`
 `UrgeDecisive`, so it is taken outright ([behaviour.md §3](behaviour.md#choosing)). If no unit can
 be switched on, the next-best urge gets the round.
 
-**Only from the decider.** An order holds ([an-order-is-not-a-mode](invariants.md#an-order-is-not-a-mode)):
-a buddy told to follow won't leave you to fix the air. Fear and spacewalks stand the decider down too.
+**Only from the decider - and over an order.** Deadly air outranks Follow, Wander and Stay
+([survival-outranks-an-order](invariants.md#survival-outranks-an-order)): the buddy fixes the air, or
+suits up, and then carries on with the order. Fear, a conversation, hiding and a walk in progress
+still come first, and Autonomy off stops it.
 
 `buddy_terminal oxygen|climate` starts the walk now, ignoring the danger bands, retry timer and any
 order. The blocker still applies. The HUD's `Air:` line shows the air and each unit's retry timer.

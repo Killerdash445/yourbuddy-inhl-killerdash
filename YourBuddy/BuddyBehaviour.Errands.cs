@@ -13,20 +13,24 @@ namespace YourBuddy
     {
         // Created in Awake, before the first frame.
         private LifeSupport lifeSupport = null!;
+        private BuddySuit suit = null!; // Awake; the agent's settings read it only from the slow phases on
         private SnackErrand snacks = null!;
         private TidyErrand tidying = null!;
         private SellErrand selling = null!;
         private PlayErrand play = null!;
+        private SuitFetchErrand suitFetch = null!;
 
         private void Awake()
         {
             cc = GetComponent<CharacterController>();
             nearMonster = node => (node - lastMonsterPos).sqrMagnitude < FearRestraintDist * FearRestraintDist;
             lifeSupport = new LifeSupport(this);
+            suit = new BuddySuit(this, lifeSupport);
             snacks = new SnackErrand(this);
             tidying = new TidyErrand(this);
             selling = new SellErrand(this);
             play = new PlayErrand(this);
+            suitFetch = new SuitFetchErrand(this, suit);
         }
 
         // Console and dialog commands. docs/behaviour.md
@@ -35,6 +39,51 @@ namespace YourBuddy
         internal string StartSellNow() => selling.StartNow("No selling: ");
         internal string StartPlayNow() => play.StartNow("No play: ");
         internal string StartTerminalNow(string which) => lifeSupport.StartNow(which);
+        internal string StartOutsideNow() => suit.StartOutsideNow();
+        internal string StartInsideNow() => suit.StartInsideNow();
+
+        /// <summary>
+        /// On the outside of the airlocks. npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
+        /// </summary>
+        internal bool IsOutside => agent.IsOutside;
+        internal string SuitNow(string onOff) => suit.SuitNow(onOff);
+        internal string UnsuitNow() => suit.UnsuitNow();
+
+        /// <summary>
+        /// Whether the buddy wears a suit: the agent's settings route it into NPC.Core's
+        /// atmosphere and space rules. docs/eva.md
+        /// </summary>
+        internal bool SuitSuited => suit.Suited;
+
+        /// <summary>
+        /// The worn suit's MovementSpeedModifier, 1 without one. docs/eva.md
+        /// </summary>
+        internal float SuitSpeedFactor => suit.SpeedFactor;
+
+        /// <summary>
+        /// For the sidecar: the suit the buddy wears, by the game item's id.
+        /// </summary>
+        internal uint WornSuitId => suit.WornSuitId;
+
+        /// <summary>
+        /// The suit item it wears, or null.
+        /// </summary>
+        internal Suit? WornSuit => suit.WornSuit;
+
+        /// <summary>
+        /// After a load: wear the suit the sidecar named. docs/eva.md
+        /// </summary>
+        internal void RestoreWornSuit(uint suitId, string? wornFor) => suit.RestoreWorn(suitId, wornFor);
+
+        /// <summary>
+        /// For the sidecar: why the worn suit is on (BuddySuit.SuitReason), null without one.
+        /// </summary>
+        internal string? WornSuitReason => suit.WornReason;
+
+        /// <summary>
+        /// Despawning: the worn suit goes back into the world, or it is gone with the buddy.
+        /// </summary>
+        internal void ReleaseWornSuit() => suit.OnDespawned();
 
         string IErrandBody.Name => Name;
         Transform IErrandBody.Transform => transform;
@@ -62,6 +111,19 @@ namespace YourBuddy
 
         bool IErrandBody.InReach(ReachTask task) => agent.InReach(task);
         string? IErrandBody.PlanReach(ReachTask task, out NavPath plan) => agent.PlanReach(task, out plan);
+
+        string? IErrandBody.PlanRoute(Vector3 target, bool mayGoOutside, out NavPath plan)
+        {
+            NavPath? found = NavGraph.FindPath(agent.FloorUnderNpc(), target, mayGoOutside: mayGoOutside);
+            if (found is not { Count: > 0 })
+            {
+                plan = default;
+                return NavGraph.LastPathBlockedByDoor ? "a door I cannot open is in the way" : "there is no path to it";
+            }
+            plan = found.Value;
+            return null;
+        }
+
         bool IErrandBody.StepIntoReach(ReachTask task, out Vector3 move, out bool wantMove) =>
             agent.StepIntoReach(task, out move, out wantMove);
         bool IErrandBody.HasReachNode(ReachTask task) => NpcAgent.FindReachNode(task);
@@ -83,10 +145,15 @@ namespace YourBuddy
 
         void IErrandBody.FinishRoute() => FinishRoute();
         string? IErrandBody.BusyForCommand() => BusyForCommand();
+        string? IErrandBody.BusyForAirlockCommand() => BusyForCommand(outsideOk: true);
+        bool IErrandBody.IsOutside => agent.IsOutside;
+        float IErrandBody.WalkSpeed => agent.WalkSpeed;
+        void IErrandBody.SetOutside(bool outside, string why) => agent.SetOutside(outside, why);
         Player? IErrandBody.PilotPlayer() => PilotPlayer();
         bool IErrandBody.TakenByAnother(Transform what) => BuddyManager.TakenByAnother(what, this);
         bool IErrandBody.AnotherBuddyWhere(System.Func<Vector3, bool> test) => BuddyManager.AnotherBuddyWhere(test, this);
         bool IErrandBody.IsAboardPlayerShip() => agent.IsAboardPlayerShip();
         int IErrandBody.FeltTemperature(Environment env) => agent.FeltTemperature(env);
+        Transform? IErrandBody.ItemParentAt(Vector3 pos) => agent.ItemParentAt(pos);
     }
 }

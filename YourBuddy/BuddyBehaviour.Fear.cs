@@ -635,7 +635,7 @@ namespace YourBuddy
                 }
             }
 
-            return agent.HeadAlongPlan(agent.MoveSpeed * FleeSpeedFactor, out wantMove);
+            return agent.HeadAlongPlan(agent.WalkSpeed * FleeSpeedFactor, out wantMove);
         }
 
         /// <summary>

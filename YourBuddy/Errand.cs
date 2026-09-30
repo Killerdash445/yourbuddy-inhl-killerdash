@@ -38,6 +38,11 @@ namespace YourBuddy
 
         bool InReach(ReachTask task);
         string? PlanReach(ReachTask task, out NavPath plan);
+        /// <summary>
+        /// Plans a raw route to a world point - Outdoor nodes included when asked - which may end
+        /// short of it, at the node nearest it. Null with the plan, else why there is none.
+        /// </summary>
+        string? PlanRoute(Vector3 target, bool mayGoOutside, out NavPath plan);
         bool StepIntoReach(ReachTask task, out Vector3 move, out bool wantMove);
         /// <summary>
         /// Whether some node has a clear walk to a stand point for `task`. Fills its Node and StandPoint.
@@ -53,7 +58,26 @@ namespace YourBuddy
         /// </summary>
         void FinishRoute();
 
+        /// <summary>
+        /// Why a job order cannot start now, or null. Outside counts as busy: every job is inside.
+        /// </summary>
         string? BusyForCommand();
+        /// <summary>
+        /// The same for the airlock orders (outside, inside, the suit), which also run outside.
+        /// </summary>
+        string? BusyForAirlockCommand();
+        /// <summary>
+        /// On the outside of the airlocks: npc-core:docs/invariants.md#an-airlock-is-crossed-by-its-cycle
+        /// </summary>
+        bool IsOutside { get; }
+        /// <summary>
+        /// The speed it walks at now, a worn suit's slowdown included.
+        /// </summary>
+        float WalkSpeed { get; }
+        /// <summary>
+        /// The buddy walked through an airlock door and knows which side it came out on.
+        /// </summary>
+        void SetOutside(bool outside, string why);
         Player? PilotPlayer();
         /// <summary>
         /// Another buddy's leg or hide holds `what`: docs/invariants.md#one-buddy-per-target
@@ -65,6 +89,11 @@ namespace YourBuddy
         bool AnotherBuddyWhere(System.Func<Vector3, bool> test);
         bool IsAboardPlayerShip();
         int FeltTemperature(Environment env);
+        /// <summary>
+        /// Where an item at `pos` belongs (the room or station interior under it), or null: where
+        /// anything it takes off goes, as UnequipSuit does for the player's suit. docs/eva.md
+        /// </summary>
+        Transform? ItemParentAt(Vector3 pos);
     }
 
     /// <summary>
@@ -106,6 +135,10 @@ namespace YourBuddy
         /// </summary>
         protected abstract string Command { get; }
         protected virtual string NextLabel => "in";
+        /// <summary>
+        /// Once due, why nothing started: shown instead of a timer stuck at 0 s. Null to show the timer.
+        /// </summary>
+        protected virtual string? WhyIdle => null;
 
         /// <summary>
         /// Picks a target it can reach and sets off. `report` finishes a sentence either way.
@@ -154,6 +187,8 @@ namespace YourBuddy
         {
             string last = Last != null ? " (last: " + Last + ")" : "";
             if (!Enabled) return $"off - {Command} still works" + last;
+
+            if (DueAt >= 0f && DueAt <= Time.time && WhyIdle is { } idle) return "due - " + idle + last;
 
             return (DueAt < 0f ? "not scheduled yet" : $"{NextLabel} {Mathf.Max(0f, DueAt - Time.time):0}s") + last;
         }

@@ -33,6 +33,9 @@ the buddy through a few `internal` members, never its fields.
 | `ErrandLeg.cs` | `ErrandLeg`, NPC.Core's `ReachTask` as the current Route's reason: `Approach`, `End`, `Describe`, `EndsOnFlee`, `Holds` | `ReachTask` | [terminals](terminals.md) |
 | `Errand.cs` | `IErrandBody`, and the `Errand` base: due time, last result, skip list, `Defer`, `StartNow`, `Describe`, `Count` | - | [behaviour](behaviour.md#3-the-decider) |
 | `LifeSupport.cs` | switching on the oxygen generator or climate control | `IErrandBody` | [terminals](terminals.md) |
+| `BuddySuit.cs` | the buddy's EVA suit: wearing a spare (the game's own equip semantics, the embedded skin), the spare rule, the watcher, the sidecar's suit id | `IErrandBody`, `LifeSupport`, `BuddySkin` | [eva](eva.md) |
+| `EvaRun.cs` | one trip through an airlock, out or in: suit, chamber, wait, step through | `BuddySuit`, `IErrandBody`, `GameInternals` | [eva](eva.md#4-through-the-airlock) |
+| `SuitFetchErrand.cs` | carrying a suit you forgot on the docked station back aboard | `IErrandBody`, `BuddySuit` | [eva](eva.md#6-bringing-a-forgotten-suit-home) |
 | `SnackErrand.cs` | opening a container or finding loose food, eating one thing | `IErrandBody`, `Items`, `GameInternals` | [snacks](snacks.md) |
 | `TidyErrand.cs` | a tidying round: several pieces of trash to a trash can | `IErrandBody`, `Items`, `GameInternals` | [items](items.md) |
 | `SellErrand.cs` | a selling run: nearby trash boxes into one sell station, one press per load | `IErrandBody`, `Items`, NPC.Core's `SellPens`, `GameInternals` | [items](items.md) |
@@ -189,7 +192,7 @@ Space protection, riding a station and being parked with it are the agent's
 ([NPC.Core's agent.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md),
 [an-npc-rides-its-own-floor](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-npc-rides-its-own-floor)).
 A parked buddy is inactive: no update, HUD, lifecare icon or atmosphere damage. The same happens aboard
-during a spacewalk ([an-unloaded-ship-parks-the-npc](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-unloaded-ship-parks-the-npc)).
+during a spacewalk, and while you are on a docked station (the game switches the ship off then) ([an-unloaded-ship-parks-the-npc](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-unloaded-ship-parks-the-npc)).
 The buddy will not follow you onto a spacewalk.
 
 ---
@@ -201,6 +204,7 @@ The buddy will not follow you onto a spacewalk.
 | `FindPath` signature or `NavPath` | NPC.Core's agent, and here `UpdateFlee` / `TryPlanRetreat` / `PlanKeepsClear` / `EndFlee`, `WalkToHide`, `BuddyCommands.GoToNode`. Every construction must fill `WaypointFloorY`. `==` on a `NavPath` compares list references |
 | an order the player can give | `BuddyCommands.cs`, via `ApplyOrder` / `ApplyRouteOrder`, never `SetMode` ([an-order-is-not-a-mode](invariants.md#an-order-is-not-a-mode)); and `BuddyDialogCommands.Names` **and its match order** |
 | an urge the buddy can choose | `Mind.cs`: the `Urge` enum, `ScoreUrges` (its weight), `ActOn`, `ErrandOf`, `UrgeName`; a new errand is an `Errand` subclass created in `BuddyBehaviour.Errands.cs` |
+| the buddy and the outside (space, airlocks, the suit) | `BuddySuit` / `EvaRun` / `SuitFetchErrand` ([eva.md](eva.md)); NPC.Core reads the suit through `BuddyAgentSettings.Suited` / `MayGoOutside`, and owns the side of the airlocks (`NpcAgent.IsOutside`) |
 | what an errand may do to the buddy | only through `IErrandBody` (`Errand.cs`); a new need is a new member there, never a buddy field made internal |
 | a search radius | its owner filter, the agent's `OnMyVessel` ([behaviour.md §3](behaviour.md#range)) |
 | a `BuddyMode`, or anything writing `mode` | every site in [behaviour.md §4](behaviour.md#4-every-place-that-reads-mode-outside-the-dispatch-switch), above all `INpcBrain.Activity`, and [fear-owns-the-buddy](invariants.md#fear-owns-the-buddy) |
@@ -210,6 +214,7 @@ The buddy will not follow you onto a spacewalk.
 | a tuning constant | [reference.md](reference.md), and [same-level-tolerance-ceiling](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#same-level-tolerance-ceiling) |
 | which partials use a field | declare it in the one partial that uses it, or in `BuddyBehaviour.cs` once two do |
 | what the sidecar stores | `BuddySaveFile` / `BuddyState`, `CaptureState` and `RestorePosition` together |
+| the buddy's worn suit across a load | `BuddyState.SuitId` and `BuddySuit.WornSuitId` / `RestoreWorn` together |
 | something a buddy works on that others must leave alone | `ErrandLeg.Holds`, and a `TakenByAnother` check where candidates are collected ([one-buddy-per-target](invariants.md#one-buddy-per-target)) |
 | state every buddy should share | a static in the owning partial, dropped on `NpcEvents.WorldReset`; state every NPC of any mod should share belongs in NPC.Core |
 | a new entry point into buddy code (a Unity message, an event, a command) | wrap it in `NpcRegistry.Acting(buddy.Agent)`, or its lines lose the buddy's name ([logging.md §4](logging.md#4-rules-for-adding-logs)) |

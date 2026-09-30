@@ -18,7 +18,7 @@ namespace YourBuddy
 
         public string Greeting => "Standing by.";
 
-        public IReadOnlyList<string> Commands => BuddyDialogCommands.Names;
+        public IReadOnlyList<string> Commands => BuddyDialogCommands.NamesFor(buddy);
 
         public string Answer(string text) => BuddyDialogCommands.Run(buddy, text);
 

@@ -75,7 +75,11 @@ namespace YourBuddy
         public static void Despawn(BuddyBehaviour buddy)
         {
             Unregister(buddy);
-            if (buddy != null) Destroy(buddy.gameObject);
+            if (buddy != null)
+            {
+                buddy.ReleaseWornSuit();
+                Destroy(buddy.gameObject);
+            }
         }
 
         public static void DespawnAll()
@@ -251,6 +255,8 @@ namespace YourBuddy
                 using NpcRegistry.ActingScope _ = NpcRegistry.Acting(buddy.Agent);
                 AttachToOwner(buddy, state.Owner);
                 BuddyCryoSpawn.ResumeSleep(buddy, state.SleepingCapsule);
+                if (state.SuitId != 0) buddy.RestoreWornSuit(state.SuitId, state.SuitReason);
+                if (state.Outside) buddy.Agent.SetOutside(true, "it was outside when the game was saved");
             }
             if (data.KnownPinCodes != null) foreach (int code in data.KnownPinCodes) NpcDoors.LearnCode(code);
         }
@@ -373,7 +379,10 @@ namespace YourBuddy
                 ShipLocalPosition = shipLocal,
                 WorldPosition = [pos.x, pos.y, pos.z],
                 Rotation = [rot.x, rot.y, rot.z, rot.w],
-                SleepingCapsule = BuddyCryoSpawn.SleepingCapsuleOf(buddy)
+                SleepingCapsule = BuddyCryoSpawn.SleepingCapsuleOf(buddy),
+                SuitId = buddy.WornSuitId,
+                SuitReason = buddy.WornSuitReason,
+                Outside = buddy.IsOutside
             };
         }
 

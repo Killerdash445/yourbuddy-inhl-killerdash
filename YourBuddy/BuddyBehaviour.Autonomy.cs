@@ -163,11 +163,18 @@ namespace YourBuddy
             if (!YourBuddyPlugin.ConfigAutonomy.Value) return;
 
             ExpireOrder();
+            if (TrySaveOwnLife()) return;
             if (Time.time < decideAt) return;
 
             decideAt = Time.time + DecideInterval;
 
             string? standDown = StandDownReason(player);
+            // Deadly air outranks an order: docs/invariants.md#survival-outranks-an-order
+            if (standDown != null && OrderInForce && StandDownReason(player, ignoreOrder: true) == null &&
+                TrySurvival())
+            {
+                return;
+            }
             if (standDown != null)
             {
                 boutMode = null;
@@ -196,9 +203,9 @@ namespace YourBuddy
         /// <summary>
         /// Why the decider leaves the buddy alone this round, or null when it may decide.
         /// </summary>
-        private string? StandDownReason(Player player)
+        private string? StandDownReason(Player player, bool ignoreOrder = false)
         {
-            if (OrderInForce) return "order '" + OrderName(orderedMode.GetValueOrDefault()) + "' in force";
+            if (!ignoreOrder && OrderInForce) return "order '" + OrderName(orderedMode.GetValueOrDefault()) + "' in force";
 
             if (agent.IsBeingCaught) return "being caught";
 
@@ -209,10 +216,63 @@ namespace YourBuddy
             if (fearState != FearState.Calm || mode == BuddyMode.Flee) return "fear is " + fearState;
 
             if (mode == BuddyMode.Route) return DescribeReachTask() is { } task ? task : "walking a route";
-            // Follow already waits inside for a spacewalk; there is nothing to choose.
-            if (NpcAgent.IsPlayerInSpace(player)) return "the player is outside";
+            // Follow already waits inside for a spacewalk; there is nothing to choose. Outside
+            // itself, it still chooses between following and wandering: ScoreUrges.
+            if (!agent.IsOutside && NpcAgent.IsPlayerInSpace(player)) return "the player is outside";
 
             return null;
+        }
+
+        private float lifeCheckAt;
+
+        /// <summary>
+        /// The air is killing the buddy now (NpcAgent.LifeInDanger): drop whatever it is doing - an
+        /// order, an errand, the walk to a terminal, whose air would come back too slowly - and put a
+        /// spare suit on. Checked every second, not every DecideInterval: the death counter runs out
+        /// in about six ticks. docs/invariants.md#survival-outranks-an-order
+        /// </summary>
+        private bool TrySaveOwnLife()
+        {
+            if (Time.time < lifeCheckAt) return false;
+
+            lifeCheckAt = Time.time + 1f;
+            if (!agent.LifeInDanger || suit.Suited || suit.RunActive) return false;
+            // Fear owns a flee; a catch or a closet holds the body.
+            if (agent.IsBeingCaught || mode == BuddyMode.Flee || Hiding || fearState != FearState.Calm) return false;
+            if (!suit.SpareSuitAvailable()) return false;
+
+            string? dropping = DescribeReachTask();
+            if (mode == BuddyMode.Route) FinishRoute();
+            if (!suit.TryStartSurvivalSuitUp()) return false;
+
+            YourBuddyPlugin.Log.LogWarning("[suit] " + Name + " is suffocating - suiting up now" +
+                                           (dropping != null ? " (dropped: " + dropping + ")" : ""));
+            decideAt = Time.time + DecideInterval;
+            return true;
+        }
+
+        /// <summary>
+        /// Under an order, the air aboard turning deadly: switch a terminal on, or when none can be
+        /// tried, put a spare suit on - the same two urges the decider weighs first. The order
+        /// resumes when the task ends (ModeAfterTask). True when one started.
+        /// </summary>
+        private bool TrySurvival()
+        {
+            if (!lifeSupport.AirIsDangerous()) return false;
+
+            string order = OrderName(orderedMode.GetValueOrDefault());
+            // Already dying: only the suit is fast enough (TrySaveOwnLife runs first).
+            if (!agent.LifeInDanger && lifeSupport.TryStart())
+            {
+                YourBuddyPlugin.Log.LogInfo("[mind] The air aboard is dangerous - fixing it before order '" + order + "'");
+                return true;
+            }
+            if (!suit.Suited && suit.TryStartSurvivalSuitUp())
+            {
+                YourBuddyPlugin.Log.LogInfo("[mind] The air aboard is dangerous - suiting up before order '" + order + "'");
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -335,13 +395,16 @@ namespace YourBuddy
         /// Why a command cannot start a task now, or null. `whileAlert` is for hiding, the one thing
         /// worth asking for with the Breathless about; a flee still owns the buddy either way.
         /// `preemptErrand` lets a command take the buddy off a job it is already doing -
-        /// docs/invariants.md#a-command-outranks-an-errand
+        /// docs/invariants.md#a-command-outranks-an-errand. Outside, only the airlock orders
+        /// (`outsideOk`) run: every job is inside. docs/eva.md
         /// </summary>
-        private string? BusyForCommand(bool whileAlert = false, bool preemptErrand = false)
+        private string? BusyForCommand(bool whileAlert = false, bool preemptErrand = false, bool outsideOk = false)
         {
             if (IsDead) return Name + " is dead";
 
             if (Asleep || !gameObject.activeInHierarchy) return Name + " is not awake here";
+
+            if (!outsideOk && agent.IsOutside) return Name + " is outside - that waits until it is back in";
 
             if (agent.IsBeingCaught || mode == BuddyMode.Flee) return Name + " is already fleeing the Breathless";
 

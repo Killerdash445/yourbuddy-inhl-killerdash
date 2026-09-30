@@ -25,8 +25,9 @@ namespace YourBuddy
 
             Transform playerTransform = player.Controller.CachedTransform;
 
-            // If the player went EVA, the buddy politely waits inside.
-            if (NpcAgent.IsPlayerInSpace(player)) return Vector3.zero;
+            // If the player went EVA, the buddy politely waits inside - unless it is suited and
+            // came out with them. docs/eva.md
+            if (NpcAgent.IsPlayerInSpace(player) && !suit.Suited) return Vector3.zero;
 
             // Step-off stretch: a short unvalidated walk that gets him off chair seats
             // and ledges, or out of a doorway he is holding open.

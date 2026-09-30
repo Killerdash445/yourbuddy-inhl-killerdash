@@ -191,5 +191,43 @@ namespace YourBuddy
             internal static Gate? GetGate(SellStation? station) => Get<Gate>(StationGate, station);
             internal static Space.Button? GetSellButton(SellStation? station) => Get<Space.Button>(SellButton, station);
         }
+
+        /// <summary>
+        /// EquipmentSystem: the equip sound the player's own suit plays, replayed when the buddy
+        /// suits up. docs/eva.md
+        /// </summary>
+        internal static class EquipmentSystemAccess
+        {
+            private static readonly FieldInfo? SuitEquipEvent = Field<EventReference>(typeof(EquipmentSystem), "suitEquipEvent",
+                "the EVA suit's equip sound");
+
+            internal static EventReference? GetSuitEquipEvent(EquipmentSystem? system) => GetValue<EventReference>(SuitEquipEvent, system);
+        }
+
+        /// <summary>
+        /// SpaceStation: the airlock its docking opens to the outside, which an EVA run walks to.
+        /// docs/eva.md
+        /// </summary>
+        internal static class SpaceStationAccess
+        {
+            private static readonly FieldInfo? ExitAirlock = Field<Airlock>(typeof(SpaceStation), "exitAirlock",
+                "the buddy going outside through the docked station's exit airlock");
+
+            internal static Airlock? GetExitAirlock(SpaceStation? station) => Get<Airlock>(ExitAirlock, station);
+        }
+
+        /// <summary>
+        /// Airlock: its two doors. NPC.Core reflects the same fields for gate detection; these
+        /// are for the EVA run's own waiting in the chamber.
+        /// </summary>
+        internal static class AirlockAccess
+        {
+            private const string Feature = "the buddy's EVA run (waiting out the airlock cycle)";
+            private static readonly FieldInfo? OuterDoor = Field<Gate>(typeof(Airlock), "outerDoor", Feature);
+            private static readonly FieldInfo? InnerDoor = Field<Gate>(typeof(Airlock), "innerDoor", Feature);
+
+            internal static Gate? GetOuterDoor(Airlock? airlock) => Get<Gate>(OuterDoor, airlock);
+            internal static Gate? GetInnerDoor(Airlock? airlock) => Get<Gate>(InnerDoor, airlock);
+        }
     }
 }
