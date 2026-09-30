@@ -107,7 +107,8 @@ The buddy's settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, secti
 | `OrderPersistence` | General | `UntilRevoked` | `UntilRevoked`: an order holds until you give another one or tell it to decide for itself. `Expires`: it decides for itself again after `OrderExpirySeconds`. A goto always runs to completion. |
 | `OrderExpirySeconds` | General | `90` | How long an order holds under `Expires`. |
 | `Terminals` | General | `true` | When oxygen runs low or it gets too cold or hot aboard and the oxygen generator or climate control is off, a buddy walks over and switches it on - deciding for itself, and even under an order, since deadly air outranks one. When no unit can be switched on, it puts a spare suit on instead (`EvaSuit`). |
-| `EvaSuit` | General | `true` | The buddy can wear a spare isolated space suit (never your only one). Ordered outside, it walks into the docked station's exit airlock and waits for you to cycle it; ordered inside, it comes back the same way. It also suits up by itself when the air aboard turns deadly and no terminal can fix it, and carries a suit you forgot on the station back to the ship. |
+| `EvaSuit` | General | `true` | The buddy can wear a spare isolated space suit (never your only one). Ordered outside, it walks into the docked station's exit airlock and waits for you to cycle it; ordered inside, it comes back the same way. It also suits up by itself when the air aboard turns deadly and no terminal can fix it, and carries a suit you forgot on the station back to the ship (`SuitFetch`). |
+| `SuitFetch` | General | `true` | While docked, a buddy aboard fetches a space suit you left lying on the station and sets it down inside your ship's airlock, until two suits are yours or aboard. Needs `EvaSuit`. `buddy_fetchsuit` starts a fetch now. |
 | `Snacks` | General | `true` | Now and then a buddy deciding for itself eats or drinks something nearby: from a container with food in it, or lying about. Never while you are hungry. `buddy_snack` triggers one now. |
 | `SnackIntervalMinutes` | General | `13` | Roughly how many minutes pass between snacks (25% more or less each time) - tracks how often the player's own satiety needs topping up. |
 | `Tidying` | General | `true` | Now and then a buddy deciding for itself clears the rubbish: two to five pieces in a row, loose or out of a cupboard it closes again, into a trash can. `buddy_tidy` starts a round now. |
@@ -147,12 +148,13 @@ You can change these values in the config file or via console commands (see belo
 | `buddy_sell` | `[@who]` | Make it take every trash box nearby to a sell station and sell them in one press. |
 | `buddy_play` | `[@who]` | Make it go and mess about with something loose right now. |
 | `buddy_hide` | `[@who]` | Make it get into a closet or locker now, whatever it is feeling. It stays in there **until you give it another order** - no timer, and the Breathless leaving does not bring it out. |
-| `buddy_mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play lines). |
+| `buddy_mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play / Fetch suit lines). |
 | `buddy_bout` | `[@who]` | End the current follow or wander stretch now, so the other one weighs full at its next decision (for testing). |
 | `buddy_terminal` | `<oxygen\|climate> [@who]` | Make the buddy switch that unit on now, whatever the air (for testing; only if it is off and not broken or faulted). |
 | `buddy_outside` | `[@who]` | Send the buddy outside: it puts a spare suit on (never your only one), walks into the docked station's exit airlock and waits for you to cycle it. Works where the surface has gravity (the FuelStation); an EVA skin is drawn while it wears the suit. |
 | `buddy_inside` | `[@who]` | Bring the buddy back in from outside: it walks into the airlock you stand in (or the nearest) and waits for you to cycle it. |
 | `buddy_suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
+| `buddy_fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
 | `buddy_auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
 | `buddy_password` | `<code>` | Tell the buddies a door PIN code - all of them learn it. It is used only on keypads whose own code matches, and is saved with your game. |
 | `buddy_speed` | `<value> [@who]` | Set movement speed (0.5–10 m/s). |

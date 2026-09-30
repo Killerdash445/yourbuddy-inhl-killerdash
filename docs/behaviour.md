@@ -94,7 +94,7 @@ Any factor at zero vetoes; anything under `UrgeFloor` is not worth doing.
 | `Sell` | 0.75 | `0.4 + 0.2 ×` boxes | nearest box | since last look / `SellCheckInterval` |
 | `Tidy` | 0.65 | `0.5 + 0.25 ×` (pieces − 1) | nearest piece | since last round / `TidyIntervalMinutes` |
 | `Snack` | 0.55 | 1 | nearest food | since last snack / `SnackIntervalMinutes` |
-| `SuitFetch` | 0.50 | 1 | nearest suit left on the station ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) | since last look / 30 s |
+| `SuitFetch` | 0.50 | 1 | nearest suit left on the station ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) | since last look / 120 s |
 | `Play` | 0.35 | 1 | nearest plaything | since last session / `ItemPlayIntervalMinutes` |
 | `Wander` | 0.30 | 1 | an active node owner within `DecideNodeOwnerRadius` | Follow bout so far |
 | `Follow` | 0.30 | rises with distance to the player; 1 off their deck | the player reachable | Wander bout so far |
@@ -187,6 +187,7 @@ Test commands (each says why when it refuses; all work under an order and return
 | `buddy_tidy` | a tidying round now ([items.md §3](items.md#3-tidying)) |
 | `buddy_sell` | a selling run now ([items.md §4](items.md#4-selling-trash-boxes)) |
 | `buddy_play` | a play session now ([items.md §5](items.md#5-idle-play)) |
+| `buddy_fetchsuit` | fetch a suit left on the docked station now ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) |
 | `buddy_hide` | hide now, until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
 
 A parked buddy (undocked station, or aboard during a spacewalk) is inactive, so nothing here runs.

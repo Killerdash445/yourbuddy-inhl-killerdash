@@ -103,7 +103,7 @@ See [behaviour.md §3](behaviour.md#3-the-decider).
 | `StraightEnterMaxDist` | 6 m | the straight walk into the chamber starts within this, and a shut door into it is waited beside |
 | `ClearDistance` / `ClearArrival` | 2.2 m / 1.4 m | the crossing leg walks to this far beyond the opened door, and is through within this of it |
 | `WaitTraceSeconds` | 15 s | the throttled "waits in the airlock" log line |
-| `FetchInterval` / `FetchRetryDelay` / `FetchSkipSeconds` | 30 s / 60 s / 45 s | the suit-fetch errand's schedule |
+| `FetchInterval` / `FetchRetryDelay` / `FetchSkipSeconds` | 120 s / 180 s / 45 s | the suit-fetch errand's schedule |
 
 ### Snacks - `SnackErrand.cs`
 

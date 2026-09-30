@@ -197,6 +197,8 @@ namespace YourBuddy
             if (!suit.gameObject.activeSelf && !ReleaseFromDisplay(suit)) return "the suit is gone";
             if (Suited) return "already wearing one";
 
+            // npc-core:docs/invariants.md#an-item-zone-lists-only-items-in-it
+            NpcItemZones.Leave(suit);
             suit.Enabled = false;
             wornSuit = suit;
             Suited = true;

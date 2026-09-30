@@ -46,6 +46,7 @@ namespace YourBuddy
         public static ConfigEntry<bool> ConfigAutonomy;
         public static ConfigEntry<bool> ConfigTerminals;
         public static ConfigEntry<bool> ConfigEvaSuit;
+        public static ConfigEntry<bool> ConfigSuitFetch;
         public static ConfigEntry<bool> ConfigSnacks;
         public static ConfigEntry<float> ConfigSnackIntervalMinutes;
         public static ConfigEntry<bool> ConfigTidying;
@@ -107,7 +108,11 @@ namespace YourBuddy
                 "with the mod's own EVA skin, and can then be ordered outside - it walks into the docked station's exit " +
                 "airlock and waits for you to cycle it - and back inside the same way. It also suits up by itself when " +
                 "the air aboard turns deadly and no terminal can fix it, and brings a suit you forgot on the docked " +
-                "station back to the ship. 'buddy_outside', 'buddy_inside' and 'buddy_suit' trigger it now. docs/eva.md");
+                "station back to the ship (see SuitFetch). 'buddy_outside', 'buddy_inside' and 'buddy_suit' trigger it now. docs/eva.md");
+            ConfigSuitFetch = Config.Bind("General", "SuitFetch", true,
+                "While you are both aboard and docked, the buddy fetches an EVA suit you left lying on the station and " +
+                "sets it down inside your ship's airlock, until two suits are yours or aboard. Needs EvaSuit. " +
+                "'buddy_fetchsuit' starts a fetch now, whatever this setting says.");
             ConfigSnacks = Config.Bind("General", "Snacks", true,
                 "Now and then the buddy opens a nearby fridge, cabinet, chest or locker and eats or drinks one thing " +
                 "from it, then closes it again. It does not need to eat. Only while it decides for itself, never while " +

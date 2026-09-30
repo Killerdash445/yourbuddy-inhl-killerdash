@@ -14,17 +14,17 @@ namespace YourBuddy
     /// </summary>
     internal sealed class SuitFetchErrand(IErrandBody body, BuddySuit suit) : Errand(body)
     {
-        private const float FetchInterval = 30f;
-        private const float FetchRetryDelay = 60f;
+        private const float FetchInterval = 120f;
+        private const float FetchRetryDelay = 180f;
         private const float FetchSkipSeconds = 45f;
 
         private Suit? target;
 
-        public override bool Enabled => YourBuddyPlugin.ConfigEvaSuit.Value;
+        public override bool Enabled => YourBuddyPlugin.ConfigEvaSuit.Value && YourBuddyPlugin.ConfigSuitFetch.Value;
         public override float Interval => FetchInterval;
         public override float RetryDelay => FetchRetryDelay;
         protected override float SkipSeconds => FetchSkipSeconds;
-        protected override string Command => "buddy_suit";
+        protected override string Command => "buddy_fetchsuit";
 
         /// <summary>
         /// The stranded suits right now: isolated, free, filed on the docked station (by the room it

@@ -38,6 +38,7 @@ namespace YourBuddy
         internal string StartTidyNow() => tidying.StartNow("No tidying: ");
         internal string StartSellNow() => selling.StartNow("No selling: ");
         internal string StartPlayNow() => play.StartNow("No play: ");
+        internal string StartSuitFetchNow() => suitFetch.StartNow("No suit fetch: ");
         internal string StartTerminalNow(string which) => lifeSupport.StartNow(which);
         internal string StartOutsideNow() => suit.StartOutsideNow();
         internal string StartInsideNow() => suit.StartInsideNow();

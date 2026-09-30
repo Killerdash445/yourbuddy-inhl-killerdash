@@ -162,6 +162,11 @@ namespace YourBuddy
         public static string Play(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartPlayNow();
 
         /// <summary>
+        /// Fetching a suit left on the docked station now, for testing: skips the schedule and the SuitFetch setting. docs/eva.md#6-bringing-a-forgotten-suit-home
+        /// </summary>
+        public static string FetchSuit(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartSuitFetchNow();
+
+        /// <summary>
         /// Hiding in a closet now, for testing: skips the fear and the HideInClosets setting. docs/fear.md §6
         /// </summary>
         public static string Hide(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartHideNow();

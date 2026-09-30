@@ -112,6 +112,7 @@ namespace YourBuddy
                 rest.Length < 1
                     ? "Usage: buddy_suit <on|off> [@who] - put a spare suit on, or take the worn one off"
                     : BuddyCommands.Suit(b, rest[0]));
+            commands["buddy_fetchsuit"] = args => ForTargets(args, (b, _) => BuddyCommands.FetchSuit(b));
             commands["buddy_mind"] = args => ForTargets(args, (b, _) => BuddyCommands.Mind(b));
             commands["buddy_bout"] = args => ForTargets(args, (b, _) => BuddyCommands.EndBout(b));
             commands["buddy_terminal"] = args => ForTargets(args, (b, rest) =>

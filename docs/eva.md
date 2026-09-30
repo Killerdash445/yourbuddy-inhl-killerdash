@@ -6,7 +6,8 @@ reach is NPC.Core's `NpcAgent.Reach.cs`; which side of the airlocks the buddy is
 too ([an-airlock-is-crossed-by-its-cycle](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-airlock-is-crossed-by-its-cycle)),
 and the graph keeps an unsuited buddy inside
 ([node types](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/navigation.md#node-types)).
-Config: `EvaSuit` (General, default on). Commands: `buddy_outside`, `buddy_inside`, `buddy_suit`.
+Config: `EvaSuit`, `SuitFetch` (General, default on). Commands: `buddy_outside`, `buddy_inside`, `buddy_suit`,
+`buddy_fetchsuit`.
 
 ---
 
@@ -134,7 +135,8 @@ watcher puts it back and logs `EVA skin was lost` - that line in a capture names
 
 ## 6. Bringing a forgotten suit home
 
-The `SuitFetch` urge, scheduled like tidying and weighed only while the buddy decides for itself:
+The `SuitFetch` urge, scheduled like tidying and weighed only while the buddy decides for itself and
+both `EvaSuit` and `SuitFetch` are on (`buddy_fetchsuit` starts one now, whatever the settings):
 an isolated suit left on the docked station is carried back aboard and set down 1.5 m inside the
 ship's inner airlock door - not in the chamber, whose next cycle would carry it out with you, and not
 at the airlock's own transform, which no node can see (the walk home was refused: `no way back to the
