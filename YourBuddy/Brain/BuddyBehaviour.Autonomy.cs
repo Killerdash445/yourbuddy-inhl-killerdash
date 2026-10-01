@@ -1,3 +1,4 @@
+using NPC.Core.World;
 using NPC.Core;
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
@@ -313,13 +314,13 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD and buddy_mind: why the decider waits, or the bout it is timing and when it looks next.
+        /// For the HUD and buddy_dev mind: why the decider waits, or the bout it is timing and when it looks next.
         /// </summary>
         private string DescribeMind()
         {
             if (!YourBuddyPlugin.ConfigAutonomy.Value) return "autonomy off";
 
-            Player? player = PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             if (player == null || player.Controller == null) return "no player";
 
             string? standDown = StandDownReason(player);
@@ -339,7 +340,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// The [mind] lines, shared by the HUD and buddy_mind. Test commands: buddy_bout, buddy_terminal, buddy_snack, buddy_tidy, buddy_sell, buddy_play, buddy_fetchsuit.
+        /// The [mind] lines, shared by the HUD and buddy_dev mind. Test commands: buddy_dev bout, buddy_order terminal, buddy_order snack, buddy_order tidy, buddy_order sell, buddy_order play, buddy_order fetchsuit.
         /// </summary>
         internal string DescribeTimers() =>
             "Mind: " + DescribeMind() + "\nWhy: " + DescribeUrges() + "\nAir: " + lifeSupport.Describe() +
@@ -367,13 +368,13 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_bout: the bout being timed is over now, so the decider's next look switches Follow and Wander.
+        /// buddy_dev bout: the bout being timed is over now, so the decider's next look switches Follow and Wander.
         /// </summary>
         internal string EndBoutNow()
         {
-            if (!YourBuddyPlugin.ConfigAutonomy.Value) return "Autonomy is off - 'buddy_auto on' first";
+            if (!YourBuddyPlugin.ConfigAutonomy.Value) return "Autonomy is off - 'buddy_manage auto on' first";
 
-            Player? player = PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             if (player == null || player.Controller == null) return "No player";
 
             string? standDown = StandDownReason(player);
@@ -437,12 +438,6 @@ namespace YourBuddy
 
             // A goto is a standing order of yours, not something the buddy chose: it is not an errand.
             return GotoUnderway ? Name + " is walking to a node you sent it to" : null;
-        }
-
-        private static Player? PilotPlayer()
-        {
-            GameManager gm = GameManager.Instance;
-            return gm != null && gm.PlayerShip != null ? gm.PlayerShip.Pilot : null;
         }
     }
 }

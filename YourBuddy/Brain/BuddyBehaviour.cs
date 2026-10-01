@@ -402,14 +402,14 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_list's line: "#2 Buddy 2 * - Follow (tidying up), on ShipyardStation, 4.1 m away".
+        /// buddy_manage list's line: "#2 Buddy 2 * - Follow (tidying up), on ShipyardStation, 4.1 m away".
         /// </summary>
         internal string ListLine(bool focused)
         {
             string state = IsDead ? "dead" : !gameObject.activeInHierarchy ? "parked" : Vanished ? "gone" : Asleep ? "asleep" : mode.ToString();
             if (!IsDead && DescribeReachTask() is { } task) state += " (" + task + ")";
 
-            Player? player = PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             string away = player != null && player.Controller != null
                 ? ", " + Vector3.Distance(transform.position, player.Controller.CachedTransform.position).ToString("0.0") + " m away"
                 : "";

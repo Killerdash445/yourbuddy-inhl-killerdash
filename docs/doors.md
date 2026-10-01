@@ -16,7 +16,7 @@ door and owes no close; it still routes through doors that are open.
 
 ## 2. Password doors
 
-The player gives a code through the [dialog](dialog.md) or `buddy_password`; it goes to NPC.Core
+The player gives a code through the [dialog](dialog.md) or `buddy_order password`; it goes to NPC.Core
 (`NpcDoors.LearnCode`), so every NPC knows it and it is saved with the game
 ([its password doors](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/doors.md#password-doors)).
 The agent then opens that door through its own panel

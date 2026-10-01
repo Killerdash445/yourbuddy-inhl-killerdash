@@ -179,7 +179,7 @@ namespace YourBuddy
             if (origin == null)
             {
                 _armed = false;
-                YourBuddyPlugin.Log.LogWarning($"[mgr] New game: {reason}, and no Shipyard station - no buddy. Use 'spawn_buddy'.");
+                YourBuddyPlugin.Log.LogWarning($"[mgr] New game: {reason}, and no Shipyard station - no buddy. Use 'buddy_manage spawn'.");
                 return;
             }
             if (!origin.gameObject.activeInHierarchy)
@@ -190,7 +190,7 @@ namespace YourBuddy
                     return;
                 }
                 _armed = false;
-                YourBuddyPlugin.Log.LogWarning($"[mgr] New game: {reason}, and '{origin.name}' is not loaded - no buddy. Use 'spawn_buddy'.");
+                YourBuddyPlugin.Log.LogWarning($"[mgr] New game: {reason}, and '{origin.name}' is not loaded - no buddy. Use 'buddy_manage spawn'.");
                 return;
             }
 
@@ -297,7 +297,7 @@ namespace YourBuddy
             BuddyBehaviour? buddy = YourBuddyPlugin.SpawnBuddy(position, rotation);
             if (buddy == null)
             {
-                YourBuddyPlugin.Log.LogWarning("[mgr] New game: the buddy could not be spawned. Use 'spawn_buddy'.");
+                YourBuddyPlugin.Log.LogWarning("[mgr] New game: the buddy could not be spawned. Use 'buddy_manage spawn'.");
                 return null;
             }
             // Parented before its first SlowUpdate: npc-core:docs/invariants.md#an-npc-rides-its-own-floor

@@ -169,7 +169,7 @@ that fails ([fear-owns-the-buddy](invariants.md#fear-owns-the-buddy)).
 
 ## 6. Hiding in a closet or locker
 
-`BuddyBehaviour.Hide.cs`. Config `HideInClosets` (default on), `FleeHideBias`; console `buddy_hide`;
+`BuddyBehaviour.Hide.cs`. Config `HideInClosets` (default on), `FleeHideBias`; console `buddy_order hide`;
 dialog word **Hide**. Two anomalies use the same hide as a prank
 ([anomalies.md](anomalies.md#peekaboo-and-closetambush)).
 
@@ -209,7 +209,7 @@ The nearest qualifying spot wins.
    | Started by | Comes out when |
    |---|---|
    | a flee (`hideFromFear`) | at least `HideMinSeconds` (25 s) inside, Calm, and nothing seen for `HideCalmSeconds` (15 s) |
-   | an order or `buddy_hide` (`hideOrdered`) | **only** on another order, on being found, or a forced leave - no timer |
+   | an order or `buddy_order hide` (`hideOrdered`) | **only** on another order, on being found, or a forced leave - no timer |
 
    A frightened hide never ends while the monster is within `HideMonsterNearDist` (5 m) - it can hear
    it through the walls ([a-hidden-buddy-waits-out-a-monster-it-can-hear](invariants.md#a-hidden-buddy-waits-out-a-monster-it-can-hear)).
@@ -241,10 +241,10 @@ The nearest qualifying spot wins.
 - **Orders end an ordered hide, not a frightened one.** `ApplyOrder`, `ApplyRouteOrder` and
   `RevokeOrder` call `LeaveAnOrderedHide`. A frightened hide defers the order
   ([fear-owns-the-buddy](invariants.md#fear-owns-the-buddy)).
-- **`Fear` off or `ai_disable` ends only a frightened hide.** `buddy_hide` ignores `Fear` going in,
+- **`Fear` off or `ai_disable` ends only a frightened hide.** `buddy_order hide` ignores `Fear` going in,
   so it must not pull the buddy out.
-- **`buddy_hide` works while Alert** - that is when you would ask.
-- **`buddy_hide` interrupts an errand** (logged `Stopped tidying up '…' - you asked me to hide`); a
+- **`buddy_order hide` works while Alert** - that is when you would ask.
+- **`buddy_order hide` interrupts an errand** (logged `Stopped tidying up '…' - you asked me to hide`); a
   goto still refuses ([a-command-outranks-an-errand](invariants.md#a-command-outranks-an-errand)).
 
 ---

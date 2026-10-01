@@ -1,6 +1,5 @@
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
-using Space;
 using UnityEngine;
 
 namespace YourBuddy
@@ -87,7 +86,6 @@ namespace YourBuddy
         /// gravity out there.
         /// </summary>
         void SetOutside(bool outside, string why, float gravity);
-        Player? PilotPlayer();
         /// <summary>
         /// Another buddy's leg or hide holds `what`: docs/invariants.md#one-buddy-per-target
         /// </summary>
@@ -122,7 +120,7 @@ namespace YourBuddy
         /// </summary>
         public float DueAt = -1f;
         /// <summary>
-        /// How the last one went, or why there was none; for the HUD and buddy_mind.
+        /// How the last one went, or why there was none; for the HUD and buddy_dev mind.
         /// </summary>
         protected string? Last;
 
@@ -194,7 +192,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD and buddy_mind.
+        /// For the HUD and buddy_dev mind.
         /// </summary>
         public string Describe()
         {

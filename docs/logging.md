@@ -19,7 +19,7 @@ every NPC mod ([NPC.Core logging](https://github.com/bytenull1/npc-core-inhl/blo
 
 **Use level 2 for navigation bugs.** Level 1 shows the buddy failing, not what it decided.
 
-`buddy_debug on` toggles on-screen debug *visuals*; it does not change log verbosity.
+`buddy_dev visuals on` toggles on-screen debug *visuals*; it does not change log verbosity.
 
 ---
 

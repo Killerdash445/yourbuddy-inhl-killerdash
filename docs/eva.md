@@ -6,8 +6,8 @@ reach is NPC.Core's `NpcAgent.Reach.cs`; which side of the airlocks the buddy is
 too ([an-airlock-is-crossed-by-its-cycle](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-airlock-is-crossed-by-its-cycle)),
 and the graph keeps an unsuited buddy inside
 ([node types](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/navigation.md#node-types)).
-Config: `EvaSuit`, `SuitFetch` (General, default on). Commands: `buddy_outside`, `buddy_inside`, `buddy_suit`,
-`buddy_fetchsuit`.
+Config: `EvaSuit`, `SuitFetch` (General, default on). Commands: `buddy_order outside`, `buddy_order inside`, `buddy_order suit`,
+`buddy_order fetchsuit`.
 
 ---
 
@@ -51,10 +51,10 @@ Wearing mirrors the game's own equip (`BuddySuit.Wear`/`TakeOff`):
   when that room is switched off.
 
 Why the suit is on is kept (`BuddySuit.SuitReason`): **ordered** (the "outside" order, or
-`buddy_suit on`) or **survival** (the deadly-air urge). Only the survival suit comes off by itself.
+`buddy_order suit on`) or **survival** (the deadly-air urge). Only the survival suit comes off by itself.
 Coming back in from outside by any way - your cycle, "inside", pulled aboard, a rescue - turns an
 ordered suit into a survival one: the walk out is over. So only a suit you ordered on inside
-(`buddy_suit on`) waits for "unsuit", or death, or a despawn. The sidecar stores the worn item's
+(`buddy_order suit on`) waits for "unsuit", or death, or a despawn. The sidecar stores the worn item's
 id (`SuitId`), why it is on (`SuitReason`) and the side of the airlocks (`Outside`), so a save
 and load gives all three back - a survival suit loaded aboard in safe air comes off at the watcher's
 next look. A sidecar without a reason restores survival.
@@ -75,7 +75,7 @@ The buddy is inside or outside, and only your cycle moves it across. A shut airl
 planned through, and a wander picks nodes on the buddy's own side. Both orders run an `EvaRun`,
 one crossing each:
 
-| | "outside", "eva", "space walk" (`buddy_outside`) | "inside", "come in", "back in" (`buddy_inside`) |
+| | "outside", "eva", "space walk" (`buddy_order outside`) | "inside", "come in", "back in" (`buddy_order inside`) |
 |---|---|---|
 | airlock | the one you stand in, else the nearest the buddy can walk to: a station's, or the ship's own while undocked | the one you stand in; floating, the nearest chamber; else as going out |
 | first | a spare suit, unless already suited | - |
@@ -129,7 +129,7 @@ watcher sees it breathing safe air again, aboard or on a station, out of any air
 (`BuddySuit.Update`, the terminal's danger bands on `NpcAgent.Air`). Only this survival suit
 comes off by itself; an ordered one waits for "unsuit" ([§2](#2-the-suit-on-the-buddy)).
 
-"Unsuit" / "take the suit off" ([dialog.md](dialog.md)), or `buddy_suit off`, takes the suit off
+"Unsuit" / "take the suit off" ([dialog.md](dialog.md)), or `buddy_order suit off`, takes the suit off
 wherever there is air, whatever its quality. Outside, or standing in an airlock chamber that the
 next cycle may open to space, the buddy refuses and keeps the suit on.
 
@@ -141,7 +141,7 @@ watcher puts it back and logs `EVA skin was lost` - that line in a capture names
 ## 6. Bringing a forgotten suit home
 
 The `SuitFetch` urge, scheduled like tidying and weighed only while the buddy decides for itself and
-both `EvaSuit` and `SuitFetch` are on (`buddy_fetchsuit` starts one now, whatever the settings):
+both `EvaSuit` and `SuitFetch` are on (`buddy_order fetchsuit` starts one now, whatever the settings):
 an isolated suit left on the docked station is carried back aboard and set down 1.5 m inside the
 ship's inner airlock door - not in the chamber, whose next cycle would carry it out with you, and not
 at the airlock's own transform, which no node can see (the walk home was refused: `no way back to the

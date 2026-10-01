@@ -14,7 +14,7 @@ In theory, the mod should reduce anxiety; in practice, after playing alone for a
 
 **The buddy**
 - A companion NPC that uses the player's model.
-- A new game starts with it asleep in the cryo capsule next to yours; it wakes shortly after you step out. In an existing save, `spawn_buddy` brings one in - or several: `spawn_buddy 3`.
+- A new game starts with it asleep in the cryo capsule next to yours; it wakes shortly after you step out. In an existing save, `buddy_manage spawn` brings one in - or several: `buddy_manage spawn 3`.
 - Can be killed by deadly atmospheres or the Breathless, and becomes a ragdoll you can pick up and carry with the Grab key.
 
 **Orders**
@@ -107,18 +107,18 @@ The buddy's settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, secti
 | `Fear` | General | `true` | The buddy reacts to the Breathless: watches it, keeps away from it, runs from it or hides. Off: it ignores the monster (which can still kill it). |
 | `HideInClosets` | General | `true` | A frightened buddy may get into a closet or locker instead of running, shut the doors, and wait there until the Breathless is no longer about. It never uses one you are in. |
 | `FleeHideBias` | General | `0.5` | How readily it hides rather than runs: `0` never, `1` always try. The chance drops while the Breathless can see it - it would watch the buddy climb in - or is too close to beat to the doors, and rises when there is nowhere to run to. |
-| `Autonomy` | General | `true` | The buddy decides for itself whenever no order is in force. Off: it only ever does what it was last told. Also `buddy_auto`. |
+| `Autonomy` | General | `true` | The buddy decides for itself whenever no order is in force. Off: it only ever does what it was last told. Also `buddy_manage auto`. |
 | `OrderPersistence` | General | `UntilRevoked` | `UntilRevoked`: an order holds until you give another one or tell it to decide for itself. `Expires`: it decides for itself again after `OrderExpirySeconds`. A goto always runs to completion. |
 | `OrderExpirySeconds` | General | `90` | How long an order holds under `Expires`. |
 | `Terminals` | General | `true` | When oxygen runs low or it gets too cold or hot aboard and the oxygen generator or climate control is off, a buddy walks over and switches it on - deciding for itself, and even under an order, since deadly air outranks one. When no unit can be switched on, it puts a spare suit on instead (`EvaSuit`). |
 | `EvaSuit` | General | `true` | The buddy can wear a spare isolated space suit (never your only one). Ordered outside, it walks into the docked station's exit airlock and waits for you to cycle it; ordered inside, it comes back the same way. It also suits up by itself when the air aboard turns deadly and no terminal can fix it, and carries a suit you forgot on the station back to the ship (`SuitFetch`). |
-| `SuitFetch` | General | `true` | While docked, a buddy aboard fetches a space suit you left lying on the station and sets it down inside your ship's airlock, until two suits are yours or aboard. Needs `EvaSuit`. `buddy_fetchsuit` starts a fetch now. |
-| `Snacks` | General | `true` | Now and then a buddy deciding for itself eats or drinks something nearby: from a container with food in it, or lying about. Never while you are hungry. `buddy_snack` triggers one now. |
+| `SuitFetch` | General | `true` | While docked, a buddy aboard fetches a space suit you left lying on the station and sets it down inside your ship's airlock, until two suits are yours or aboard. Needs `EvaSuit`. `buddy_order fetchsuit` starts a fetch now. |
+| `Snacks` | General | `true` | Now and then a buddy deciding for itself eats or drinks something nearby: from a container with food in it, or lying about. Never while you are hungry. `buddy_order snack` triggers one now. |
 | `SnackIntervalMinutes` | General | `13` | Roughly how many minutes pass between snacks (25% more or less each time) - tracks how often the player's own satiety needs topping up. |
-| `Tidying` | General | `true` | Now and then a buddy deciding for itself clears the rubbish: two to five pieces in a row, loose or out of a cupboard it closes again, into a trash can. `buddy_tidy` starts a round now. |
+| `Tidying` | General | `true` | Now and then a buddy deciding for itself clears the rubbish: two to five pieces in a row, loose or out of a cupboard it closes again, into a trash can. `buddy_order tidy` starts a round now. |
 | `TidyIntervalMinutes` | General | `5` | Roughly how many minutes pass between tidying rounds (25% more or less each time). |
-| `SellTrash` | General | `true` | When trash boxes have piled up and a sell station is in reach, the buddy carries every one it can to the station, loads them and presses the button once - the money is yours. It only presses when nothing else sellable is in there and nobody is standing inside. `buddy_sell` starts a run now. |
-| `ItemPlay` | General | `true` | Now and then, with nothing better to do, the buddy plays with something loose: carries it across the room, takes it into another room, or throws it about and fetches it back. One to three games in a row. `buddy_play` starts a session now. |
+| `SellTrash` | General | `true` | When trash boxes have piled up and a sell station is in reach, the buddy carries every one it can to the station, loads them and presses the button once - the money is yours. It only presses when nothing else sellable is in there and nobody is standing inside. `buddy_order sell` starts a run now. |
+| `ItemPlay` | General | `true` | Now and then, with nothing better to do, the buddy plays with something loose: carries it across the room, takes it into another room, or throws it about and fetches it back. One to three games in a row. `buddy_order play` starts a session now. |
 | `ItemPlayAnything` | General | `false` | What it may play with. Off: rubbish only. On: any loose object, your tools, food and cells included, which it will throw about like anything else. |
 | `ItemPlayIntervalMinutes` | General | `5` | Roughly how many minutes pass between play sessions (25% more or less each time). |
 | `DebugVisuals` | General | `false` | Draws navigation probes, target markers, and path lines. |
@@ -139,39 +139,61 @@ You can change these values in the config file or via console commands (see belo
 <details>
 <summary>Show all console commands</summary>
 
+Type `buddy` in the console for this list, grouped. Each category is one command; the first word
+after it picks what to do: `buddy_order follow @2`, `buddy_manage spawn 3`. A category alone lists its
+subcommands.
+
+**`buddy_manage`** - spawn, remove and set up buddies
+
+| Subcommand | Arguments | Description |
+|------------|-----------|-------------|
+| `spawn` | `[number]` | Replaces every buddy with one in front of you, or with that many in a row. |
+| `list` | – | Lists the buddies with their numbers and names; `*` marks the one commands go to. |
+| `despawn` | `[@who]` | Despawns a buddy. |
+| `kill` | `[force] [@who]` | Kills a buddy (ragdoll), with an optional forward impulse force (0–100). |
+| `skin` | `<name\|default> [@who]` | Debug: put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
+| `auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
+
+**`buddy_order`** - tell a buddy what to do (the dialog gives the same orders)
+
+| Subcommand | Arguments | Description |
+|------------|-----------|-------------|
+| `follow` | `[@who]` | Switch to follow mode. |
+| `stop` | `[@who]` | Stop current route/wander and follow. |
+| `wander` | `[@who]` | Switch to wander mode (uses nav nodes as points of interest). |
+| `stay` | `[@who]` | Hold position until told otherwise. |
+| `snack` | `[@who]` | Make the buddy get a snack nearby right now (ignores the schedule and the `Snacks` setting). |
+| `tidy` | `[@who]` | Make it clear the rubbish nearby into a trash can right now, several pieces in a row. |
+| `sell` | `[@who]` | Make it take every trash box nearby to a sell station and sell them in one press. |
+| `play` | `[@who]` | Make it go and mess about with something loose right now. |
+| `hide` | `[@who]` | Make it get into a closet or locker now, whatever it is feeling. It stays in there **until you give it another order** - no timer, and the Breathless leaving does not bring it out. |
+| `outside` | `[@who]` | Send the buddy outside: it puts a spare suit on (never your only one), walks into an airlock (a station's, or the ship's own while undocked) and waits for you to cycle it. On the FuelStation's surface it walks; out of the other airlocks it floats and flies after you. An EVA skin is drawn while it wears the suit. |
+| `inside` | `[@who]` | Bring the buddy back in from outside: it walks, or flies, into the airlock you stand in (else the nearest) and waits for you to cycle it. Back inside in breathable air, it takes the suit off by itself. |
+| `suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
+| `fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
+| `terminal` | `<oxygen\|climate> [@who]` | Make the buddy switch that unit on now, whatever the air (for testing; only if it is off and not broken or faulted). |
+| `password` | `<code>` | Tell the buddies a door PIN code - all of them learn it. It is used only on keypads whose own code matches, and is saved with your game. |
+
+**`buddy_anomaly`** `[<kind>|end|roll|list|forget] [@who]` - with no argument, the current state and what this save has had; `list` names every kind and whether it can come now; a kind starts it now (it still says why when it does not fit); `end` stops the running one; `roll` draws one as the mod would; `forget` lets this save have every one again.
+
+**`buddy_dev`** - testing and debugging
+
+| Subcommand | Arguments | Description |
+|------------|-----------|-------------|
+| `goto` | `<node_index> [@who]` | Walk the buddy to a specific nav-graph node (the dialog takes room names instead). |
+| `speed` | `<value> [@who]` | Set movement speed (0.5–10 m/s). |
+| `mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play / Fetch suit lines). |
+| `bout` | `[@who]` | End the current follow or wander stretch now, so the other one weighs full at its next decision (for testing). |
+| `visuals` | `[on/off]` | Toggle debug visuals (path, probes, target markers). |
+| `hud` | `[on/off]` | Toggle status HUD. It shows the buddy commands go to. |
+
+**NPC.Core's** ([its commands](https://github.com/bytenull1/npc-core-inhl#console-commands)): `npc_node`, `npc_gates`,
+`node_editor`, `debug_level`, and:
+
 | Command | Arguments | Description |
 |---------|-----------|-------------|
-| `spawn_buddy` | `[number]` | Replaces every buddy with one in front of you, or with that many in a row. |
-| `buddy_list` | – | Lists the buddies with their numbers and names; `*` marks the one commands go to. |
-| `buddy_despawn` | `[@who]` | Despawns a buddy. |
-| `kill_buddy` | `[force] [@who]` | Kills a buddy (ragdoll), with an optional forward impulse force (0–100). |
-| `buddy_follow` | `[@who]` | Switch to follow mode. |
-| `buddy_wander` | `[@who]` | Switch to wander mode (uses nav nodes as points of interest). |
-| `buddy_stay` | `[@who]` | Hold position until told otherwise. |
-| `buddy_stop` | `[@who]` | Stop current route/wander and follow. |
-| `buddy_goto` | `<node_index> [@who]` | Walk the buddy to a specific nav-graph node (the dialog takes room names instead). |
-| `buddy_snack` | `[@who]` | Make the buddy get a snack nearby right now (ignores the schedule and the `Snacks` setting). |
-| `buddy_tidy` | `[@who]` | Make it clear the rubbish nearby into a trash can right now, several pieces in a row. |
-| `buddy_sell` | `[@who]` | Make it take every trash box nearby to a sell station and sell them in one press. |
-| `buddy_play` | `[@who]` | Make it go and mess about with something loose right now. |
-| `buddy_hide` | `[@who]` | Make it get into a closet or locker now, whatever it is feeling. It stays in there **until you give it another order** - no timer, and the Breathless leaving does not bring it out. |
-| `buddy_mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play / Fetch suit lines). |
-| `buddy_bout` | `[@who]` | End the current follow or wander stretch now, so the other one weighs full at its next decision (for testing). |
-| `buddy_terminal` | `<oxygen\|climate> [@who]` | Make the buddy switch that unit on now, whatever the air (for testing; only if it is off and not broken or faulted). |
-| `buddy_outside` | `[@who]` | Send the buddy outside: it puts a spare suit on (never your only one), walks into an airlock (a station's, or the ship's own while undocked) and waits for you to cycle it. On the FuelStation's surface it walks; out of the other airlocks it floats and flies after you. An EVA skin is drawn while it wears the suit. |
-| `buddy_inside` | `[@who]` | Bring the buddy back in from outside: it walks, or flies, into the airlock you stand in (else the nearest) and waits for you to cycle it. Back inside in breathable air, it takes the suit off by itself. |
-| `buddy_suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
-| `buddy_fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
-| `buddy_anomaly` | `[<kind>\|end\|roll\|list\|forget] [@who]` | Anomalies: with no argument, the current state and what this save has had; `list` names every kind and whether it can come now; a kind starts it now (it still says why when it does not fit); `end` stops the running one; `roll` draws one as the mod would; `forget` lets this save have every one again. |
-| `buddy_auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
-| `buddy_password` | `<code>` | Tell the buddies a door PIN code - all of them learn it. It is used only on keypads whose own code matches, and is saved with your game. |
-| `buddy_speed` | `<value> [@who]` | Set movement speed (0.5–10 m/s). |
-| `buddy_node` / `buddy_gates` | | NPC.Core's `npc_node` and `npc_gates` under their old names ([NPC.Core commands](https://github.com/bytenull1/npc-core-inhl#console-commands)); `node_editor` and `debug_level` are NPC.Core's too. |
 | `ai_disable` | `[buddy\|monster\|all] [on\|off]` | NPC.Core's. Debug: freeze the buddies' AI (every NPC mod's), the Breathless's, or both. Nothing is written to your save, so a reload always clears it. |
 | `ai_notarget` | `[on\|off]` | NPC.Core's. Debug: the Breathless stops noticing **you** - it keeps wandering, and it still hunts the buddy. |
-| `buddy_skin` | `<name\|default> [@who]` | Debug: put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
-| `buddy_debug` | `[on/off]` | Toggle debug visuals (path, probes, target markers). |
-| `buddy_hud` | `[on/off]` | Toggle status HUD. It shows the buddy commands go to. |
 
 </details>
 
@@ -181,11 +203,11 @@ You can change these values in the config file or via console commands (see belo
 
 ### Spawning the Buddy
 
-Start a new game: your buddy sleeps in the cryo capsule next to yours and wakes a few seconds after you step out of your own. In an existing save, open the in‑game console (`~`) and type `spawn_buddy` - the NPC appears a few meters in front of you. Running the command again replaces it.
+Start a new game: your buddy sleeps in the cryo capsule next to yours and wakes a few seconds after you step out of your own. In an existing save, open the in‑game console (`~`) and type `buddy_manage spawn` - the NPC appears a few meters in front of you. Running the command again replaces it.
 
-**More than one.** `spawn_buddy 3` replaces your buddies with three, standing in a row. They are called Buddy, Buddy 2 and Buddy 3, and a save keeps all of them. They walk through each other, share the door codes you give, and never go for the same box, cupboard, sell station or closet. `buddy_list` shows who is who.
+**More than one.** `buddy_manage spawn 3` replaces your buddies with three, standing in a row. They are called Buddy, Buddy 2 and Buddy 3, and a save keeps all of them. They walk through each other, share the door codes you give, and never go for the same box, cupboard, sell station or closet. `buddy_manage list` shows who is who.
 
-**Which one a command means.** Every buddy command takes `@2`, `@buddy2` or `@all` anywhere among its arguments: `buddy_follow @all`, `buddy_goto 12 @3`. Without one, it goes to the buddy you last talked to or named - or, if that one is gone, the nearest. With a single buddy you never need any of this.
+**Which one a command means.** Every buddy command takes `@2`, `@buddy2` or `@all` anywhere among its arguments: `buddy_order follow @all`, `buddy_dev goto 12 @3`. Without one, it goes to the buddy you last talked to or named - or, if that one is gone, the nearest. With a single buddy you never need any of this.
 
 ### Talking to the Buddy
 

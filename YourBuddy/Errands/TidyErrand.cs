@@ -45,7 +45,7 @@ namespace YourBuddy
         public override float Interval => Mathf.Max(TidyMinInterval, YourBuddyPlugin.ConfigTidyIntervalMinutes.Value * 60f);
         public override float RetryDelay => TidyRetryDelay;
         protected override float SkipSeconds => TidySkipSeconds;
-        protected override string Command => "buddy_tidy";
+        protected override string Command => "buddy_order tidy";
 
         private enum TidyPhase { Walk, Handle, Insert }
 

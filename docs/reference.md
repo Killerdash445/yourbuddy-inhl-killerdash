@@ -260,6 +260,7 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `ShadowDoorMin` / `ShadowDoorMax` | 6 / 25 m | Shadow: the door it runs through, this far from you and in your view ([anomalies.md](anomalies.md#shadow)) |
 | `ShadowStartMin` / `ShadowStartMax` | 3 / 10 m | where it starts, this far from that door on your side |
 | `ShadowRouteMax` | 25 m | its run, at most this long |
+| `ShadowDoorwayHalfWidth` | 1.2 m | its path must cross the door's plane this near its middle |
 | `ShadowOpenDist` / `ShadowPastDoor` | 1.2 / 1.5 m | the door opens when it is this near; this far past, it is gone and the door shuts |
 | `ShadowSeenSeconds` / `ShadowNearDist` | 0.8 s / 4 m | seen this long, or seen this near, it is gone |
 | `ShadowRunSeconds` / `ShadowWaitSeconds` | 30 / 120 s | the run gives up; behind the shut door, the most it waits for you to open it |
@@ -304,7 +305,7 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `SpawnSpacing` | 0.8 m | gap between buddies in `spawn_buddy N`'s row |
+| `SpawnSpacing` | 0.8 m | gap between buddies in `buddy_manage spawn N`'s row |
 | `SpawnSameDeck` | 0.5 m | a row point is used only on the middle point's deck, else it falls back to the middle |
 
 ---
@@ -312,18 +313,21 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 ## 2. Debug commands
 
 The graph, gate and editor commands, `debug_level`, `ai_disable` and `ai_notarget` are NPC.Core's
-([its reference](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/reference.md#2-console-commands)); `buddy_node` and `buddy_gates`
-are kept as names for `npc_node` and `npc_gates`, and `ai_disable buddy` still means `ai_disable npc`.
+([its reference](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/reference.md#2-console-commands)); `ai_disable buddy`
+still means `ai_disable npc`.
 
-The full command list is in the [README](../README.md#console-commands-reference). Commands live in
+The full command list is in the [README](../README.md#console-commands-reference); `buddy` prints it in
+game. Each category (`buddy_manage`, `buddy_order`, `buddy_anomaly`, `buddy_dev`) is one console command
+whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why categories: about 30
+flat `buddy_*` names made the console list hard to read. Commands live in
 `BuddyConsole.cs`; order bodies live in `BuddyCommands.cs` so the [dialog](dialog.md) shares them.
-`buddy_goto` calls `FindPath` then `ApplyRouteOrder`, so `NavPath` changes must update it.
+`buddy_dev goto` calls `FindPath` then `ApplyRouteOrder`, so `NavPath` changes must update it.
 
 **Which buddy.** A per-buddy command takes `@2` (a number), `@buddy2` (a name, case and spaces
 ignored) or `@all` anywhere among its arguments (`BuddyConsole.ForTargets`). Without one it goes to
 `BuddyManager.Focus`: the buddy last talked to or named, else the nearest living one. Naming exactly
-one moves the focus, which is also the buddy the HUD shows. `buddy_list` lists numbers and names and
-marks the focus. `spawn_buddy N` replaces every buddy with N.
+one moves the focus, which is also the buddy the HUD shows. `buddy_manage list` lists numbers and names and
+marks the focus. `buddy_manage spawn N` replaces every buddy with N.
 
 **`ai_notarget` leaves the buddy huntable.** Its catch is the agent's own `BreathlessCheck`, which only
 `ai_disable` stops; `CatchRoutine` restores the aggressor flag it borrowed only while

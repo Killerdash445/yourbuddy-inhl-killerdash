@@ -135,7 +135,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Where a route ends up: the order in force (buddy_snack runs under one), else Follow.
+        /// Where a route ends up: the order in force (buddy_order snack runs under one), else Follow.
         /// </summary>
         private BuddyMode ModeAfterTask => orderedMode is { } order && order != BuddyMode.Route && OrderInForce ? order : BuddyMode.Follow;
 

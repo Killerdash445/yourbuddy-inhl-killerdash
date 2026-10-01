@@ -72,7 +72,7 @@ namespace YourBuddy
 
         /// <summary>
         /// The survival suit-up: a suit on, then normal life aboard until the air is safe again.
-        /// `ordered` marks an explicit player command (`buddy_suit on`), which yields the
+        /// `ordered` marks an explicit player command (`buddy_order suit on`), which yields the
         /// only-suit count rule and keeps the suit on afterwards. False with a throttled trace
         /// when no spare is takeable.
         /// </summary>

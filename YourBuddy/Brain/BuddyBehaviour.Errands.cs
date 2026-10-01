@@ -1,6 +1,5 @@
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
-using Space;
 using UnityEngine;
 
 namespace YourBuddy
@@ -157,7 +156,6 @@ namespace YourBuddy
         bool IErrandBody.Floating => agent.Floating;
         Vector3 IErrandBody.FlyTo(Vector3 point, float arrival, out bool wantMove) => agent.FlyTo(point, arrival, out wantMove);
         void IErrandBody.SetOutside(bool outside, string why, float gravity) => agent.SetOutside(outside, why, gravity);
-        Player? IErrandBody.PilotPlayer() => PilotPlayer();
         bool IErrandBody.TakenByAnother(Transform what) => BuddyManager.TakenByAnother(what, this);
         bool IErrandBody.AnotherBuddyWhere(System.Func<Vector3, bool> test) => BuddyManager.AnotherBuddyWhere(test, this);
         bool IErrandBody.IsAboardPlayerShip() => agent.IsAboardPlayerShip();

@@ -19,7 +19,7 @@ Console and dialog both go through `BuddyCommands`. `SetMode` and `StartRoute` a
 
 An order ends when it is:
 
-- **revoked** - "decide for yourself" or `buddy_auto on`;
+- **revoked** - "decide for yourself" or `buddy_manage auto on`;
 - **expired** - `OrderPersistence = Expires`, after `OrderExpirySeconds`, only while autonomy is on;
 - **a goto that arrived** (`FinishRoute`), or one a flee interrupted and that can no longer be
   planned (`EndFlee`);
@@ -42,7 +42,7 @@ Neither order nor mode is saved. A loaded buddy starts in Follow with no order.
 | `UntilRevoked` | until another order, or "decide for yourself" | **yes** |
 | `Expires` | `OrderExpirySeconds` (at least 5 s), then the decider takes over | |
 
-`Autonomy = false`: the buddy never decides; it keeps its last order, or Follow. `buddy_auto on`
+`Autonomy = false`: the buddy never decides; it keeps its last order, or Follow. `buddy_manage auto on`
 also revokes the current order, or switching it on would visibly do nothing.
 
 ---
@@ -169,7 +169,7 @@ Within a task, the nearest three candidates are shuffled (`ShuffleNearest`, `Pic
 
 ### Watching and nudging it
 
-The HUD's `Mind`, `Why`, `Air`, `Snack`, `Tidy`, `Sell` and `Play` lines (also `buddy_mind`):
+The HUD's `Mind`, `Why`, `Air`, `Snack`, `Tidy`, `Sell` and `Play` lines (also `buddy_dev mind`):
 
 ```
 Mind: Follow 12s of 34, Wander weighed from 24s; next look in 2s
@@ -183,14 +183,14 @@ Test commands (each says why when it refuses; all work under an order and return
 
 | Command | Does |
 |---|---|
-| `buddy_bout` | ends the current bout; the other mode weighs full at the next look |
-| `buddy_terminal <oxygen\|climate>` | switch that unit on now, if [allowed](invariants.md#a-terminal-is-only-switched-on) |
-| `buddy_snack` | a snack now ([snacks.md](snacks.md)) |
-| `buddy_tidy` | a tidying round now ([items.md §3](items.md#3-tidying)) |
-| `buddy_sell` | a selling run now ([items.md §4](items.md#4-selling-trash-boxes)) |
-| `buddy_play` | a play session now ([items.md §5](items.md#5-idle-play)) |
-| `buddy_fetchsuit` | fetch a suit left on the docked station now ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) |
-| `buddy_hide` | hide now, until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
+| `buddy_dev bout` | ends the current bout; the other mode weighs full at the next look |
+| `buddy_order terminal <oxygen\|climate>` | switch that unit on now, if [allowed](invariants.md#a-terminal-is-only-switched-on) |
+| `buddy_order snack` | a snack now ([snacks.md](snacks.md)) |
+| `buddy_order tidy` | a tidying round now ([items.md §3](items.md#3-tidying)) |
+| `buddy_order sell` | a selling run now ([items.md §4](items.md#4-selling-trash-boxes)) |
+| `buddy_order play` | a play session now ([items.md §5](items.md#5-idle-play)) |
+| `buddy_order fetchsuit` | fetch a suit left on the docked station now ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) |
+| `buddy_order hide` | hide now, until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
 
 A parked buddy (undocked station, or aboard during a spacewalk) is inactive, so nothing here runs.
 
@@ -230,7 +230,7 @@ and `EndFlee` cancel the step-off themselves (`CancelStepOff`).
 | Say | Console | Effect |
 |---|---|---|
 | decide / yourself / your call | - | `BuddyCommands.DecideForYourself` → `RevokeOrder`; refuses while `Autonomy` is off |
-| - | `buddy_auto [on\|off]` | sets `Autonomy`; `on` also revokes |
+| - | `buddy_manage auto [on\|off]` | sets `Autonomy`; `on` also revokes |
 
 "Decide" is matched **before** Follow, so "decide for yourself whether to follow" is not a follow
 order. Other words: [dialog.md §3](dialog.md#3-the-orders).
@@ -264,7 +264,7 @@ A `Chose` with no `Decided:` after it, then another `Chose`, is an impossible ur
 level-2 line between says why.
 
 HUD `Orders:` appears only while an order stands: `Stay, until revoked`, `Follow, 42s left`, or
-`Goto, until it arrives`. `buddy_mind` and the HUD leave out what another line already says: a stand-down
+`Goto, until it arrives`. `buddy_dev mind` and the HUD leave out what another line already says: a stand-down
 for the task shown in `Mode:` or for the order in force has no `Mind:` line, and `Why:` (the scored urges)
 is dropped while the decider is standing down.
 

@@ -279,6 +279,10 @@ covers its glass, so a hit within the pane is let through. It starts at a ground
 `ShadowRouteMax` (25 m), at the buddy's flee speed. Node markers hover over their decks, so the path's
 own floor heights carry it.
 
+"Through the doorway" means a leg of the path crosses the door's plane within `ShadowDoorwayHalfWidth`
+(1.2 m) of its middle. Why not a waypoint near the door: station nodes sit 1.3-2 m either side of most doors
+(every Oxygen door), so no waypoint comes that close. A refusal names, per door, which step failed.
+
 | Step | What happens | Next |
 |---|---|---|
 | running | along the path; a shut door opens when it is `ShadowOpenDist` (1.2 m) off, and it waits for it to open fully | `ShadowPastDoor` (1.5 m) past the doorway |

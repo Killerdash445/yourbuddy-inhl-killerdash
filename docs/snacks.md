@@ -3,8 +3,8 @@
 `SnackErrand.cs`, walking into reach on NPC.Core's `NpcAgent.Reach.cs`. Config (General): `Snacks`
 (default on), `SnackIntervalMinutes` (13 - the player's own satiety drains from a full stomach to the
 game's Hunger threshold in about that long,
-[NPC.Core's game-model.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/game-model.md#atmosphere-kills-by-the-players-rule)). Console: `buddy_snack` (one
-now), `buddy_mind` (the timer). Dialog: "snack" / "eat" / "food" / "hungry"
+[NPC.Core's game-model.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/game-model.md#atmosphere-kills-by-the-players-rule)). Console: `buddy_order snack` (one
+now), `buddy_dev mind` (the timer). Dialog: "snack" / "eat" / "food" / "hungry"
 ([dialog.md §3](dialog.md#3-the-orders)).
 
 ---
@@ -65,7 +65,7 @@ doors it opened, unless the player has climbed into that hiding spot since
 ([a-snack-closes-what-it-opened](invariants.md#a-snack-closes-what-it-opened)). A buddy that dies
 mid-snack leaves them open.
 
-`buddy_snack` skips the schedule, the `Snacks` setting and any order in force (the Route then returns
+`buddy_order snack` skips the schedule, the `Snacks` setting and any order in force (the Route then returns
 to that order). It refuses while asleep, scared, busy or on a goto, and when the player is hungry.
 
 ---

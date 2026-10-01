@@ -427,7 +427,7 @@ namespace YourBuddy
         };
 
         /// <summary>
-        /// The scored table, for the HUD's Why line, buddy_mind and the level-2 trace. Built from the
+        /// The scored table, for the HUD's Why line, buddy_dev mind and the level-2 trace. Built from the
         /// already sorted list, so the order is the ranking.
         /// </summary>
         private void BuildUrgeReport()
@@ -453,7 +453,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD and buddy_mind.
+        /// For the HUD and buddy_dev mind.
         /// </summary>
         internal string DescribeUrges() => urgeReport;
     }

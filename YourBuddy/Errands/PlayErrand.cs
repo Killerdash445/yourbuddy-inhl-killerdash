@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NPC.Core.World;
 using NPC.Core;
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
@@ -103,7 +104,7 @@ namespace YourBuddy
         public override float Interval => Mathf.Max(PlayMinInterval, YourBuddyPlugin.ConfigItemPlayIntervalMinutes.Value * 60f);
         public override float RetryDelay => PlayRetryDelay;
         protected override float SkipSeconds => PlaySkipSeconds;
-        protected override string Command => "buddy_play";
+        protected override string Command => "buddy_order play";
 
         private enum PlayKind { CarryNear, CarryFar, Throw }
 
@@ -633,7 +634,7 @@ namespace YourBuddy
         private Vector3 ThrowDirection()
         {
             Vector3 toPlayer = Vector3.zero;
-            Player? player = Body.PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             if (player != null && player.Controller != null)
             {
                 toPlayer = player.Controller.CachedTransform.position - Here;

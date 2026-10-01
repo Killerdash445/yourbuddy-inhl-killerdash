@@ -24,7 +24,7 @@ namespace YourBuddy
         public override float Interval => FetchInterval;
         public override float RetryDelay => FetchRetryDelay;
         protected override float SkipSeconds => FetchSkipSeconds;
-        protected override string Command => "buddy_fetchsuit";
+        protected override string Command => "buddy_order fetchsuit";
 
         /// <summary>
         /// The stranded suits right now: isolated, free, filed on the docked station (by the room it
@@ -52,7 +52,7 @@ namespace YourBuddy
                 return 0;
             }
 
-            Player? pilot = Body.PilotPlayer();
+            Player? pilot = NpcPlayer.Pilot;
             Vector3 playerPos = pilot != null && pilot.Controller != null
                 ? pilot.Controller.CachedTransform.position
                 : Vector3.zero;

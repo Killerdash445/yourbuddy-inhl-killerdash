@@ -146,7 +146,7 @@ pre-empts today (`BusyForCommand(whileAlert: true, preemptErrand: true)`).
 **Rule.** A suit the buddy takes is an enabled, ungrabbed, isolated `Suit` item - lying free in the
 world, or displayed in a locker (`EquipmentHolder.Item`, released through its own `TryDropItem`) -
 and it is taken only while you wear a suit yourself (then anything free is a spare), while two or
-more are free, or while you explicitly ordered the run (`buddy_outside`, `buddy_suit on`): you are
+more are free, or while you explicitly ordered the run (`buddy_order outside`, `buddy_order suit on`): you are
 right there and consented. The rule is checked when the suit is chosen and again at the suit, right
 before it is worn.
 

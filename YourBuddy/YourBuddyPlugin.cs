@@ -76,7 +76,7 @@ namespace YourBuddy
             ConfigNativeSpawn = Config.Bind("General", "SpawnOnNewGame", true,
                 "Start every new game with a buddy: it wakes in a closed cryo capsule next to yours, which opens, " +
                 "or stands at the Shipyard station's origin when no capsule can be opened. " +
-                "Off: no buddy until 'spawn_buddy'. Loaded saves always bring back their own buddy, or none.");
+                "Off: no buddy until 'buddy_manage spawn'. Loaded saves always bring back their own buddy, or none.");
             ConfigWakeAfterPodOpen = Config.Bind("General", "WakeAfterPodOpenSeconds", 10f,
                 "SpawnOnNewGame: seconds after your own pod starts opening before the buddy's capsule opens " +
                 "(also after loading a save made while it slept).");
@@ -88,9 +88,9 @@ namespace YourBuddy
             ConfigAutoDoors = Config.Bind("General", "AutoDoors", true,
                 "Allow the buddy to open room doors (Gate type) in front of it. Cabinet doors and airlocks are never touched.");
             ConfigDebugVisuals = Config.Bind("General", "DebugVisuals", false,
-                "Draw the buddy's target, planned path and obstacle probes in the world. Can also be toggled with 'buddy_debug'.");
+                "Draw the buddy's target, planned path and obstacle probes in the world. Can also be toggled with 'buddy_dev visuals'.");
             ConfigShowHud = Config.Bind("General", "ShowHud", false,
-                "Display an on-screen status panel (mode, room, environment, threat, target) while a buddy exists. Toggle with 'buddy_hud'.");
+                "Display an on-screen status panel (mode, room, environment, threat, target) while a buddy exists. Toggle with 'buddy_dev hud'.");
             ConfigDialog = Config.Bind("General", "Dialog", true,
                 "Look at the buddy and press Interact to open a window where you can give it orders " +
                 "(follow, do its own thing, stay, walk to a node) and tell it a door password.");
@@ -101,7 +101,7 @@ namespace YourBuddy
             ConfigAutonomy = Config.Bind("General", "Autonomy", true,
                 "Whether the buddy ever decides for itself. With no order in force it takes turns: it follows you " +
                 "for a while, then wanders around on its own, then comes back to you. " +
-                "Tell it 'decide for yourself' (or 'buddy_auto on') to hand control back after an order.");
+                "Tell it 'decide for yourself' (or 'buddy_manage auto on') to hand control back after an order.");
             ConfigTerminals = Config.Bind("General", "Terminals", true,
                 "When the air aboard turns dangerous (low oxygen, too cold or too hot) and the oxygen generator or " +
                 "climate control is switched off, the buddy walks over and switches it on - even under an order, since " +
@@ -111,15 +111,15 @@ namespace YourBuddy
                 "with the mod's own EVA skin, and can then be ordered outside - it walks into the docked station's exit " +
                 "airlock and waits for you to cycle it - and back inside the same way. It also suits up by itself when " +
                 "the air aboard turns deadly and no terminal can fix it, and brings a suit you forgot on the docked " +
-                "station back to the ship (see SuitFetch). 'buddy_outside', 'buddy_inside' and 'buddy_suit' trigger it now. docs/eva.md");
+                "station back to the ship (see SuitFetch). 'buddy_order outside', 'buddy_order inside' and 'buddy_order suit' trigger it now. docs/eva.md");
             ConfigSuitFetch = Config.Bind("General", "SuitFetch", true,
                 "While you are both aboard and docked, the buddy fetches an EVA suit you left lying on the station and " +
                 "sets it down inside your ship's airlock, until two suits are yours or aboard. Needs EvaSuit. " +
-                "'buddy_fetchsuit' starts a fetch now, whatever this setting says.");
+                "'buddy_order fetchsuit' starts a fetch now, whatever this setting says.");
             ConfigSnacks = Config.Bind("General", "Snacks", true,
                 "Now and then the buddy opens a nearby fridge, cabinet, chest or locker and eats or drinks one thing " +
                 "from it, then closes it again. It does not need to eat. Only while it decides for itself, never while " +
-                "you are hungry, and never at a hiding spot you are in. 'buddy_snack' triggers one now.");
+                "you are hungry, and never at a hiding spot you are in. 'buddy_order snack' triggers one now.");
             ConfigSnackIntervalMinutes = Config.Bind("General", "SnackIntervalMinutes", 13f,
                 "Roughly how many minutes pass between snacks (each time 25% more or less at random; at least 1). " +
                 "13 tracks how often the player themselves needs to eat: satiety drains 1/tick (~1.02s) and the game's " +
@@ -128,18 +128,18 @@ namespace YourBuddy
             ConfigTidying = Config.Bind("General", "Tidying", true,
                 "Now and then the buddy picks up a piece of trash (an empty wrapper or can, never anything still useful) " +
                 "lying about or from a fridge, cabinet, chest or locker it closes again, and carries it to a trash can within 25m. Only while it decides " +
-                "for itself. 'buddy_tidy' triggers it now.");
+                "for itself. 'buddy_order tidy' triggers it now.");
             ConfigTidyIntervalMinutes = Config.Bind("General", "TidyIntervalMinutes", 5f,
                 "Roughly how many minutes pass between tidying rounds (each time 25% more or less at random; at least 1).");
             ConfigSellTrash = Config.Bind("General", "SellTrash", true,
                 "When a full trash can has dropped a trash box and a sell station is within reach, the buddy carries the " +
                 "box there, loads it and presses the button; the money is yours. It only presses when the station holds " +
                 "nothing sellable but trash boxes and nobody stands inside. Only while it decides for itself. " +
-                "'buddy_sell' triggers it now.");
+                "'buddy_order sell' triggers it now.");
             ConfigHideInClosets = Config.Bind("General", "HideInClosets", true,
                 "When the buddy flees the Breathless and a closet or locker is within 8m, it hides inside instead of " +
                 "running across the ship: it opens the doors, gets in, closes them, and comes out once it is calm again " +
-                "or someone opens a door. It never uses a spot you are in. 'buddy_hide' tries one now.");
+                "or someone opens a door. It never uses a spot you are in. 'buddy_order hide' tries one now.");
             ConfigFleeHideBias = Config.Bind("General", "FleeHideBias", 0.5f,
                 "How readily a frightened buddy hides rather than runs, 0 (never hide) to 1 (always try). " +
                 "The chance is lowered when the Breathless can see it - it would watch the buddy climb in - " +
@@ -149,7 +149,7 @@ namespace YourBuddy
                 "Now and then, with nothing else to do, the buddy plays with something loose within 8m: it either carries " +
                 "it a few metres and puts it down, or throws it across the room, at random. Never anything in a container, " +
                 "a machine or your hands, and it never throws at you. Only while it decides for itself. " +
-                "'buddy_play' triggers it now.");
+                "'buddy_order play' triggers it now.");
             ConfigItemPlayAnything = Config.Bind("General", "ItemPlayAnything", false,
                 "What the buddy may play with. Off: garbage only - wrappers, cans, empty seed packs, broken loot boxes. " +
                 "On: any loose item it finds, your tools, food and cells included, which it will throw about like anything else.");

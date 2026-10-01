@@ -88,7 +88,7 @@ namespace YourBuddy
         // A walk that did not work out is worth trying again; only a structural failure (no node
         // with a clear walk) earns the long skip that TryStart and StartLeg hand out.
         protected override float DeferSkipSeconds => SellRetrySeconds;
-        protected override string Command => "buddy_sell";
+        protected override string Command => "buddy_order sell";
         protected override string NextLabel => "next look in";
 
         private enum SellLeg { Box, Load, Button }
@@ -394,7 +394,7 @@ namespace YourBuddy
         /// </summary>
         public override bool TryStart(out string report)
         {
-            if (Body.PilotPlayer() == null)
+            if (NpcPlayer.Pilot == null)
             {
                 report = "there is nobody to pay";
                 return Failed(report);
@@ -899,7 +899,7 @@ namespace YourBuddy
         private void PressButton(SellTask task)
         {
             SellStationParts parts = task.Parts;
-            Player? player = Body.PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             if (player == null)
             {
                 End(task, "there is nobody to pay - the trash box stays loaded", 0f);
@@ -974,7 +974,7 @@ namespace YourBuddy
             }
             if (sold > 0 && sold == run.Loaded.Count)
             {
-                Player? player = Body.PilotPlayer();
+                Player? player = NpcPlayer.Pilot;
                 int earned = player != null ? player.CashSystem.Cash - run.CashBefore : 0;
                 DueAt = Time.time + SellCheckInterval;
                 string result = $"sold {SellRun.Count(sold)} for {earned}";
@@ -1067,7 +1067,7 @@ namespace YourBuddy
             string box = worst != null && ColliderBounds(worst.gameObject, out Bounds bounds)
                 ? $"box {bounds.center - zone.center:0.00} half {bounds.extents:0.00}"
                 : "box unmeasured";
-            Player? player = Body.PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             string you = player != null && task.Parts.CatchZone != null && task.Parts.CatchZone.GetPlayerInZone() == player
                 ? ", you inside"
                 : "";

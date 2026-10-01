@@ -4,7 +4,7 @@
 (idle play), with the shared item rules in `Items.cs`. Holding an item and the walk into reach are
 NPC.Core's agent: `NpcHands` and `NpcAgent.Reach.cs` ([its agent.md §6-7](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md#6-walking-into-reach)).
 Config (General): `Tidying`, `TidyIntervalMinutes` (5), `SellTrash`, `ItemPlay`, `ItemPlayAnything`
-(off), `ItemPlayIntervalMinutes` (5). Console: `buddy_tidy`, `buddy_sell`, `buddy_play`, `buddy_mind`.
+(off), `ItemPlayIntervalMinutes` (5). Console: `buddy_order tidy`, `buddy_order sell`, `buddy_order play`, `buddy_dev mind`.
 
 ---
 
@@ -93,7 +93,7 @@ From the decider, as the `Tidy` urge; the amount of trash nearby raises its scor
 **Why the item is held in the slot, not tossed:** a released toss never reliably went in. Touching
 the trigger while holding the item, as the player does, needs no release inside the can.
 
-A flee ends tidying like a snack; the item is put down. `buddy_tidy` and the dialog's **Tidy** start
+A flee ends tidying like a snack; the item is put down. `buddy_order tidy` and the dialog's **Tidy** start
 a round now, skipping schedule, setting and order.
 
 ---
@@ -200,7 +200,7 @@ inside a pen that can't get closer to a target outside it for 3 s is teleported 
 the agent's `EmergencyUnstick` (`[ai] Penned in a sell station's fences … - climbing out`), never into another
 pen. The fence colliders are never touched.
 
-A flee or order ends the run: a box in hand is put down, loaded boxes stay. `buddy_sell` and the
+A flee or order ends the run: a box in hand is put down, loaded boxes stay. `buddy_order sell` and the
 dialog's **Sell** start a run now, skipping schedule, setting and order.
 
 ---
@@ -239,7 +239,7 @@ offer.
 5. The walk to the item is tidying's leg one.
 
 A flee, order or save puts a held item down (§2). Nothing is ever thrown at the Breathless or the
-player. `buddy_play` and the dialog's **Play** start a session now.
+player. `buddy_order play` and the dialog's **Play** start a session now.
 
 ---
 

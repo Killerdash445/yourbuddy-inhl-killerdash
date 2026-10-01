@@ -12,7 +12,7 @@ body:
     id: what
     attributes:
       label: What happened, and where
-      description: Station or ship, room, and what the buddy was doing (following, tidying, fleeing...). A screenshot with `buddy_hud on` helps a lot.
+      description: Station or ship, room, and what the buddy was doing (following, tidying, fleeing...). A screenshot with `buddy_dev hud on` helps a lot.
     validations:
       required: true
 

@@ -120,7 +120,7 @@ namespace YourBuddy
             if (Deaf(buddy) is { } dead) return dead;
             if (!YourBuddyPlugin.ConfigAutonomy.Value)
             {
-                return "Autonomy is switched off - 'buddy_auto on', or the Autonomy config setting";
+                return "Autonomy is switched off - 'buddy_manage auto on', or the Autonomy config setting";
             }
             buddy.RevokeOrder();
             return buddy.Name + " decides for itself now";
@@ -217,7 +217,7 @@ namespace YourBuddy
         public static string GoInside(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartInsideNow();
 
         /// <summary>
-        /// buddy_suit on|off: wear a spare suit now, or take the worn one off. docs/eva.md
+        /// buddy_order suit on|off: wear a spare suit now, or take the worn one off. docs/eva.md
         /// </summary>
         public static string Suit(BuddyBehaviour buddy, string onOff) => Dead(buddy) ?? buddy.SuitNow(onOff);
 

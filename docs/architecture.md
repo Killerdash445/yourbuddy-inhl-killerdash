@@ -17,17 +17,27 @@ the buddy through a few `internal` members, never its fields.
 
 ## 1. Module map
 
+| Folder | What is in it |
+|---|---|
+| `YourBuddy/` | `YourBuddyPlugin.cs`, the entry point |
+| `Core/` | the buddies' list and save, spawning, skins, settings, `GameInternals` |
+| `Brain/` | `BuddyBehaviour` and its partials, but for the anomalies |
+| `Anomalies/` | the director, the catalogue, and `BuddyBehaviour.Anomaly.*.cs`: one partial per set piece |
+| `Errands/` | the errand base, each errand, and the item rules they share |
+| `Eva/` | the suit and the airlock run |
+| `Commands/` | the console, the shared order bodies and the talk window |
+
 | File | Owns | Talks to | Doc |
 |---|---|---|---|
 | `YourBuddyPlugin.cs` | BepInEx entry (depends on NPC.Core), config, `Log`, NPC.Core wiring (events, sidecar, room keeper), `SpawnBuddy` (one more buddy: clones the player prefab, strips components, shrinks the controller to 0.22 m, attaches the brain and NPC.Core's `NpcAgent`, registers the agent and its conversation) | `BuddyManager`, `GameInternals` | [game-model](game-model.md) |
 | `BuddyAgentSettings.cs` | the agent's `NpcAgentSettings`, read live from the config | - | [NPC.Core agent](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md#1-attaching-an-agent) |
-| `BuddyConsole.cs` | every buddy console command, registered through `NpcConsole`; `@2` / `@name` / `@all` targeting | `BuddyCommands`, `BuddyManager` | [reference](reference.md#2-debug-commands) |
+| `BuddyConsole.cs` | the console: `buddy` (help) and one command per category with subcommands, registered through `NpcConsole`; `@2` / `@name` / `@all` targeting | `BuddyCommands`, `BuddyManager` | [reference](reference.md#2-debug-commands) |
 | `BuddyManager.cs` | the buddies: their list (`All`; their agents are in `NpcRegistry`), `Focus`, numbers and names; `Tick` (on `NpcEvents.Tick`), the `.buddy` sidecar's contents and the restore after a load | `BuddyBehaviour`, `NpcRegistry`, `NpcSaves`, `NpcVessels` | §5 |
 | `BuddyBehaviour.cs` | brain state shared across partials, `Init`, the `INpcBrain` hooks, the HUD box and text, `ListLine` | `NpcAgent` | [NPC.Core agent](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/agent.md#3-the-brain) |
 | `BuddyBehaviour.Modes.cs` | `UpdateFollow` (on the agent's `Pursue`), `UpdateRoute` (on `SimpleAdvance`), `FinishRoute`, `StartRoute`, `SetMode`, the reach task in hand | `NpcAgent` | [behaviour](behaviour.md) |
 | `BuddyBehaviour.Fear.cs` | seeing the Breathless, stress, `FearState`, `HoldBackFromMonster`, the `Flee` mode | `NavProbe`, `NavGraph`, `GameInternals` | [fear](fear.md) |
 | `BuddyBehaviour.Hide.cs` | hiding in a closet or locker: walk, teleport in/out, doors, who ends it | `NpcAgent` | [fear](fear.md) |
-| `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: each kind's start conditions, vanishing, the stare walk, holds while watched, `EndAnomaly`, `Speak` | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
+| `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: starting one (`TryStartAnomaly`), the per-frame update, holds while watched, `EndAnomaly`, `Speak`; each set piece's own fields, constants and steps are in `BuddyBehaviour.Anomaly.<Name>.cs` (Shadow, Sleeper, Shipyard, Doors, Stare, Vanish, Pipe, Move, Flicker) | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
 | `AnomalyDirector.cs` | when an anomaly happens and how far it may go: difficulty, the game's event tier, the roll, cooldown, the draw; the player's stress | `BuddyBehaviour`, `GameManager.EventSystem` | [anomalies](anomalies.md#1-how-often-and-how-far) |
 | `Anomaly.cs`, `AnomalyLines.cs` | the catalogue (`AnomalyKind`, severity, weight, once only) and what the buddy says | - | [anomalies](anomalies.md#2-the-anomalies) |
 | `AnomalyMemory.cs` | the kinds a save has had and the lines said, kept in the sidecar | `BuddySaveFile` | [anomalies](anomalies.md#once-per-save) |
@@ -165,7 +175,7 @@ NPC.Core deletes sidecars with their save and sweeps orphans
 Three ways in, all through `YourBuddyPlugin.SpawnBuddy`, which adds one buddy to `BuddyManager.All`
 (no cap):
 
-- `spawn_buddy [N]`, which despawns every buddy first and spawns N in a row;
+- `buddy_manage spawn [N]`, which despawns every buddy first and spawns N in a row;
 - a save's sidecar (`BuddyManager.Tick`), every buddy it holds;
 - **a new game** (`SpawnOnNewGame`): the buddy spawns **asleep** (the agent's `Asleep`: no AI, no slow
   phases, no dialog) in the nearest shut prop capsule beside the player's pod, or at the Shipyard's

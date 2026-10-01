@@ -8,7 +8,7 @@ namespace YourBuddy
 {
     /// <summary>
     /// Swaps the texture on a buddy's body with a PNG from the "skins" folder next to the plugin dll,
-    /// and puts the original back. Debug tool behind buddy_skin. docs/reference.md#2-debug-commands
+    /// and puts the original back. Debug tool behind buddy_manage skin. docs/reference.md#2-debug-commands
     /// </summary>
     internal static class BuddySkin
     {

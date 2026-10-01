@@ -47,20 +47,20 @@ is a goto that names a room, which is tried right after "decide" ("go to the wor
 
 | Word | Console | Effect |
 |---|---|---|
-| decide / yourself / your call | `buddy_auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
-| unsuit / take off the suit / remove the suit | `buddy_suit off` | take the worn suit off - never outside or in an airlock ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)); before the airlock orders |
-| inside / come in / back in | `buddy_inside` | from outside, walk into an airlock's chamber and wait for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the outside order |
-| outside / eva / space walk | `buddy_outside` | suit up if a spare is free, then wait in an airlock (a station's, or the ship's own while undocked) for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |
-| hide / closet / locker / conceal | `buddy_hide` | hide and stay until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
-| follow / come | `buddy_follow` | `ApplyOrder(Follow)` |
-| wander / job | `buddy_wander` | `ApplyOrder(Wander)` |
-| stay / wait / stop | `buddy_stay` | `ApplyOrder(Stay)` |
-| sell / trash box / money / cash | `buddy_sell` | sell nearby trash boxes ([items.md §4](items.md#4-selling-trash-boxes)); before tidy |
-| tidy / clean / trash / rubbish / garbage / litter / bin | `buddy_tidy` | a tidying round ([items.md §3](items.md#3-tidying)) |
-| play / toy | `buddy_play` | a play session ([items.md §5](items.md#5-idle-play)) |
-| snack / eat / food / hungry | `buddy_snack` | eat or drink something nearby ([snacks.md](snacks.md)) |
-| goto *room* | `buddy_goto <i>` (a node, not a room) | `FindPath` + `ApplyRouteOrder` ([below](#goto-by-room)) |
-| password *nnnn* | `buddy_password <code>` | adds the code to the codes every NPC knows ([NPC.Core's password doors](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/doors.md#password-doors)) |
+| decide / yourself / your call | `buddy_manage auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
+| unsuit / take off the suit / remove the suit | `buddy_order suit off` | take the worn suit off - never outside or in an airlock ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)); before the airlock orders |
+| inside / come in / back in | `buddy_order inside` | from outside, walk into an airlock's chamber and wait for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the outside order |
+| outside / eva / space walk | `buddy_order outside` | suit up if a spare is free, then wait in an airlock (a station's, or the ship's own while undocked) for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |
+| hide / closet / locker / conceal | `buddy_order hide` | hide and stay until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
+| follow / come | `buddy_order follow` | `ApplyOrder(Follow)` |
+| wander / job | `buddy_order wander` | `ApplyOrder(Wander)` |
+| stay / wait / stop | `buddy_order stay` | `ApplyOrder(Stay)` |
+| sell / trash box / money / cash | `buddy_order sell` | sell nearby trash boxes ([items.md §4](items.md#4-selling-trash-boxes)); before tidy |
+| tidy / clean / trash / rubbish / garbage / litter / bin | `buddy_order tidy` | a tidying round ([items.md §3](items.md#3-tidying)) |
+| play / toy | `buddy_order play` | a play session ([items.md §5](items.md#5-idle-play)) |
+| snack / eat / food / hungry | `buddy_order snack` | eat or drink something nearby ([snacks.md](snacks.md)) |
+| goto *room* | `buddy_dev goto <i>` (a node, not a room) | `FindPath` + `ApplyRouteOrder` ([below](#goto-by-room)) |
+| password *nnnn* | `buddy_order password <code>` | adds the code to the codes every NPC knows ([NPC.Core's password doors](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/doors.md#password-doors)) |
 
 **Follow, Wander, Stay, Goto and "decide" are orders.** They are recorded as the order in force
 ([an-order-is-not-a-mode](invariants.md#an-order-is-not-a-mode)). Given during a flee, an order waits
@@ -77,7 +77,7 @@ only on the next order ([an-ordered-hide-ends-only-on-an-order](invariants.md#an
 
 ### Goto by room
 
-The dialog sends the buddy to a **room**, not a node number; `buddy_goto` keeps node indices for
+The dialog sends the buddy to a **room**, not a node number; `buddy_dev goto` keeps node indices for
 debugging. Rooms are those of the station the ship is docked to (`SpaceStation.rooms`), under the
 names the debug HUD shows (`YardLibrary`, `OxygenKitchen`). Case, spaces and the station's common
 prefix are ignored, and so is a partial name that is unique: "goto library", "go to the Yard Library".
@@ -88,7 +88,7 @@ A room has no volume ([game-model.md §2](https://github.com/bytenull1/npc-core-
 floors are not under its rooms, so `BuddyRooms` gives each node to the room whose furniture (every
 transform under the `Room`) is nearest to it. The room's nodes are tried nearest its middle first, up
 to four, so one dead-end node does not strand it. A room with no node is not listed. The
-`[nav] Rooms at <station>` line names the first node chosen for each room, by the index `buddy_goto`
+`[nav] Rooms at <station>` line names the first node chosen for each room, by the index `buddy_dev goto`
 takes, so a wrong pick can be tried from the console.
 
 Orders and mode are not saved; a loaded buddy starts in Follow with no order. Door codes are saved.

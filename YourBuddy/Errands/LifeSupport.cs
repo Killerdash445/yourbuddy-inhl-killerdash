@@ -101,7 +101,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_terminal: switch the unit on now, air or no air, retry timer or not - but only one that is
+        /// buddy_order terminal: switch the unit on now, air or no air, retry timer or not - but only one that is
         /// off and may be switched on: docs/invariants.md#a-terminal-is-only-switched-on
         /// </summary>
         public string StartNow(string which)
@@ -177,14 +177,14 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD and buddy_mind: the air aboard against the danger bands, and each unit's retry timer.
+        /// For the HUD and buddy_dev mind: the air aboard against the danger bands, and each unit's retry timer.
         /// </summary>
         public string Describe()
         {
             string text;
             if (!YourBuddyPlugin.ConfigTerminals.Value)
             {
-                text = "terminals off (buddy_terminal still works)";
+                text = "terminals off (buddy_order terminal still works)";
             }
             else if (!body.IsAboardPlayerShip() || GameManager.Instance.PlayerShip!.Environment is not { Data: not null } env)
             {

@@ -426,7 +426,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_suit on|off: wear a spare now, or take the worn one off, whatever the air says.
+        /// buddy_order suit on|off: wear a spare now, or take the worn one off, whatever the air says.
         /// </summary>
         internal string SuitNow(string onOff)
         {

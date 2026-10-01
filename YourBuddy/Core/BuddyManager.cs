@@ -110,8 +110,7 @@ namespace YourBuddy
 
         private static BuddyBehaviour? NearestLiving()
         {
-            GameManager gm = GameManager.Instance;
-            Player? pilot = gm != null && gm.PlayerShip != null ? gm.PlayerShip.Pilot : null;
+            Player? pilot = NpcPlayer.Pilot;
             bool hasPlayer = pilot != null && pilot.Controller != null;
             Vector3 from = Vector3.zero;
             if (hasPlayer) from = pilot!.Controller!.CachedTransform.position; // hasPlayer checked both
@@ -245,7 +244,7 @@ namespace YourBuddy
                 string who = state.Name ?? "Buddy";
                 if (!state.Alive)
                 {
-                    YourBuddyPlugin.Log.LogInfo($"[mgr] {who} was dead in this save file - not spawning. Use 'spawn_buddy'.");
+                    YourBuddyPlugin.Log.LogInfo($"[mgr] {who} was dead in this save file - not spawning. Use 'buddy_manage spawn'.");
                     continue;
                 }
                 Vector3 position = RestorePosition(state);

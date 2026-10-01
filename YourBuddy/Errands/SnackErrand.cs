@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NPC.Core.World;
 using NPC.Core;
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
@@ -40,7 +41,7 @@ namespace YourBuddy
         public override float Interval => Mathf.Max(SnackMinInterval, YourBuddyPlugin.ConfigSnackIntervalMinutes.Value * 60f);
         public override float RetryDelay => SnackRetryDelay;
         protected override float SkipSeconds => SnackSkipSeconds;
-        protected override string Command => "buddy_snack";
+        protected override string Command => "buddy_order snack";
 
         private enum SnackPhase { Walk, Look, Eat }
 
@@ -293,7 +294,7 @@ namespace YourBuddy
         /// </summary>
         private bool PlayerIsHungry(out int satiety)
         {
-            Player? player = Body.PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             satiety = player != null && player.Data != null ? player.Data.HealthSystemData.Satiety : int.MaxValue;
             return satiety <= PlayerHungryAtOrBelow;
         }

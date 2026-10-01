@@ -157,7 +157,7 @@ namespace YourBuddy
             // to an AI that is switched off. docs/reference.md
             if (!YourBuddyPlugin.ConfigFear.Value || NpcMonster.MonsterDisabled)
             {
-                // An ordered hide is not fear's to end: buddy_hide skips the fear setting going in,
+                // An ordered hide is not fear's to end: buddy_order hide skips the fear setting going in,
                 // so the same setting must not pull the buddy straight back out. docs/fear.md §6
                 if (Hiding && !hideOrdered && !hidePrank)
                 {
@@ -751,9 +751,7 @@ namespace YourBuddy
 
             Vector3 here = transform.position;
             float fromMonster = Vector3.Distance(here, lastMonsterPos);
-            Player? player = GameManager.Instance != null && GameManager.Instance.PlayerShip != null
-                ? GameManager.Instance.PlayerShip.Pilot
-                : null;
+            Player? player = NpcPlayer.Pilot;
             bool toPlayer = player != null && player.Controller != null && !NpcAgent.IsPlayerInSpace(player);
             // toPlayer implies player and its Controller are non-null.
             Vector3 playerPos = toPlayer ? player!.Controller!.CachedTransform.position : Vector3.zero;

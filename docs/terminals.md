@@ -2,7 +2,7 @@
 
 `LifeSupport.cs`; the walk into reach is NPC.Core's `NpcAgent.Reach.cs`, shared with
 [snacks](snacks.md) and [items](items.md). Config: `Terminals` (General, default on).
-Test command: `buddy_terminal <oxygen|climate>`.
+Test command: `buddy_order terminal <oxygen|climate>`.
 
 ---
 
@@ -63,7 +63,7 @@ be switched on, the next-best urge gets the round.
 suits up, and then carries on with the order. Fear, a conversation, hiding and a walk in progress
 still come first, and Autonomy off stops it.
 
-`buddy_terminal oxygen|climate` starts the walk now, ignoring the danger bands, retry timer and any
+`buddy_order terminal oxygen|climate` starts the walk now, ignoring the danger bands, retry timer and any
 order. The blocker still applies. The HUD's `Air:` line shows the air and each unit's retry timer.
 
 ---

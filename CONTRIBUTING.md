@@ -11,7 +11,7 @@ bug report form. [docs/troubleshooting.md](docs/troubleshooting.md) may already 
 A good report makes the difference between a quick fix and guesswork:
 
 1. **What happened, and where.** Station or ship, room, what the buddy was doing (following,
-   tidying, fleeing…). A screenshot with `buddy_hud on` helps a lot.
+   tidying, fleeing…). A screenshot with `buddy_dev hud on` helps a lot.
 2. **A log.** In the game console:
    ```
    debug_level 2

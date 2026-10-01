@@ -130,7 +130,7 @@ namespace YourBuddy
 
         /// <summary>
         /// A hiding spot near enough, free, reachable and not toward the monster. Starts the walk.
-        /// `fromFear` is a flee; buddy_hide passes false. docs/fear.md §6
+        /// `fromFear` is a flee; buddy_order hide passes false. docs/fear.md §6
         /// </summary>
         private bool TryStartHide(bool fromFear, out string report)
         {
@@ -616,7 +616,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_hide, and the dialog's "hide": in now, whatever the fear, and it stays until the
+        /// buddy_order hide, and the dialog's "hide": in now, whatever the fear, and it stays until the
         /// Breathless is not about or you give it another order. docs/fear.md §6
         /// </summary>
         internal string StartHideNow()
@@ -658,7 +658,7 @@ namespace YourBuddy
         /// </summary>
         private void WaitToJumpOut(float inside)
         {
-            Player? player = PilotPlayer();
+            Player? player = NpcPlayer.Pilot;
             if (player != null && player.Controller != null)
             {
                 Transform you = player.Controller.CachedTransform;
@@ -698,12 +698,12 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD's Fear line and buddy_mind.
+        /// For the HUD's Fear line and buddy_dev mind.
         /// </summary>
         internal string DescribeHide()
         {
             string last = hideLast != null ? " (last: " + hideLast + ")" : "";
-            if (!YourBuddyPlugin.ConfigHideInClosets.Value) return "off - buddy_hide still works" + last;
+            if (!YourBuddyPlugin.ConfigHideInClosets.Value) return "off - buddy_order hide still works" + last;
 
             if (hideState == HideState.Hidden)
             {
