@@ -29,8 +29,11 @@ the buddy through a few `internal` members, never its fields.
 | `BuddyBehaviour.Hide.cs` | hiding in a closet or locker: walk, teleport in/out, doors, who ends it | `NpcAgent` | [fear](fear.md) |
 | `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: each kind's start conditions, vanishing, the stare walk, holds while watched, `EndAnomaly`, `Speak` | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
 | `AnomalyDirector.cs` | when an anomaly happens and how far it may go: difficulty, the game's event tier, the roll, cooldown, the draw; the player's stress | `BuddyBehaviour`, `GameManager.EventSystem` | [anomalies](anomalies.md#1-how-often-and-how-far) |
-| `Anomaly.cs`, `AnomalyLines.cs` | the catalogue (`AnomalyKind`, severity, weight) and what the buddy says | - | [anomalies](anomalies.md#2-the-anomalies) |
-| `PlayerView.cs`, `ScareSounds.cs`, `BuddyGore.cs` | what the player sees; the game's FMOD events borrowed; the bloody texture | `NavProbe`, `GameInternals`, `BuddySkin` | [anomalies](anomalies.md#4-being-seen) |
+| `Anomaly.cs`, `AnomalyLines.cs` | the catalogue (`AnomalyKind`, severity, weight, once only) and what the buddy says | - | [anomalies](anomalies.md#2-the-anomalies) |
+| `AnomalyMemory.cs` | the kinds a save has had and the lines said, kept in the sidecar | `BuddySaveFile` | [anomalies](anomalies.md#once-per-save) |
+| `BuddyDouble.cs` | a copy of the buddy's body with nothing else: the shadow and the sleeper | - | [anomalies](anomalies.md#shadow) |
+| `AnomalyProps.cs`, `BbModel.cs` | the meat and blood an anomaly leaves, never saved; a Blockbench model read from the dll | `GameInternals`, Newtonsoft | [anomalies](anomalies.md#the-mess-and-the-meat-model) |
+| `PlayerView.cs`, `ScareSounds.cs`, `BuddyGore.cs` | what the player sees; the game's FMOD events borrowed; the bloody texture and the flickers' overlays | `NavProbe`, `GameInternals`, `BuddySkin` | [anomalies](anomalies.md#4-being-seen) |
 | `BuddyBehaviour.Autonomy.cs` | orders (`ApplyOrder`, `ApplyRouteOrder`, `RevokeOrder`), persistence, expiry, stand-down, bouts | `NavGraph` | [behaviour](behaviour.md) |
 | `BuddyBehaviour.Mind.cs` | the utility decider: scores urges, draws one, starts its errand | `Errand`, `LifeSupport` | [behaviour](behaviour.md#3-the-decider) |
 | `BuddyBehaviour.Errands.cs` | owns the errands; implements `IErrandBody`, their only way into the buddy | every errand | [behaviour](behaviour.md) |

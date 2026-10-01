@@ -4,3 +4,5 @@
 # LF + specialized diff
 *.cs            text eol=lf diff=csharp
 
+# Blockbench models
+*.bbmodel       binary linguist-generated=true

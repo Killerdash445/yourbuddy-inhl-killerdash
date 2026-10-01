@@ -212,7 +212,6 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `RetrySeconds` | 20 s | a roll whose draw fit nowhere tries again this soon |
 | `CooldownSeconds` | 600 s | quiet after one, at Normal and tier 0; shorter on Expert and higher tiers |
 | `MonsterClearance` | 25 m | none with the Breathless this near you |
-| `RecentCount` | 3 | the last kinds not drawn again |
 | `NormalScaryTasks` / `NormalExtremeTasks` | 1 / 3 | story tasks done before scary, then extreme, are allowed |
 | `ExpertAllTasks` | 1 | story tasks done before Expert allows scary and extreme |
 
@@ -228,13 +227,55 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `VanishMinSeconds` / `VanishMaxSeconds` | 40 / 110 s | gone this long |
 | `ReappearMinDist` / `ReappearMaxDist` | 6 / 16 m | back at a node this far from you, out of your sight |
 | `BloodySeconds` | 150 s | how long the blood lasts unwatched |
-| `BloodySeenRate` | 6 | each second you watch it uses this many seconds of that |
+| `BloodySeenRate` | 15 | each second you watch it uses this many seconds of that |
 | `BloodyUnseenSeconds` | 5 s | it goes only once you have not seen the buddy this long |
+| `BloodyRunRetrySeconds` | 6 s | its time up and still seen, it tries to run out of your sight this often |
 | `BehindYouDist` | 1.2 m | how far behind you it stands |
 | `DoorPassDist` | 1.6 m | how far past a doorway it walks before the door is shut behind it |
 | `DoorLegSeconds` / `DoorWaitSeconds` | 25 / 4 s | a walk through one door gives up; past it, the most it waits for the door to shut |
 | `MaxDoors` | 6 | doors in one round |
 | `WrongNameSeconds` | 900 s | the wrong name waits this long for the window |
+| `BotTalkMinDist` / `BotTalkMaxDist` | 12 / 45 m | you this far from the Shipyard's robot ([anomalies.md](anomalies.md#bottalk)) |
+| `BotStandMin` / `BotStandMax` | 1.2 / 2.2 m | where it stands from the robot |
+| `BotTalkGlanceDist` / `BotTalkCloseDist` | 4 / 2.5 m | it looks round when you see it this near, or come this near |
+| `BotTalkWaitSeconds` / `BotTalkGlanceSeconds` | 240 / 1.2 s | how long it waits for you; how long it looks at you |
+| `BotBlipGap` | 0.035 s | between the robot's talk sounds |
+| `RunOffMinDist` / `RunOffMaxDist` / `RunOffGain` | 6 / 20 / 4 m | where it runs: this far, and this much further from you |
+| `RunOffLegSeconds` / `RunOffUnseenSeconds` | 20 / 3 s | the run gives up; there, it ends once unseen this long |
+| `CaughtMinDist` / `CaughtMaxDist` | 8 / 60 m | you this far from the cryo room's door ([anomalies.md](anomalies.md#meat)) |
+| `CaughtViewInset` | 0.8 m | where you first see in: this far inside the doorway |
+| `CaughtStandMin` / `CaughtStandMax` / `CaughtStandDist` | 2 / 5.5 / 3 m | where it stands, in from that point; nearest 3 m |
+| `CaughtMeatAhead` | 0.7 m | the meat, in front of it (else 0.6 of that, else 0.3 m) |
+| `MessProbeAbove` / `MessLevelTolerance` | 0.05 / 0.05 m | each stain and the meat: the floor probed from this high, and this level with its feet |
+| `CaughtWaitSeconds` | 480 s | how long it waits for you |
+| `CaughtNearDist` | 3 m | you this near give it away, door shut or not |
+| `CaughtEnterDist` | 3 m | on the room's side and this near the doorway, you are in: it runs |
+| `CaughtTurnSeconds` / `CaughtCorneredSeconds` / `CaughtGoneUnseenSeconds` | 0.6 / 120 / 1 s | the least it stares at you; the most it stares or waits cornered; unseen this long (after you saw it), it is gone |
+| `CaughtRunMin` / `CaughtRunGain` | 2 / 1 m | its run inside the room; else 1 / 0 m |
+| `PipeMinDist` / `PipeMaxDist` | 5 / 30 m | Pipe: you this far when it starts ([anomalies.md](anomalies.md#pipe)) |
+| `PipeGiveUpSeconds` | 120 s | never spotted this long, it puts the pipe down unseen |
+| `PipeStartleDist` | 4 m | spotted this near, your stress |
+| `MoveWaitSeconds` | 300 s | Move: waits this long to be found ([anomalies.md](anomalies.md#move)) |
+| `MoveStartleDist` | 4 m | found this near, your stress |
+| `ShadowDoorMin` / `ShadowDoorMax` | 6 / 25 m | Shadow: the door it runs through, this far from you and in your view ([anomalies.md](anomalies.md#shadow)) |
+| `ShadowStartMin` / `ShadowStartMax` | 3 / 10 m | where it starts, this far from that door on your side |
+| `ShadowRouteMax` | 25 m | its run, at most this long |
+| `ShadowOpenDist` / `ShadowPastDoor` | 1.2 / 1.5 m | the door opens when it is this near; this far past, it is gone and the door shuts |
+| `ShadowSeenSeconds` / `ShadowNearDist` | 0.8 s / 4 m | seen this long, or seen this near, it is gone |
+| `ShadowRunSeconds` / `ShadowWaitSeconds` | 30 / 120 s | the run gives up; behind the shut door, the most it waits for you to open it |
+| `FlickerWaitSeconds` | 240 s | Smile, UnderTheSuit: the most it waits for you to look ([anomalies.md](anomalies.md#smile-and-underthesuit)) |
+| `FlickerMinDist` / `FlickerMaxDist` | 1.5 / 7 m | you this far from it |
+| `FlickerLookAngle` / `FlickerFacingAngle` | 25° / 50° | its head this near the middle of your view; it faces you this squarely |
+| `SmileBeats` / `FleshBeats` | 0.2, 0.12, 0.12 / 0.12 s | the flicker: on, off, on |
+| `SleeperMinDist` | 8 m | Sleeper: you this far from its capsule; it half that ([anomalies.md](anomalies.md#sleeper)) |
+| `SleeperWithYouDist` | 25 m | the buddy this near you, on your ship |
+| `SleeperWaitSeconds` | 900 s | the most the capsule waits for you |
+| `SleeperOpenDist` / `SleeperOpenAngle` | 2.5 m / 60° | it opens with you this near the sleeper's head, it this near the middle of your view |
+| `SleeperSeeDist` / `SleeperLookAngle` / `SleeperGoneUnseenSeconds` | 6 m / 45° / 1 s | found, you still look at it within these; not for 1 s, the capsule is empty |
+| `SleeperStareSeconds` | 30 s | the most the buddy stands facing you, waiting to be seen |
+| `MeatScale` | 1.5 | the meat's size over its model ([anomalies.md](anomalies.md#the-mess-and-the-meat-model)) |
+| `DoorClearDist` | 1.8 m | the least a ShutDoors stand is from the door |
+| `MaxDoorPasses` | 3 | passes over the doors still open |
 
 ### Sounds - `ScareSounds.cs`
 

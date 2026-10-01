@@ -181,6 +181,7 @@ namespace YourBuddy
             // The game's moments and shared services come from NPC.Core, patched once for every NPC mod.
             NpcEvents.Tick += BuddyManager.Tick;
             NpcEvents.GameStarting += BuddyCryoSpawn.OnGameStarting;
+            NpcEvents.GameStarting += AnomalyMemory.OnGameStarting;
             NpcEvents.SaveLoaded += BuddyManager.ArmPendingSpawn;
             NpcSaves.RegisterSidecar(BuddyBehaviour.ModName, BuddyManager.SidecarExtension, BuddyManager.SidecarContents);
 
@@ -374,6 +375,7 @@ namespace YourBuddy
             NpcAgent agent = NpcAgent.Attach(npcGo, new NpcIdentity(BuddyBehaviour.ModName, buddyName, buddyNumber), body,
                 new BuddyAgentSettings(buddy), buddy);
             buddy.Init(agent);
+            buddy.Model = animatedModel;
             BuddyManager.Register(buddy);
             BuddyConversation conversation = new(buddy);
             buddy.Conversation = conversation;

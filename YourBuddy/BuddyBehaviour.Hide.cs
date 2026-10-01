@@ -683,23 +683,18 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Doors open and out at once - no pause to open them - with a "Boo!" or a shriek.
+        /// Doors open and out at once - no pause to open them - in silence, or with a shriek.
         /// </summary>
         private void JumpOut(string why)
         {
             YourBuddyPlugin.Log.LogInfo($"[anomaly] Jumps out of {hideName} - {why}");
             LeaveHidingSpot(why, false);
             hidePhaseUntil = Time.time + 0.1f;
-            if (hidePrankScary)
-            {
-                if (!ScareSounds.Play(ScareSound.Shriek, agent.GroundPos(1.2f))) ScareSounds.Play(ScareSound.Creature, agent.GroundPos(1.2f));
+            if (!hidePrankScary) return;
 
-                Startle(35);
-            }
-            else
-            {
-                Speak("Boo!");
-            }
+            if (!ScareSounds.Play(ScareSound.Shriek, agent.GroundPos(1.2f))) ScareSounds.Play(ScareSound.Creature, agent.GroundPos(1.2f));
+
+            Startle(35);
         }
 
         /// <summary>

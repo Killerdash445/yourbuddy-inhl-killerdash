@@ -36,6 +36,12 @@ namespace YourBuddy
         /// Written even when no buddy exists. docs/game-model.md#the-cryo-room
         /// </summary>
         public string? OpenedCapsule { get; init; }
+        /// <summary>
+        /// The anomalies this save has had, by kind name, and every line the buddies said in
+        /// them. Written even when no buddy exists. docs/anomalies.md#once-per-save
+        /// </summary>
+        public string[]? AnomaliesHappened { get; init; }
+        public string[]? LinesSaid { get; init; }
 
         internal static BuddySaveFile Of(IReadOnlyList<BuddyState> buddies, int[] codes, string? openedCapsule)
         {
@@ -53,7 +59,14 @@ namespace YourBuddy
                     SleepingCapsule = buddies[0].SleepingCapsule,
                     SuitId = buddies[0].SuitId
                 };
-            return data with { Buddies = [.. buddies], KnownPinCodes = codes, OpenedCapsule = openedCapsule };
+            return data with
+            {
+                Buddies = [.. buddies],
+                KnownPinCodes = codes,
+                OpenedCapsule = openedCapsule,
+                AnomaliesHappened = AnomalyMemory.HappenedNow,
+                LinesSaid = AnomalyMemory.SaidNow
+            };
         }
 
         /// <summary>

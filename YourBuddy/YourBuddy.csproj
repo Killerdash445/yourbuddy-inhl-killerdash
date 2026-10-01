@@ -85,6 +85,10 @@
       <HintPath>lib\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>lib\Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>lib\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
@@ -109,6 +113,10 @@
   <ItemGroup>
     <!-- The EVA suit skin, applied while the buddy wears a suit: docs/eva.md -->
     <EmbeddedResource Include="Resources\PilotSuit_eva.png" />
+    <EmbeddedResource Include="Resources\Meat.bbmodel" />
+    <!-- The skin flickers' overlays: docs/anomalies.md -->
+    <EmbeddedResource Include="Resources\FlickerSmile.png" />
+    <EmbeddedResource Include="Resources\FlickerFlesh.png" />
   </ItemGroup>
 
 </Project>

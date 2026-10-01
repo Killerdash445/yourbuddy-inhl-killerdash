@@ -29,6 +29,7 @@ From `Isolated Inhale_Data/Managed/`:
 - `UnityEngine.IMGUIModule.dll`
 - `UnityEngine.ImageConversionModule.dll`
 - `UnityEngine.InputLegacyModule.dll`
+- `Unity.InputSystem.dll`
 - `UnityEngine.TextRenderingModule.dll`
 - `UnityEngine.UI.dll`
 - `Unity.TextMeshPro.dll`

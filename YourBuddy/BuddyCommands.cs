@@ -25,16 +25,22 @@ namespace YourBuddy
         /// </summary>
         private static string? Dead(BuddyBehaviour buddy) => buddy.IsDead ? buddy.Name + " is dead" : null;
 
+        /// <summary>
+        /// The refusal for a buddy that is not listening to orders now (an anomaly), else Dead's.
+        /// docs/anomalies.md#2-the-anomalies
+        /// </summary>
+        private static string? Deaf(BuddyBehaviour buddy) => Dead(buddy) ?? (buddy.IgnoresYou ? buddy.Name + " does not answer" : null);
+
         public static string Follow(BuddyBehaviour buddy)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
 
             return buddy.ApplyOrder(BuddyMode.Follow) ? buddy.Name + " now follows you" : buddy.Name + " will follow you" + OnceSafe;
         }
 
         public static string Wander(BuddyBehaviour buddy)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
             if (buddy.Floating) return buddy.Name + " has nothing to walk on out here - it can follow you or stay";
 
             return buddy.ApplyOrder(BuddyMode.Wander)
@@ -44,7 +50,7 @@ namespace YourBuddy
 
         public static string Stay(BuddyBehaviour buddy)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
 
             return buddy.ApplyOrder(BuddyMode.Stay) ? buddy.Name + " stays here" : buddy.Name + " will stay put" + OnceSafe;
         }
@@ -54,7 +60,7 @@ namespace YourBuddy
         /// </summary>
         public static string GoToNode(BuddyBehaviour buddy, int nodeIndex)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
             if (nodeIndex < 0 || nodeIndex >= NavGraph.NodeCount)
             {
                 return "Node index out of range (0-" + (NavGraph.NodeCount - 1) + ")";
@@ -80,7 +86,7 @@ namespace YourBuddy
         /// </summary>
         internal static string GoToRoom(BuddyBehaviour buddy, StationRooms.Entry room)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
 
             return buddy.IsOutside
                 ? buddy.Name + " is outside - tell it to come inside first"
@@ -111,7 +117,7 @@ namespace YourBuddy
         /// </summary>
         public static string DecideForYourself(BuddyBehaviour buddy)
         {
-            if (Dead(buddy) is { } dead) return dead;
+            if (Deaf(buddy) is { } dead) return dead;
             if (!YourBuddyPlugin.ConfigAutonomy.Value)
             {
                 return "Autonomy is switched off - 'buddy_auto on', or the Autonomy config setting";

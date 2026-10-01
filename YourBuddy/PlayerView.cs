@@ -70,6 +70,52 @@ namespace YourBuddy
         }
 
         /// <summary>
+        /// As Sees, but a window pane does not block: from space you look into a station through its windows.
+        /// A window block's own collider covers its glass, so a hit within the pane's bounds is let through.
+        /// docs/anomalies.md#shadow
+        /// </summary>
+        internal static bool SeesThroughWindows(Vector3 point)
+        {
+            Transform? cam = Camera();
+            if (cam == null) return false;
+
+            Vector3 aim = point - cam.position;
+            float dist = aim.magnitude;
+            if (dist > ViewRange) return false;
+
+            if (dist < 0.05f) return true;
+
+            if (Vector3.Angle(cam.forward, aim) > ViewHalfAngle) return false;
+
+            int count = Physics.RaycastNonAlloc(cam.position, aim / dist, WindowHits, dist, NavProbe.ProbeLayers, QueryTriggerInteraction.Ignore);
+            PlayerController? you = NpcPlayer.Pilot is { } pilot ? pilot.Controller : null;
+            for (int i = 0; i < count; i++)
+            {
+                Collider hit = WindowHits[i].collider;
+                if (hit == null || (you != null && hit.transform.IsChildOf(you.transform))) continue;
+
+                if (!InWindow(hit.transform, WindowHits[i].point)) return false;
+            }
+            return true;
+        }
+
+        private static readonly RaycastHit[] WindowHits = new RaycastHit[16];
+
+        /// <summary>
+        /// The point lies in the pane of the window block `hit` belongs to: its 'Glass' renderer, widened by
+        /// the wall's thickness.
+        /// </summary>
+        private static bool InWindow(Transform hit, Vector3 point)
+        {
+            Transform? glass = hit.name.StartsWith("Glass") ? hit : hit.Find("Glass");
+            if (glass == null || !glass.TryGetComponent(out Renderer pane)) return false;
+
+            Bounds bounds = pane.bounds;
+            bounds.Expand(0.6f);
+            return bounds.Contains(point);
+        }
+
+        /// <summary>
         /// The player sees the buddy's chest or head.
         /// </summary>
         internal static bool SeesBody(Transform body, Vector3 feet) =>

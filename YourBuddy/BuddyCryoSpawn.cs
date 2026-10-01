@@ -322,6 +322,74 @@ namespace YourBuddy
             }
         }
 
+        // ------------------------------------------------------------------
+        // The second sleeper: docs/anomalies.md#sleeper
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// The capsule the buddy woke in, and where a sleeper stands in it; null and why not.
+        /// </summary>
+        internal static SleeperBed? OpenedBed(out string why)
+        {
+            why = "";
+            string? name = OpenedCapsule;
+            if (name == null)
+            {
+                why = "it never woke in a cryo capsule in this game";
+                return null;
+            }
+            foreach (CryoPod pod in Object.FindObjectsOfType<CryoPod>(true))
+            {
+                foreach (PropCapsule prop in PropCapsules(pod))
+                {
+                    if (prop.Capsule.name != name) continue;
+
+                    // Where SleepInCapsule put the buddy: the player's spawn point, carried into the capsule.
+                    Vector3 position = prop.Capsule.TransformPoint(pod.transform.InverseTransformPoint(pod.SpawnPos));
+                    Quaternion rotation = Quaternion.Euler(0f, prop.Capsule.eulerAngles.y + 180f, 0f);
+                    return new SleeperBed(prop.Capsule, prop.Door, position, rotation, DoorMotion.Of(pod));
+                }
+            }
+            why = $"its cryo capsule '{name}' is not in this scene";
+            return null;
+        }
+
+        /// <summary>
+        /// Shut, its monitor on with a pulse: someone is asleep in it.
+        /// </summary>
+        internal static void ShutWithSleeper(SleeperBed bed)
+        {
+            bed.Door.localPosition = Vector3.zero;
+            foreach (CryoPodDisplay display in bed.Capsule.GetComponentsInChildren<CryoPodDisplay>(true))
+            {
+                display.EnabledInstantly = true;
+                display.ShowDefaultPlayer();
+            }
+        }
+
+        /// <summary>
+        /// The door opens as the buddy's own did on waking, with the pod's sound; `opened` once it is up.
+        /// </summary>
+        internal static void OpenForSleeper(SleeperBed bed, Action opened)
+        {
+            bed.Capsule.gameObject.AddComponent<CryoCapsuleDoor>().Init(bed.Door, bed.Motion, opened);
+            if (bed.Motion.OpenEvent is { IsNull: false } openEvent) RuntimeManager.PlayOneShot(openEvent, bed.Capsule.position);
+        }
+
+        /// <summary>
+        /// Open and dark again, as the buddy left it.
+        /// </summary>
+        internal static void OpenEmpty(SleeperBed bed)
+        {
+            if (bed.Capsule == null || bed.Door == null) return;
+
+            // An opening still under way would call back into an anomaly that is over.
+            foreach (CryoCapsuleDoor opening in bed.Capsule.GetComponents<CryoCapsuleDoor>()) Object.Destroy(opening);
+
+            bed.Door.localPosition = new Vector3(0f, bed.Motion.OpenRange, -bed.Motion.SlideRange);
+            HideDisplays(new PropCapsule(bed.Capsule, bed.Door), instantly: true);
+        }
+
         private static CryoPod? NearestPod(Vector3 near)
         {
             CryoPod? best = null;
@@ -407,6 +475,11 @@ namespace YourBuddy
 
         private readonly record struct PropCapsule(Transform Capsule, Transform Door);
     }
+
+    /// <summary>
+    /// The buddy's own cryo capsule, as the second sleeper uses it.
+    /// </summary>
+    internal readonly record struct SleeperBed(Transform Capsule, Transform Door, Vector3 Position, Quaternion Rotation, DoorMotion Motion);
 
     /// <summary>
     /// How the player's pod opens, read from its CryoPodAnimator.

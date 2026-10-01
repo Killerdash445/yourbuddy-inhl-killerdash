@@ -12,6 +12,8 @@ namespace YourBuddy
         private static readonly int BaseMap = Shader.PropertyToID("_BaseMap");
         private static readonly int MainTex = Shader.PropertyToID("_MainTex");
         private static readonly Dictionary<(Texture, int), Texture2D> Made = [];
+        private static readonly Dictionary<(Texture, string), Texture2D> MadeOverlays = [];
+        private static readonly Dictionary<string, Texture2D?> Overlays = [];
 
         /// <summary>
         /// Blots per 64x64 texels, and their radius in texels at that size.
@@ -116,6 +118,124 @@ namespace YourBuddy
                     pixels[y * w + x] = mixed;
                 }
             }
+        }
+
+        /// <summary>
+        /// The Metal_Pipe atlas with its top end bloody: the sides lie on v 0.25..1 (v 1 at the top end), the
+        /// top cap at u 0.375..0.56, v 0.06..0.25. Blood thins down the shaft, with a few drips.
+        /// </summary>
+        internal static Texture2D? BloodyEnd(Texture source)
+        {
+            if (Made.TryGetValue((source, -1), out Texture2D? cached) && cached != null) return cached;
+
+            Texture2D? copy = Readable(source);
+            if (copy == null) return null;
+
+            Color[] pixels = copy.GetPixels();
+            int w = copy.width;
+            int h = copy.height;
+            System.Random random = new(4111);
+            float[] drips = new float[w];
+            for (int x = 0; x < w; x++) drips[x] = random.NextDouble() < 0.4 ? 0.25f + (float)random.NextDouble() * 0.3f : 1f;
+
+            for (int y = 0; y < h; y++)
+            {
+                float v = (y + 0.5f) / h;
+                for (int x = 0; x < w; x++)
+                {
+                    Color was = pixels[y * w + x];
+                    if (was.a < 0.5f) continue;
+
+                    float u = (x + 0.5f) / w;
+                    float t = (v - 0.25f) / 0.75f;
+                    float chance = v >= 0.25f
+                        ? t > 0.8f ? 0.95f : t > 0.6f ? 0.6f : t > drips[x] ? 0.9f : t > 0.45f ? 0.2f : 0f
+                        : u is > 0.375f and < 0.5625f && v > 0.0625f ? 0.9f : 0f;
+                    if (random.NextDouble() >= chance) continue;
+
+                    Color mixed = Color.Lerp(was, Blood * (0.7f + (float)random.NextDouble() * 0.3f), 0.85f);
+                    mixed.a = was.a;
+                    pixels[y * w + x] = mixed;
+                }
+            }
+            copy.SetPixels(pixels);
+            copy.Apply(false);
+            Made[(source, -1)] = copy;
+            return copy;
+        }
+
+        /// <summary>
+        /// What the body wears now with an embedded overlay painted over it, at the larger of the two sizes,
+        /// point sampled: the skin flickers. The overlays follow the suit's atlas layout.
+        /// Null when either cannot be read. docs/anomalies.md#smile-and-underthesuit
+        /// </summary>
+        internal static Texture2D? Overlaid(Component body, string resource, out Texture? wearing)
+        {
+            wearing = Current(body);
+            if (wearing == null) return null;
+
+            Texture2D? overlay = Embedded(resource);
+            if (overlay == null) return null;
+
+            if (MadeOverlays.TryGetValue((wearing, resource), out Texture2D? cached) && cached != null) return cached;
+
+            Texture2D? under = Readable(wearing);
+            if (under == null) return null;
+
+            int size = Mathf.Max(under.width, overlay.width);
+            Color[] below = under.GetPixels();
+            Color[] above = overlay.GetPixels();
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    Color was = below[y * under.height / size * under.width + x * under.width / size];
+                    Color paint = above[y * overlay.height / size * overlay.width + x * overlay.width / size];
+                    Color mixed = Color.Lerp(was, paint, paint.a);
+                    mixed.a = was.a;
+                    pixels[y * size + x] = mixed;
+                }
+            }
+            Texture2D made = new(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp,
+                name = wearing.name + "_" + resource,
+            };
+            made.SetPixels(pixels);
+            made.Apply(false);
+            Object.Destroy(under);
+            MadeOverlays[(wearing, resource)] = made;
+            return made;
+        }
+
+        /// <summary>
+        /// A PNG embedded in the dll as YourBuddy.Resources.`name`, read once.
+        /// </summary>
+        private static Texture2D? Embedded(string name)
+        {
+            if (Overlays.TryGetValue(name, out Texture2D? loaded)) return loaded;
+
+            Texture2D? texture = null;
+            using (System.IO.Stream? stream = typeof(BuddyGore).Assembly.GetManifestResourceStream("YourBuddy.Resources." + name))
+            {
+                if (stream != null)
+                {
+                    using System.IO.MemoryStream bytes = new();
+                    stream.CopyTo(bytes);
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (!ImageConversion.LoadImage(texture, bytes.ToArray()))
+                    {
+                        Object.Destroy(texture);
+                        texture = null;
+                    }
+                }
+            }
+            if (texture == null) YourBuddyPlugin.Log.LogWarning($"[anomaly] The overlay {name} is not in the dll or is not a PNG - that flicker is off");
+
+            Overlays[name] = texture;
+            return texture;
         }
 
         /// <summary>

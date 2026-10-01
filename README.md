@@ -34,7 +34,7 @@ In theory, the mod should reduce anxiety; in practice, after playing alone for a
 - Reacts to the Breathless: watches it, refuses to walk toward it, and when it has stared too long or the monster comes too close, either **runs** - first away, then to you - or **hides** in a closet or locker until the monster is gone.
 
 **Anomalies**
-- Now and then the buddy is not quite itself, and you start to wonder whether it is still the friend you woke up with. It may vanish and turn up elsewhere, jump out of a closet at you, stare out of a window for minutes, mutter something it should not know, show up spattered with blood, shut every door aboard, move only while you are not looking, or stand right behind you. Its talk log may hold an order you never gave.
+- Now and then the buddy is not quite itself, and you start to wonder whether it is still the friend you woke up with. It may vanish and turn up elsewhere, jump out of a closet at you, stare out of a window for minutes, mutter something it should not know, show up spattered with blood, shut every door aboard, move only while you are not looking, or stand right behind you. Its talk log may hold an order you never gave. Some stations have more than one of it. Each moment, and every line it says, comes once per save.
 - How far it goes follows the difficulty and your progress: Harmless only gets funny moments; Normal starts strange, turns scary after the first story task and extreme after the third; Expert allows scary and extreme ones after the first story task.
 
 **Navigation**
@@ -162,7 +162,7 @@ You can change these values in the config file or via console commands (see belo
 | `buddy_inside` | `[@who]` | Bring the buddy back in from outside: it walks, or flies, into the airlock you stand in (else the nearest) and waits for you to cycle it. Back inside in breathable air, it takes the suit off by itself. |
 | `buddy_suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
 | `buddy_fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
-| `buddy_anomaly` | `[<kind>\|end\|roll\|list] [@who]` | Anomalies: with no argument, the current state; `list` names every kind and whether your difficulty allows it; a kind starts it now (it still says why when it does not fit); `end` stops the running one; `roll` draws one as the mod would. |
+| `buddy_anomaly` | `[<kind>\|end\|roll\|list\|forget] [@who]` | Anomalies: with no argument, the current state and what this save has had; `list` names every kind and whether it can come now; a kind starts it now (it still says why when it does not fit); `end` stops the running one; `roll` draws one as the mod would; `forget` lets this save have every one again. |
 | `buddy_auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
 | `buddy_password` | `<code>` | Tell the buddies a door PIN code - all of them learn it. It is used only on keypads whose own code matches, and is saved with your game. |
 | `buddy_speed` | `<value> [@who]` | Set movement speed (0.5–10 m/s). |

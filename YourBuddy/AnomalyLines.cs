@@ -7,18 +7,6 @@ namespace YourBuddy
     /// </summary>
     internal static class AnomalyLines
     {
-        private static readonly string[] Funny =
-        [
-            "This room has 212 bolts. I counted.",
-            "The vending machine likes me.",
-            "I'm not lost. I'm exploring.",
-            "If I hide in the fridge, will you find me?",
-            "We should give the ship a name.",
-            "I practised standing still.",
-            "Space is big. Have you noticed?",
-            "I licked a window. Don't tell anyone.",
-        ];
-
         private static readonly string[] Strange =
         [
             "Did you hear that?",
@@ -76,43 +64,75 @@ namespace YourBuddy
         [
             ("swap", "Done. They didn't notice."),
             ("where is the real one?", "Asleep."),
-            ("let him in", "He was never out."),
+            ("is he in?", "He was never out."),
         ];
 
         private static readonly string[] WrongNames = ["{0} 2", "B-UDDY 02", "{0} (copy)", "{0}?"];
 
         /// <summary>
-        /// A spoken line no worse than `ceiling`, leaning toward it.
+        /// Found aboard, far from where you left it: docs/anomalies.md#move
         /// </summary>
-        internal static string Spoken(AnomalySeverity ceiling) => Pick(ceiling switch
-        {
-            AnomalySeverity.Funny => Funny,
-            AnomalySeverity.Strange => Strange,
-            AnomalySeverity.Scary => Random.value < 0.7f ? Scary : Strange,
-            _ => Random.value < 0.7f ? Extreme : Scary,
-        });
+        private static readonly string[] LeftBehindLines =
+        [
+            "You left without me.",
+            "I took the long way.",
+            "Did you think I would stay there?",
+            "The door was open.",
+            "It was cold out there. Don't do that again.",
+            "I'm always with you. Always.",
+        ];
 
-        internal static (string said, string reply) Order(AnomalySeverity ceiling)
+        /// <summary>
+        /// Each line once per save; null once every one was said. docs/anomalies.md#once-per-save
+        /// </summary>
+        internal static string? LeftBehind() => Unsaid(LeftBehindLines);
+
+        /// <summary>
+        /// A spoken line no worse than `ceiling`, leaning toward it; null once all were said.
+        /// </summary>
+        internal static string? Spoken(AnomalySeverity ceiling) => ceiling switch
         {
-            (string, string)[] pool = ceiling switch
+            AnomalySeverity.Extreme => Random.value < 0.7f ? Unsaid(Extreme, Scary, Strange) : Unsaid(Scary, Extreme, Strange),
+            AnomalySeverity.Scary => Random.value < 0.7f ? Unsaid(Scary, Strange) : Unsaid(Strange, Scary),
+            _ => Unsaid(Strange),
+        };
+
+        /// <summary>
+        /// An order and its reply, each pair once; null once all were said.
+        /// </summary>
+        internal static (string said, string reply)? Order(AnomalySeverity ceiling)
+        {
+            (string, string)[][] pools = ceiling switch
             {
-                AnomalySeverity.Extreme => Random.value < 0.6f ? ExtremeOrders : ScaryOrders,
-                AnomalySeverity.Scary => Random.value < 0.7f ? ScaryOrders : StrangeOrders,
-                _ => StrangeOrders,
+                AnomalySeverity.Extreme => Random.value < 0.6f ? [ExtremeOrders, ScaryOrders, StrangeOrders] : [ScaryOrders, ExtremeOrders, StrangeOrders],
+                AnomalySeverity.Scary => Random.value < 0.7f ? [ScaryOrders, StrangeOrders] : [StrangeOrders, ScaryOrders],
+                _ => [StrangeOrders],
             };
-            return pool[Random.Range(0, pool.Length)];
+            foreach ((string, string)[] pool in pools)
+            {
+                if (AnomalyMemory.TryUnsaid(pool, o => "$ " + o.Item1, out (string, string) order)) return order;
+            }
+            return null;
         }
 
         /// <summary>
-        /// "Buddy 2" for a lone "Buddy"; a numbered one gets one of the other forms.
+        /// "Buddy 2" for a lone "Buddy"; a numbered one gets one of the other forms. Each form once; null
+        /// once all were used.
         /// </summary>
-        internal static string WrongName(string name)
+        internal static string? WrongName(string name)
         {
             bool numbered = name.Length > 0 && char.IsDigit(name[name.Length - 1]);
-            int first = numbered ? 1 : 0;
-            return string.Format(WrongNames[Random.Range(first, WrongNames.Length)], name);
+            string[] forms = numbered ? WrongNames[1..] : WrongNames;
+            return AnomalyMemory.TryUnsaid(forms, f => "title " + f, out string form) ? string.Format(form, name) : null;
         }
 
-        private static string Pick(string[] pool) => pool[Random.Range(0, pool.Length)];
+        private static string? Unsaid(params string[][] pools)
+        {
+            foreach (string[] pool in pools)
+            {
+                if (AnomalyMemory.TryUnsaid(pool, line => line, out string line)) return line;
+            }
+            return null;
+        }
     }
 }

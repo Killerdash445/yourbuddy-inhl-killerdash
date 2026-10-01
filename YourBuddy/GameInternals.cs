@@ -233,6 +233,41 @@ namespace YourBuddy
         }
 
         /// <summary>
+        /// The save id and item flags of the props an anomaly leaves: clones of the game's own item and
+        /// blood decal that the save never sees. docs/anomalies.md#meat
+        /// </summary>
+        internal static class PropAccess
+        {
+            private const string Feature = "the props anomalies leave: meat, blood, the bloody pipe (none are made)";
+            private static readonly FieldInfo? GrabbableId = Field<uint>(typeof(SaveObject<Space.Data.GrabbableData>), "id", Feature);
+            private static readonly FieldInfo? CleanableId = Field<uint>(typeof(SaveObject<Space.Data.ByteData>), "id", Feature);
+            private static readonly FieldInfo? Signature = Field<string>(typeof(Grabbable), "signature", Feature);
+            private static readonly FieldInfo? CanStore = Field<bool>(typeof(Grabbable), "canStore", Feature);
+            private static readonly FieldInfo? CanSell = Field<bool>(typeof(Grabbable), "canSell", Feature);
+            private static readonly FieldInfo? CanTrash = Field<bool>(typeof(Grabbable), "canTrash", Feature);
+            private static readonly FieldInfo? Price = Field<int>(typeof(Grabbable), "price", Feature);
+
+            /// <summary>
+            /// Every member resolved: a clone left with the original's save id would share its data.
+            /// </summary>
+            internal static bool Ready => GrabbableId != null && CleanableId != null && Signature != null &&
+                                          CanStore != null && CanSell != null && CanTrash != null && Price != null;
+
+            // Ready is checked by every caller first.
+            internal static void ClearId(Grabbable item) => GrabbableId!.SetValue(item, 0u);
+            internal static void ClearId(Cleanable dirt) => CleanableId!.SetValue(dirt, 0u);
+
+            internal static void SetItem(Grabbable item, string signature, bool canStore, bool canSell, bool canTrash, int price)
+            {
+                Signature!.SetValue(item, signature);
+                CanStore!.SetValue(item, canStore);
+                CanSell!.SetValue(item, canSell);
+                CanTrash!.SetValue(item, canTrash);
+                Price!.SetValue(item, price);
+            }
+        }
+
+        /// <summary>
         /// Airlock: its two doors. NPC.Core reflects the same fields for gate detection; these
         /// are for the EVA run's own waiting in the chamber.
         /// </summary>

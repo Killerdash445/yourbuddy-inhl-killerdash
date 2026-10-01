@@ -419,6 +419,9 @@ namespace YourBuddy
 
         private void OnDestroy()
         {
+            // A double lives outside the buddy: docs/invariants.md#an-anomaly-puts-back-what-it-changed
+            RemoveShadow();
+            RemoveSleeper();
             BuddyManager.Unregister(this);
         }
     }

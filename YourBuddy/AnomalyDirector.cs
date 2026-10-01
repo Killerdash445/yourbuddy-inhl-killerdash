@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using NPC.Core;
-using NPC.Core.Agents;
 using NPC.Core.Interaction;
 using NPC.Core.World;
 using Space;
@@ -37,14 +36,9 @@ namespace YourBuddy
         internal const int NormalScaryTasks = 1;
         internal const int NormalExtremeTasks = 3;
         internal const int ExpertAllTasks = 1;
-        /// <summary>
-        /// The last few kinds are not drawn again.
-        /// </summary>
-        private const int RecentCount = 3;
 
         private static float _nextCheckAt = -1f;
         private static float _cooldownUntil;
-        private static readonly Queue<AnomalyKind> Recent = new();
         private static string _last = "none yet";
         private static float _traceAt;
         private static readonly List<AnomalyInfo> Candidates = [];
@@ -133,9 +127,28 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// This kind may be drawn now: its severity, and a harmless-only kind only at frequency 0.
+        /// This kind may be drawn now: its severity, and not had yet in this save.
         /// </summary>
-        internal static bool Allows(AnomalyInfo info) => Allows(info.Severity) && (!info.HarmlessOnly || Frequency <= 0f);
+        internal static bool Allows(AnomalyInfo info) => WhyNot(info) == null;
+
+        /// <summary>
+        /// Why this kind is not drawn now, or null: it happened already, the difficulty, or the story
+        /// progress it waits for. For buddy_anomaly list.
+        /// </summary>
+        internal static string? WhyNot(AnomalyInfo info)
+        {
+            // docs/anomalies.md#once-per-save
+            if (AnomalyMemory.HasHappened(info.Kind)) return "happened already in this save";
+
+            if (Allows(info.Severity)) return null;
+
+            float frequency = Frequency;
+            if (frequency <= 0f) return "not on Harmless";
+
+            int needed = frequency >= 1.5f ? ExpertAllTasks
+                : info.Severity == AnomalySeverity.Scary ? NormalScaryTasks : NormalExtremeTasks;
+            return $"after {needed} story task(s), {Progress} done";
+        }
 
         /// <summary>
         /// The worst severity allowed now: what the line pools lean toward.
@@ -243,8 +256,6 @@ namespace YourBuddy
 
             if (NpcInteraction.IsOpen) return "the talk window is open";
 
-            if (NpcAgent.IsPlayerInSpace(player)) return "you are outside";
-
             Breathless? monster = GameManager.Instance != null ? GameManager.Instance.Breathless : null;
             if (monster != null && monster.gameObject.activeInHierarchy &&
                 Vector3.Distance(monster.transform.position, player.Controller.CachedTransform.position) < MonsterClearance)
@@ -267,7 +278,8 @@ namespace YourBuddy
             Actors.Clear();
             foreach (BuddyBehaviour buddy in BuddyManager.All)
             {
-                if (buddy != null && buddy.AnomalyReady() == null) Actors.Add(buddy);
+                // Left on a station, it is parked: it may still turn up near you. Outside, only the shadow plays.
+                if (buddy != null && (buddy.AnomalyReady(outsideOk: true) == null || buddy.MoveReady() == null)) Actors.Add(buddy);
             }
             if (Actors.Count == 0) return false;
 
@@ -275,7 +287,7 @@ namespace YourBuddy
             Candidates.Clear();
             foreach (AnomalyInfo info in Anomalies.All)
             {
-                if (Allows(info) && !Recent.Contains(info.Kind)) Candidates.Add(info);
+                if (Allows(info)) Candidates.Add(info);
             }
             string? lastBlocker = null;
             while (Candidates.Count > 0)
@@ -289,7 +301,7 @@ namespace YourBuddy
 
                 if (NpcLog.Level >= 2) YourBuddyPlugin.Log.LogInfo($"[anomaly] Not {pick.Name}: {lastBlocker}");
             }
-            report = lastBlocker != null ? "none fits here (" + lastBlocker + ")" : "every kind was drawn lately";
+            report = lastBlocker != null ? "none fits here (" + lastBlocker + ")" : "every kind allowed has happened in this save";
             return false;
         }
 
@@ -308,13 +320,12 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// A buddy began one, drawn or forced: the cooldown starts and the kind sits out a while.
+        /// A buddy began one, drawn or forced: the cooldown starts and the save remembers it.
         /// </summary>
         internal static void Began(BuddyBehaviour buddy, AnomalyKind kind)
         {
             _cooldownUntil = Time.time + Cooldown;
-            Recent.Enqueue(kind);
-            while (Recent.Count > RecentCount) Recent.Dequeue();
+            AnomalyMemory.Remember(kind);
 
             _last = Anomalies.Info(kind).Name + " (" + buddy.Name + ")";
         }

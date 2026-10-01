@@ -167,7 +167,7 @@ namespace YourBuddy
 
             ExpireOrder();
             // Deadly air outranks an anomaly as it does an order: docs/invariants.md#survival-outranks-an-order
-            if (anomaly.HasValue && !vanished && !AnomalyIsLooks && lifeSupport.AirIsDangerous()) EndAnomaly("the air is dangerous");
+            if (anomaly.HasValue && !vanished && !AnomalyInBackground && lifeSupport.AirIsDangerous()) EndAnomaly("the air is dangerous");
             if (TrySaveOwnLife()) return;
             if (Time.time < decideAt) return;
 
@@ -218,8 +218,11 @@ namespace YourBuddy
 
             if (Hiding) return hideState + " " + hideName;
 
-            // Blood is only a look: it goes about its day with it. docs/anomalies.md#bloody
-            if (anomaly.HasValue && !AnomalyIsLooks) return "acting out " + Anomalies.Info(anomaly.Value).Name;
+            // Blood is a look: it goes about its day with it, until it runs off to be clean. docs/anomalies.md#bloody
+            if (anomaly.HasValue && (!AnomalyInBackground || (anomaly == AnomalyKind.Bloody && anomalyStep > 0)))
+            {
+                return "acting out " + Anomalies.Info(anomaly.Value).Name;
+            }
             // docs/invariants.md#fear-owns-the-buddy
             if (fearState != FearState.Calm || mode == BuddyMode.Flee) return "fear is " + fearState;
 

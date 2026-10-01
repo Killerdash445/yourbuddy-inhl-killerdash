@@ -196,7 +196,9 @@ too ("no sell station within 80m" of four boxes).
 **Rule.** Every way an anomaly ends - its own end, an order, a task, fear, deadly air, death,
 parking, a rebuild - goes through `EndAnomaly`. That puts back exactly what the anomaly changed: the
 renderers it switched off and no others, the controller's collisions, `Asleep`, the texture the body
-wore, a prank's closet, a stare's walk.
+wore, a flicker's skin, a prank's closet, a stare's walk, the robot it talked to, a stalker's door codes,
+a double it made and the capsule it shut. The doubles live outside the buddy, so its `OnDestroy` removes
+them too.
 
 **Why.** A vanish that ends any other way leaves an invisible buddy with no AI that nothing ever wakes.
 Switching every renderer back on brings back the face mask `SpawnBuddy` hides. Restoring the original
@@ -204,7 +206,23 @@ texture instead of the one it wore strips a skin the player chose.
 
 **Enforced in.** `EndAnomaly`, from `UpdateAnomaly`, `EndAnomalyForOrder`, `BusyForCommand`,
 `AnomalyHoldsBody` (fear), `UpdateAutonomy` (air), `OnInterrupted` and `OnDied`; `Reappear`,
-`BuddyGore.Remove`.
+`BuddyGore.Remove`, `ShowFlicker`, `ReleaseBot`, `RemoveShadow`, `RemoveSleeper`; `BuddyBehaviour.OnDestroy`.
+
+### an-anomaly-prop-never-enters-the-save
+
+**Rule.** A prop an anomaly leaves (`AnomalyProps`) is a clone of a game object whose `SaveObject` id
+is cleared and whose `Data` is set, with an id the game's counter never reaches, before its `Awake`
+runs. That data is never registered with `SaveData`. A double of the buddy (`BuddyDouble`) has every
+script stripped before it wakes, so it has no save data at all. Nothing either does reaches the vanilla
+save.
+
+**Why.** A clone keeps the original's serialized id and would share, and overwrite, its save data. A
+fresh id makes `CreateData` register the prop, and a load then holds data for an object nothing makes
+any more, or an item prefab the game cannot find once the mod is gone. Removing the mod must never break
+a save.
+
+**Enforced in.** `AnomalyProps.SpawnMeat`, `SpawnPipe`, `SpawnBlood` (set up under a switched-off holder);
+`GameInternals.PropAccess`; `BuddyDouble.Make` (built under a switched-off root).
 
 ---
 

@@ -125,7 +125,8 @@ namespace YourBuddy
                 string first = args.Length > 0 && !args[0].StartsWith("@") ? args[0] : "";
                 if (first.Length == 0)
                 {
-                    Print("Anomalies: " + AnomalyDirector.Describe() + "\nSounds: " + ScareSounds.Describe());
+                    Print("Anomalies: " + AnomalyDirector.Describe() + "\nThis save: " + AnomalyMemory.Describe() +
+                          "\nSounds: " + ScareSounds.Describe());
                     ForTargets(args, (b, _) => b.Name + ": " + b.DescribeAnomaly());
                     return;
                 }
@@ -133,15 +134,22 @@ namespace YourBuddy
                 {
                     foreach (AnomalyInfo info in Anomalies.All)
                     {
+                        string? why = AnomalyDirector.WhyNot(info);
                         Print(info.Kind + " - " + info.Name + " (" + info.Severity.ToString().ToLowerInvariant() +
-                              (AnomalyDirector.Allows(info) ? ")" : ", not at this difficulty and tier)"));
+                              (why == null ? ")" : " - not now: " + why + ")"));
                     }
-                    Print("Usage: buddy_anomaly [<kind>|end|roll|list] [@who]");
+                    Print("Usage: buddy_anomaly [<kind>|end|roll|list|forget] [@who]");
                     return;
                 }
                 if (first.Equals("roll", StringComparison.OrdinalIgnoreCase))
                 {
                     Print(AnomalyDirector.RollNow());
+                    return;
+                }
+                if (first.Equals("forget", StringComparison.OrdinalIgnoreCase))
+                {
+                    AnomalyMemory.Load(null);
+                    Print("This save forgets every anomaly and line it had - they can all happen again");
                     return;
                 }
                 ForTargets(args, (b, rest) => BuddyCommands.Anomaly(b, rest[0]));
