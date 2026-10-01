@@ -159,7 +159,7 @@ namespace YourBuddy
             {
                 // An ordered hide is not fear's to end: buddy_hide skips the fear setting going in,
                 // so the same setting must not pull the buddy straight back out. docs/fear.md §6
-                if (Hiding && !hideOrdered)
+                if (Hiding && !hideOrdered && !hidePrank)
                 {
                     ForceLeaveHidingSpot(YourBuddyPlugin.ConfigFear.Value ? "the monster is switched off" : "fear is switched off");
                 }
@@ -511,6 +511,8 @@ namespace YourBuddy
             if (Hiding)
             {
                 hideFromFear = true;
+                // A prank hide is a fear hide now: docs/anomalies.md#peekaboo-and-closetambush
+                hidePrank = false;
                 fleePhase = FleePhase.Hide;
                 YourBuddyPlugin.Log.LogInfo($"[fear] Fleeing the Breathless into {hideName}, then back to {modeBeforeFlee}");
                 return;

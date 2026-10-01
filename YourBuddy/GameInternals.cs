@@ -205,6 +205,34 @@ namespace YourBuddy
         }
 
         /// <summary>
+        /// The game's own sounds the buddy's anomalies borrow, read off whichever instance is in the
+        /// scene. docs/anomalies.md#5-sounds
+        /// </summary>
+        internal static class ScareSoundAccess
+        {
+            private const string Feature = "the buddy's anomaly sounds (that one stays silent)";
+            private static readonly FieldInfo? Screech = Field<EventReference>(typeof(Breathless), "screechSound", Feature);
+            private static readonly FieldInfo? Moving = Field<EventReference>(typeof(Breathless), "movingSound", Feature);
+            private static readonly FieldInfo? Talk = Field<EventReference>(typeof(AssistanceBot), "talkSound", Feature);
+            private static readonly FieldInfo? Clean = Field<EventReference>(typeof(Cleanable), "cleanSound", Feature);
+            private static readonly FieldInfo? CloseFail = Field<EventReference>(typeof(Gate), "closeFailSound", Feature);
+            private static readonly FieldInfo? Scream = Field<EventReference>(typeof(UnsealScream), "screamSound", Feature);
+            private static readonly FieldInfo? Activity = Field<EventReference>(typeof(BreathlessActivity), "sound", Feature);
+            private static readonly FieldInfo? RandomEvent = Field<EventReference>(typeof(RandomSound), "sound", Feature);
+            private static readonly FieldInfo? Background = Field<EventReference>(typeof(BackgroundSound), "scarySound", Feature);
+
+            internal static EventReference? GetScreech(Breathless? b) => GetValue<EventReference>(Screech, b);
+            internal static EventReference? GetMoving(Breathless? b) => GetValue<EventReference>(Moving, b);
+            internal static EventReference? GetTalk(AssistanceBot? bot) => GetValue<EventReference>(Talk, bot);
+            internal static EventReference? GetClean(Cleanable? dirt) => GetValue<EventReference>(Clean, dirt);
+            internal static EventReference? GetCloseFail(Gate? gate) => GetValue<EventReference>(CloseFail, gate);
+            internal static EventReference? GetScream(UnsealScream? e) => GetValue<EventReference>(Scream, e);
+            internal static EventReference? GetActivity(BreathlessActivity? e) => GetValue<EventReference>(Activity, e);
+            internal static EventReference? GetRandom(RandomSound? e) => GetValue<EventReference>(RandomEvent, e);
+            internal static EventReference? GetBackground(BackgroundSound? e) => GetValue<EventReference>(Background, e);
+        }
+
+        /// <summary>
         /// Airlock: its two doors. NPC.Core reflects the same fields for gate detection; these
         /// are for the EVA run's own waiting in the chamber.
         /// </summary>

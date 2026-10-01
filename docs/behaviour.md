@@ -61,6 +61,7 @@ It **stands down** (logged at level 2 every 15 s) while:
 | fear above Calm, or fleeing | [fear-owns-the-buddy](invariants.md#fear-owns-the-buddy) |
 | walking a route | a goto, a resumed route, or an errand in progress |
 | hiding | hiding owns the buddy ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
+| acting out an anomaly | it holds the buddy until it ends ([anomalies.md](anomalies.md)) |
 | the player is on a spacewalk and the buddy is inside | Follow already waits inside ([eva.md §4](eva.md#4-through-the-airlock)) |
 
 Outside the airlocks every job is out of reach, so only Follow and Wander are weighed there - and
@@ -204,7 +205,7 @@ Check a new mode against every row.
 | Site | What it does | `Flee` |
 |---|---|---|
 | `INpcBrain.Activity` | the agent's stall recovery: `Follow` → `Pursuit`, `Wander` → `DropPlanAndPause`, `Route` → `SkipWaypoint`, `Stay` / `Dead` → none. Idle watch off in `Stay` / `Dead`; spacing only in `Follow` / `Wander` and not hiding; no doorway step-out in `Route` | `Retreat` → `EndWalk`, `ToPlayer` → `Pursuit`, else none |
-| `INpcBrain.TryIdleFacing` | idle facing: the monster above Calm, else the player in Follow | watches the monster |
+| `INpcBrain.TryIdleFacing` | idle facing: the monster above Calm, else an anomaly's (`AnomalyFaces`), else the player in Follow | watches the monster |
 | `INpcBrain.OnWalkAbandoned` | a stalled walk: `AbandonRetreat` in `Flee`, else `FinishRoute` | re-plans the retreat |
 | `INpcBrain.OnShipRebuilt` | a rebuild turns `Route` into `Follow` | same for `modeBeforeFlee` |
 | `IErrandBody.OnRoute` | `Route` only | - |
@@ -213,11 +214,12 @@ Check a new mode against every row.
 | `Autonomy.cs` `ApplyOrder`, `ApplyRouteOrder` | mid-flee, replace `modeBeforeFlee` | defers |
 | `Autonomy.cs` `StandDownReason`, `GotoUnderway`, `UpdateAutonomy` | stand down on `Flee` / `Route`; branch on `Wander` / `Follow` | stands down |
 | `Mind.cs` `ScoreCompany`, `ActOn` | which of Follow / Wander is weighed | not reached |
+| `Anomaly.cs` `AnomalyReady`, `StartStatue` | none starts in `Route` or `Flee`; a statue turns `Wander` into `Follow` | not started |
 | `Hide.cs` `BeginHide`, `EndHide` | an errand's `Route` ends; a hide in a flee ends or retries it | owner |
 | `ActivityName`, `StatusText`, `ListLine` | print it | - |
 
 Writers of `mode`: the initialiser, `SetMode` (from `ApplyOrder`, `Decide`, `StartFlee`, `EndFlee`,
-`OnShipRebuilt`), `StartRoute`, `FinishRoute`, `IErrandBody.Walk`, `BeginHide`, `OnDied`. `SetMode`
+`OnShipRebuilt`, `StartStatue`), `StartRoute`, `FinishRoute`, `IErrandBody.Walk`, `BeginHide`, `OnDied`. `SetMode`
 drops the agent's plan but not its step-off, wander pause, barred waypoint or sidestep; `StartFlee`
 and `EndFlee` cancel the step-off themselves (`CancelStepOff`).
 

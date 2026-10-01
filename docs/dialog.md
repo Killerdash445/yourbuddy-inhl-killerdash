@@ -11,11 +11,13 @@ default on). There is no hotkey; the game's Interact binding is the only way in.
 Look at the buddy and press **Interact**. The window, which NPC answers, the sight and range checks
 and the input handover are NPC.Core's ([interaction.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#1-opening-it)).
 A buddy can be talked to (`BuddyConversation.CanTalk`) while `Dialog` is on and it is neither asleep
-in its capsule nor hidden; NPC.Core adds that it lives and is loaded.
+in its capsule, hidden, nor ignoring you in an anomaly ([anomalies.md](anomalies.md#2-the-anomalies));
+NPC.Core adds that it lives and is loaded.
 
 Opening the window makes that buddy the **focus**, so console commands without a target go to it too
 ([reference.md §2](reference.md#2-debug-commands)). While it is open the buddy stands still and faces
-the player (`InDialog`). The title is the buddy's name, and the first line "Standing by.".
+the player (`InDialog`). The title is the buddy's name - once in a while the wrong one ([anomalies.md](anomalies.md#wrongname)) -
+and the first line "Standing by.". An anomaly may add lines to the log while the window is shut.
 
 ---
 

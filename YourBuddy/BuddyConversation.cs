@@ -12,9 +12,11 @@ namespace YourBuddy
     {
         public INpc Npc => buddy.Agent;
 
-        public bool CanTalk => YourBuddyPlugin.ConfigDialog.Value && !buddy.Asleep && !buddy.Hiding;
+        // Not while it is gone, or frozen staring at you: docs/anomalies.md
+        public bool CanTalk => YourBuddyPlugin.ConfigDialog.Value && !buddy.Asleep && !buddy.Hiding && !buddy.IgnoresYou;
 
-        public string Title => buddy.Name;
+        // Once, the wrong name: docs/anomalies.md#wrongname
+        public string Title => buddy.TitleOverride ?? buddy.Name;
 
         public string Greeting => "Standing by.";
 
@@ -31,6 +33,7 @@ namespace YourBuddy
 
             if (open) BuddyManager.SetFocus(buddy);
             buddy.InDialog = open;
+            if (open) buddy.OnTalkOpened();
         }
     }
 }

@@ -200,6 +200,64 @@ See [fear.md §6](fear.md#6-hiding-in-a-closet-or-locker). Walking up uses the `
 | `HideDoorShutSeconds` | 6 s | grace for the doors' close animation |
 | `HideWaitLogSeconds` | 15 s | between "still in here" lines |
 | `HideSkipSeconds` | 600 s | a spot it could not use |
+| `PrankTriggerDist` / `PrankMaxSeconds` | 1.5 m / 240 s | a prank hide jumps out once you are this near the spot; comes out quietly after this ([anomalies.md](anomalies.md#peekaboo-and-closetambush)) |
+
+### The anomaly director - `AnomalyDirector.cs`
+
+See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `CheckSeconds` / `FirstCheckSeconds` | 60 / 300 s | between rolls; before the first after a load |
+| `RetrySeconds` | 20 s | a roll whose draw fit nowhere tries again this soon |
+| `CooldownSeconds` | 600 s | quiet after one, at Normal and tier 0; shorter on Expert and higher tiers |
+| `MonsterClearance` | 25 m | none with the Breathless this near you |
+| `RecentCount` | 3 | the last kinds not drawn again |
+| `NormalScaryTasks` / `NormalExtremeTasks` | 1 / 3 | story tasks done before scary, then extreme, are allowed |
+| `ExpertAllTasks` | 1 | story tasks done before Expert allows scary and extreme |
+
+### Anomalies - `BuddyBehaviour.Anomaly.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `SightSampleSeconds` | 0.1 s | how often a running anomaly asks whether you see it |
+| `SpinSeconds` | 1.8 s | two turns |
+| `StareMinSeconds` / `StareMaxSeconds` | 50 / 140 s | a window or wall stare, once there |
+| `StareSearchRadius` | 20 m | a window this near |
+| `WallSearchDist` / `WallStandOff` | 4 / 0.45 m | a wall this near; it stops this far from it |
+| `VanishMinSeconds` / `VanishMaxSeconds` | 40 / 110 s | gone this long |
+| `ReappearMinDist` / `ReappearMaxDist` | 6 / 16 m | back at a node this far from you, out of your sight |
+| `BloodySeconds` | 150 s | how long the blood lasts unwatched |
+| `BloodySeenRate` | 6 | each second you watch it uses this many seconds of that |
+| `BloodyUnseenSeconds` | 5 s | it goes only once you have not seen the buddy this long |
+| `BehindYouDist` | 1.2 m | how far behind you it stands |
+| `DoorPassDist` | 1.6 m | how far past a doorway it walks before the door is shut behind it |
+| `DoorLegSeconds` / `DoorWaitSeconds` | 25 / 4 s | a walk through one door gives up; past it, the most it waits for the door to shut |
+| `MaxDoors` | 6 | doors in one round |
+| `WrongNameSeconds` | 900 s | the wrong name waits this long for the window |
+
+### Sounds - `ScareSounds.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `SoundCapSeconds` | 2.5 s | a creature or shriek sound is faded out after this |
+| `BlipGapMin` / `BlipGapMax` | 0.07 / 0.12 s | between the voice blips of a spoken line |
+| `BlipHeight` | 1.5 m | where they play, above the speaker's origin |
+
+### Being seen - `PlayerView.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `ViewHalfAngle` | 55° | in view within this of the camera's forward |
+| `ViewRange` | 40 m | nothing further counts as seen |
+| `BehindAngle` | 115° | off the view by this much is behind you |
+
+### Blood - `BuddyGore.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `Blots` | 16 | blots painted on the texture |
+| `BlotMinRadius` / `BlotMaxRadius` | 1 / 4 texels | their size on a 64x64 atlas, scaled with the texture |
 
 ### Spawning several - `BuddyConsole.cs`
 

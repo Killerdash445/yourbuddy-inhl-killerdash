@@ -174,6 +174,26 @@ namespace YourBuddy
         public static string Hide(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.StartHideNow();
 
         /// <summary>
+        /// buddy_anomaly: one now, whatever the chance, the difficulty and the quiet after the last. docs/anomalies.md
+        /// </summary>
+        public static string Anomaly(BuddyBehaviour buddy, string kindName)
+        {
+            if (Dead(buddy) is { } dead) return dead;
+
+            if (kindName.Equals("end", System.StringComparison.OrdinalIgnoreCase))
+            {
+                if (!buddy.AnomalyRunning) return buddy.Name + " is not acting anything out";
+
+                buddy.EndAnomaly("you ended it");
+                return buddy.Name + " is back to normal";
+            }
+            if (Anomalies.Parse(kindName) is not { } kind) return "No anomaly '" + kindName + "' - 'buddy_anomaly list' names them";
+
+            string? blocker = buddy.TryStartAnomaly(kind);
+            return blocker == null ? buddy.Name + ": " + Anomalies.Info(kind).Name : "Not now: " + blocker;
+        }
+
+        /// <summary>
         /// What the decider waits for and when it acts next: the HUD's Mind / Air / Snack lines. docs/behaviour.md §3
         /// </summary>
         public static string Mind(BuddyBehaviour buddy) => Dead(buddy) ?? buddy.Name + ": " + buddy.DescribeTimers();

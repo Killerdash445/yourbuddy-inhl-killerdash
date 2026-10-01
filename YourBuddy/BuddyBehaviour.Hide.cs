@@ -3,6 +3,7 @@ using NPC.Core;
 using NPC.Core.Agents;
 using NPC.Core.Navigation;
 using NPC.Core.World;
+using Space;
 using UnityEngine;
 using static YourBuddy.Items;
 
@@ -82,6 +83,18 @@ namespace YourBuddy
         /// A monster parked outside forever must not freeze the buddy in a cupboard.
         /// </summary>
         private const float HideMaxSeconds = 240f;
+
+        /// <summary>
+        /// In the closet as an anomaly, to jump out at you: docs/anomalies.md#peekaboo-and-closetambush.
+        /// `hidePrankScary` is the ambush; without it, a peek-a-boo.
+        /// </summary>
+        private bool hidePrank = false;
+        private bool hidePrankScary = false;
+        /// <summary>
+        /// It jumps out once you are this near the spot on its deck, and gives up after PrankMaxSeconds.
+        /// </summary>
+        private const float PrankTriggerDist = 1.5f;
+        private const float PrankMaxSeconds = 240f;
 
         /// <summary>
         /// Only used to reuse the reach walk's node and stand-point search; the walk itself is the flee's.
@@ -414,6 +427,11 @@ namespace YourBuddy
         {
             if (!hideDoorsShut && !ConfirmHideDoorsShut()) return;
 
+            if (AnyHideDoorOpen() && hidePrank)
+            {
+                JumpOut("you opened the door");
+                return;
+            }
             if (AnyHideDoorOpen())
             {
                 YourBuddyPlugin.Log.LogInfo($"[fear] Found in {hideName} - the door is open - getting out");
@@ -427,6 +445,12 @@ namespace YourBuddy
             // Hidden it cannot see out, but it can hear: the distance needs no sight line.
             // docs/invariants.md#a-hidden-buddy-waits-out-a-monster-it-can-hear
             bool monsterNear = monsterDist <= HideMonsterNearDist;
+
+            if (hidePrank)
+            {
+                WaitToJumpOut(inside);
+                return;
+            }
 
             // docs/invariants.md#an-ordered-hide-ends-only-on-an-order
             if (hideOrdered)
@@ -533,6 +557,7 @@ namespace YourBuddy
             hideSpot = null;
             hideFromFear = false;
             hideOrdered = false;
+            hidePrank = false;
             hideStillAfraid = true;
             agent.ClearMoveTarget();
             agent.DropPlan();
@@ -614,6 +639,70 @@ namespace YourBuddy
         }
 
         /// <summary>
+        /// The closet anomalies: in, out of your sight, to wait for you. Null once the walk there started.
+        /// docs/anomalies.md#peekaboo-and-closetambush
+        /// </summary>
+        private string? StartPrankHide(bool scary)
+        {
+            if (!TryStartHide(false, out string report)) return report;
+
+            // BeginHide took it for an ordered hide: this one ends on its own.
+            hideOrdered = false;
+            hidePrank = true;
+            hidePrankScary = scary;
+            return null;
+        }
+
+        /// <summary>
+        /// Hidden for a prank: out at you once you come near, or quietly out after PrankMaxSeconds.
+        /// </summary>
+        private void WaitToJumpOut(float inside)
+        {
+            Player? player = PilotPlayer();
+            if (player != null && player.Controller != null)
+            {
+                Transform you = player.Controller.CachedTransform;
+                Vector3 toYou = you.position - hideStand;
+                toYou.y = 0f;
+                if (toYou.sqrMagnitude <= PrankTriggerDist * PrankTriggerDist && OnPlayersDeck(you))
+                {
+                    JumpOut("you walked past");
+                    return;
+                }
+            }
+            if (inside >= PrankMaxSeconds)
+            {
+                YourBuddyPlugin.Log.LogInfo($"[anomaly] Gave up waiting in {hideName} after {PrankMaxSeconds:0}s - coming out quietly");
+                LeaveHidingSpot("nobody came", false);
+                return;
+            }
+            if (Time.time < hideWaitLogAt) return;
+
+            hideWaitLogAt = Time.time + HideWaitLogSeconds;
+            if (NpcLog.Level >= 2) YourBuddyPlugin.Log.LogInfo($"[anomaly] Waiting in {hideName} for you to pass ({inside:0}s)");
+        }
+
+        /// <summary>
+        /// Doors open and out at once - no pause to open them - with a "Boo!" or a shriek.
+        /// </summary>
+        private void JumpOut(string why)
+        {
+            YourBuddyPlugin.Log.LogInfo($"[anomaly] Jumps out of {hideName} - {why}");
+            LeaveHidingSpot(why, false);
+            hidePhaseUntil = Time.time + 0.1f;
+            if (hidePrankScary)
+            {
+                if (!ScareSounds.Play(ScareSound.Shriek, agent.GroundPos(1.2f))) ScareSounds.Play(ScareSound.Creature, agent.GroundPos(1.2f));
+
+                Startle(35);
+            }
+            else
+            {
+                Speak("Boo!");
+            }
+        }
+
+        /// <summary>
         /// For the HUD's Fear line and buddy_mind.
         /// </summary>
         internal string DescribeHide()
@@ -623,7 +712,8 @@ namespace YourBuddy
 
             if (hideState == HideState.Hidden)
             {
-                string why = hideOrdered ? ", you asked - and I stay until you say otherwise"
+                string why = hidePrank ? ", waiting for you to pass"
+                    : hideOrdered ? ", you asked - and I stay until you say otherwise"
                     : monsterDist <= HideMonsterNearDist ? $", it is {monsterDist:0.0}m away" : "";
                 return $"hidden in {hideName} {Time.time - hiddenSince:0}s{why}";
             }

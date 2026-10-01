@@ -189,6 +189,25 @@ too ("no sell station within 80m" of four boxes).
 
 **Enforced in.** `SellErrand.ConfirmSale`, `TryNextBox`, `FetchBlocker`, `StationBlocker`; `Items.InUnloadedRoom`.
 
+## Anomalies
+
+### an-anomaly-puts-back-what-it-changed
+
+**Rule.** Every way an anomaly ends - its own end, an order, a task, fear, deadly air, death,
+parking, a rebuild - goes through `EndAnomaly`. That puts back exactly what the anomaly changed: the
+renderers it switched off and no others, the controller's collisions, `Asleep`, the texture the body
+wore, a prank's closet, a stare's walk.
+
+**Why.** A vanish that ends any other way leaves an invisible buddy with no AI that nothing ever wakes.
+Switching every renderer back on brings back the face mask `SpawnBuddy` hides. Restoring the original
+texture instead of the one it wore strips a skin the player chose.
+
+**Enforced in.** `EndAnomaly`, from `UpdateAnomaly`, `EndAnomalyForOrder`, `BusyForCommand`,
+`AnomalyHoldsBody` (fear), `UpdateAutonomy` (air), `OnInterrupted` and `OnDied`; `Reappear`,
+`BuddyGore.Remove`.
+
+---
+
 ## Several buddies
 
 ### one-buddy-per-target

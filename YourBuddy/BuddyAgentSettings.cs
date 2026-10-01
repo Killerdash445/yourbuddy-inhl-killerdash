@@ -22,5 +22,8 @@ namespace YourBuddy
         // The worn suit slows it and stops its jumps, as it does the player (PlayerController). docs/eva.md
         public override float SpeedFactor => buddy is { } b ? b.SuitSpeedFactor : 1f;
         public override bool CanJump => !Suited;
+
+        // Vanished, it is off the scanner too: docs/anomalies.md#vanish
+        public override bool ShowOnLifecare => buddy is not { Vanished: true };
     }
 }

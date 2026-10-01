@@ -230,6 +230,8 @@ namespace YourBuddy
             // After the save's own buddy, so a restored one is never doubled by the new-game wake-up.
             // sceneReady implies gm != null.
             if (sceneReady) BuddyCryoSpawn.Tick(gm!);
+
+            if (sceneReady) AnomalyDirector.Tick();
         }
 
         /// <summary>

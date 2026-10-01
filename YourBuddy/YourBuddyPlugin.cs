@@ -59,6 +59,9 @@ namespace YourBuddy
         public static ConfigEntry<float> ConfigItemPlayIntervalMinutes;
         public static ConfigEntry<OrderPersistence> ConfigOrderPersistence;
         public static ConfigEntry<float> ConfigOrderExpirySeconds;
+        public static ConfigEntry<bool> ConfigAnomalies;
+        public static ConfigEntry<AnomalyLevel> ConfigAnomalyDifficulty;
+        public static ConfigEntry<float> ConfigAnomalyFrequency;
         // ReSharper disable once MemberCanBePrivate.Global
         public static ConfigEntry<float> ConfigMoveSpeed;
 
@@ -159,6 +162,18 @@ namespace YourBuddy
                 "How long an order holds when OrderPersistence is Expires. Ignored otherwise.");
             ConfigMoveSpeed = Config.Bind("General", "MoveSpeed", 3.5f,
                 "Default buddy movement speed in m/s.");
+            ConfigAnomalies = Config.Bind("Anomalies", "Anomalies", true,
+                "Now and then the buddy does something funny, strange or frightening, and you start to wonder whether it is " +
+                "still the friend you woke up with. How far it goes follows the difficulty (see AnomalyDifficulty) and your " +
+                "progress: Harmless only funny moments; Normal strange, scary after the first story task, extreme after " +
+                "the third; Expert scary and extreme after the first. " +
+                "'buddy_anomaly' lists them and starts one now. docs/anomalies.md");
+            ConfigAnomalyDifficulty = Config.Bind("Anomalies", "AnomalyDifficulty", AnomalyLevel.Game,
+                "Game: follow the game's difficulty (its events frequency). Harmless, Normal or Expert: use that one for the " +
+                "buddy whatever the game is set to.");
+            ConfigAnomalyFrequency = Config.Bind("Anomalies", "AnomalyFrequency", 1f,
+                "How often anomalies happen: multiplies their chance and divides the quiet after one. 0: never by " +
+                "themselves ('buddy_anomaly' still works).");
 
             Logger.LogInfo("[mod] Initializing...");
             GameInternals.ResolveAll();
@@ -360,7 +375,9 @@ namespace YourBuddy
                 new BuddyAgentSettings(buddy), buddy);
             buddy.Init(agent);
             BuddyManager.Register(buddy);
-            NpcInteraction.Register(new BuddyConversation(buddy));
+            BuddyConversation conversation = new(buddy);
+            buddy.Conversation = conversation;
+            NpcInteraction.Register(conversation);
 
             npcGo.SetActive(true);
             using NpcRegistry.ActingScope _ = NpcRegistry.Acting(agent);

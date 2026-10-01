@@ -173,6 +173,8 @@ namespace YourBuddy
                 agent.FacePlayer(player);
                 return true;
             }
+            // A spin, a stare, a freeze while watched: docs/anomalies.md
+            if (AnomalyHoldsBody()) return true;
 
             // Inside the spot, or getting in and out of it, nothing else moves the buddy. The walk there
             // goes through Steer, so it sidesteps and opens doors as any walk does.
@@ -187,6 +189,8 @@ namespace YourBuddy
             wantMove = false;
             // The walk to a hiding spot is a walk of its own, whatever the mode says. docs/fear.md §6
             if (hideState == HideState.Walking) return UpdateHide(out wantMove);
+            // So is an anomaly's walk: to a window or wall, or through the doors it shuts. docs/anomalies.md
+            if (anomalyWalking) return WalkAnomalyLeg(out wantMove);
 
             switch (mode)
             {
@@ -219,7 +223,7 @@ namespace YourBuddy
         {
             get
             {
-                bool free = hideState == HideState.None;
+                bool free = hideState == HideState.None && !anomalyWalking;
                 switch (mode)
                 {
                     case BuddyMode.Follow:
@@ -253,6 +257,7 @@ namespace YourBuddy
             // Standing still with the Breathless about: watch it - unless being talked
             // to, where the override already faces the player. docs/fear.md
             if (fearState != FearState.Calm && !InDialog) agent.FacePoint(lastMonsterPos);
+            else if (!InDialog && AnomalyFaces(player)) return;
             else if (mode == BuddyMode.Follow) agent.FacePlayer(player);
         }
 
@@ -280,10 +285,15 @@ namespace YourBuddy
         /// </summary>
         bool INpcBrain.Sheltered => hideState == HideState.Hidden;
 
-        void INpcBrain.OnInterrupted(string why) => ForceLeaveHidingSpot(why);
+        void INpcBrain.OnInterrupted(string why)
+        {
+            EndAnomaly(why);
+            ForceLeaveHidingSpot(why);
+        }
 
         void INpcBrain.OnDied()
         {
+            EndAnomaly("it died");
             suit.OnDied();
             mode = BuddyMode.Dead;
         }
@@ -356,7 +366,7 @@ namespace YourBuddy
             statusTextAt = Time.time + StatusTextInterval;
             bool parked = !gameObject.activeInHierarchy;
             StringBuilder text = HudText.Clear();
-            text.Append("Mode: ").Append(parked ? "parked" : Asleep ? "asleep" : mode.ToString());
+            text.Append("Mode: ").Append(parked ? "parked" : Vanished ? "gone" : Asleep ? "asleep" : mode.ToString());
             if (DescribeReachTask() is { } task) text.Append(" (").Append(task).Append(')');
             if (suit.Suited) text.Append(" [SUITED]");
             if (agent.IsOutside) text.Append(agent.Floating ? " [OUTSIDE, ZERO-G]" : " [OUTSIDE]");
@@ -378,7 +388,8 @@ namespace YourBuddy
                 if (DescribeHudMind() is { } mind) text.Append('\n').Append(mind);
                 text.Append("\nAir: ").Append(lifeSupport.Describe()).Append("\nSnack: ").Append(snacks.Describe())
                     .Append("\nTidy: ").Append(tidying.Describe()).Append("\nSell: ").Append(selling.Describe())
-                    .Append("\nPlay: ").Append(play.Describe()).Append("\nFetch suit: ").Append(suitFetch.Describe());
+                    .Append("\nPlay: ").Append(play.Describe()).Append("\nFetch suit: ").Append(suitFetch.Describe())
+                    .Append("\nOdd: ").Append(DescribeAnomaly());
             }
             if (agent.MoveTarget is { } target)
             {
@@ -395,7 +406,7 @@ namespace YourBuddy
         /// </summary>
         internal string ListLine(bool focused)
         {
-            string state = IsDead ? "dead" : !gameObject.activeInHierarchy ? "parked" : Asleep ? "asleep" : mode.ToString();
+            string state = IsDead ? "dead" : !gameObject.activeInHierarchy ? "parked" : Vanished ? "gone" : Asleep ? "asleep" : mode.ToString();
             if (!IsDead && DescribeReachTask() is { } task) state += " (" + task + ")";
 
             Player? player = PilotPlayer();

@@ -27,6 +27,10 @@ the buddy through a few `internal` members, never its fields.
 | `BuddyBehaviour.Modes.cs` | `UpdateFollow` (on the agent's `Pursue`), `UpdateRoute` (on `SimpleAdvance`), `FinishRoute`, `StartRoute`, `SetMode`, the reach task in hand | `NpcAgent` | [behaviour](behaviour.md) |
 | `BuddyBehaviour.Fear.cs` | seeing the Breathless, stress, `FearState`, `HoldBackFromMonster`, the `Flee` mode | `NavProbe`, `NavGraph`, `GameInternals` | [fear](fear.md) |
 | `BuddyBehaviour.Hide.cs` | hiding in a closet or locker: walk, teleport in/out, doors, who ends it | `NpcAgent` | [fear](fear.md) |
+| `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: each kind's start conditions, vanishing, the stare walk, holds while watched, `EndAnomaly`, `Speak` | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
+| `AnomalyDirector.cs` | when an anomaly happens and how far it may go: difficulty, the game's event tier, the roll, cooldown, the draw; the player's stress | `BuddyBehaviour`, `GameManager.EventSystem` | [anomalies](anomalies.md#1-how-often-and-how-far) |
+| `Anomaly.cs`, `AnomalyLines.cs` | the catalogue (`AnomalyKind`, severity, weight) and what the buddy says | - | [anomalies](anomalies.md#2-the-anomalies) |
+| `PlayerView.cs`, `ScareSounds.cs`, `BuddyGore.cs` | what the player sees; the game's FMOD events borrowed; the bloody texture | `NavProbe`, `GameInternals`, `BuddySkin` | [anomalies](anomalies.md#4-being-seen) |
 | `BuddyBehaviour.Autonomy.cs` | orders (`ApplyOrder`, `ApplyRouteOrder`, `RevokeOrder`), persistence, expiry, stand-down, bouts | `NavGraph` | [behaviour](behaviour.md) |
 | `BuddyBehaviour.Mind.cs` | the utility decider: scores urges, draws one, starts its errand | `Errand`, `LifeSupport` | [behaviour](behaviour.md#3-the-decider) |
 | `BuddyBehaviour.Errands.cs` | owns the errands; implements `IErrandBody`, their only way into the buddy | every errand | [behaviour](behaviour.md) |
@@ -91,16 +95,16 @@ The buddy's answers:
 | Hook | The buddy |
 |---|---|
 | `SlowPhase` | 0: loads every room holding a sell station while `SellTrash` is on; 2: `UpdateFear`; 3: the decider (`UpdateAutonomy`) and `LifeSupport.Update` |
-| `OverrideMovement` | in the talk window: hold still facing you; hiding, but not on the walk there: `UpdateHide` |
-| `Steer` | the walk to a hiding spot, else the mode: Follow → `UpdateFollow` (`Pursue`), Wander → `Wander` on `wanderOwner`, avoiding nodes near the monster while not Calm, Route → `UpdateRoute`, Stay → `Stay`, Flee → `UpdateFlee` |
+| `OverrideMovement` | in the talk window: hold still facing you; an anomaly that holds the body (`AnomalyHoldsBody`); hiding, but not on the walk there: `UpdateHide` |
+| `Steer` | the walk to a hiding spot or an anomaly's walk (`WalkAnomalyLeg`: to a window, a wall, through a door), else the mode: Follow → `UpdateFollow` (`Pursue`), Wander → `Wander` on `wanderOwner`, avoiding nodes near the monster while not Calm, Route → `UpdateRoute`, Stay → `Stay`, Flee → `UpdateFlee` |
 | `Constrain` | `HoldBackFromMonster` |
 | `Activity` | per mode: [behaviour.md §4](behaviour.md#4-every-place-that-reads-mode-outside-the-dispatch-switch) |
-| `TryIdleFacing` | the monster above Calm, else you in Follow |
+| `TryIdleFacing` | the monster above Calm, else where an anomaly looks (`AnomalyFaces`), else you in Follow |
 | `OnWalkAbandoned` | a flee: `AbandonRetreat`; else `FinishRoute` |
 | `Holds` | its errand leg or hiding spot |
 | `Sheltered` | hidden in a closet |
-| `OnInterrupted` | `ForceLeaveHidingSpot` |
-| `OnDied` | mode `Dead` |
+| `OnInterrupted` | `EndAnomaly`, `ForceLeaveHidingSpot` |
+| `OnDied` | `EndAnomaly`, mode `Dead` |
 | `OnShipRebuilt` | a goto ends; see [NPC.Core's an-npc-rides-its-own-floor](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-npc-rides-its-own-floor) |
 
 The planning loop behind Follow is the agent's `Pursue`

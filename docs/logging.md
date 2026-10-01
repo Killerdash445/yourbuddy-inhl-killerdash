@@ -33,6 +33,7 @@ every NPC mod ([NPC.Core logging](https://github.com/bytenull1/npc-core-inhl/blo
 | `[suit]` | `BuddySuit.cs`, `EvaRun.cs`, `SuitFetchErrand.cs` | suiting up and down, the airlock trips, waiting for your cycle, a lost EVA skin, the suit fetch |
 | `[nav]` | NPC.Core `NavGraph` | seeding, route chains, path failures |
 | `[probe]` | NPC.Core `NavProbe`, `SceneScan` | probe mask, gate inventory, gate-frame audits, full buffers, scene rescans |
+| `[anomaly]` | `AnomalyDirector`, `BuddyBehaviour.Anomaly.cs`, `ScareSounds` | anomalies started and ended, lines said, a vanish waiting to come back; draws that did not fit and sounds found at level 2 |
 | `[mgr]` | `BuddyManager`, `BuddyCryoSpawn` | spawns, restoring buddies from a save, the new-game wake-up |
 | `[editor]` | NPC.Core `NodeEditor` | node and link placement |
 | `[internals]` | `GameInternals` | missing game members at load, then one summary line |

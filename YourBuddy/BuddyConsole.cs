@@ -119,6 +119,33 @@ namespace YourBuddy
                 rest.Length < 1
                     ? "Usage: buddy_terminal <oxygen|climate> [@who] - switch that unit on now, if it is off"
                     : BuddyCommands.Terminal(b, rest[0]));
+            // docs/anomalies.md#7-testing
+            commands["buddy_anomaly"] = delegate (string[] args)
+            {
+                string first = args.Length > 0 && !args[0].StartsWith("@") ? args[0] : "";
+                if (first.Length == 0)
+                {
+                    Print("Anomalies: " + AnomalyDirector.Describe() + "\nSounds: " + ScareSounds.Describe());
+                    ForTargets(args, (b, _) => b.Name + ": " + b.DescribeAnomaly());
+                    return;
+                }
+                if (first.Equals("list", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (AnomalyInfo info in Anomalies.All)
+                    {
+                        Print(info.Kind + " - " + info.Name + " (" + info.Severity.ToString().ToLowerInvariant() +
+                              (AnomalyDirector.Allows(info) ? ")" : ", not at this difficulty and tier)"));
+                    }
+                    Print("Usage: buddy_anomaly [<kind>|end|roll|list] [@who]");
+                    return;
+                }
+                if (first.Equals("roll", StringComparison.OrdinalIgnoreCase))
+                {
+                    Print(AnomalyDirector.RollNow());
+                    return;
+                }
+                ForTargets(args, (b, rest) => BuddyCommands.Anomaly(b, rest[0]));
+            };
             commands["buddy_auto"] = delegate (string[] args)
             {
                 Print(BuddyCommands.SetAutonomy(Toggle(args, 0, YourBuddyPlugin.ConfigAutonomy.Value)));

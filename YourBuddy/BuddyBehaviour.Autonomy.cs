@@ -44,6 +44,7 @@ namespace YourBuddy
             if (IsDead) return false;
 
             LeaveAnOrderedHide(OrderName(order));
+            EndAnomalyForOrder(OrderName(order));
             orderedMode = order;
             orderedAt = Time.time;
             if (order == BuddyMode.Wander) wanderOwner = null;
@@ -65,6 +66,7 @@ namespace YourBuddy
             if (IsDead) return false;
 
             LeaveAnOrderedHide("Goto");
+            EndAnomalyForOrder("Goto");
             orderedMode = BuddyMode.Route;
             orderedAt = Time.time;
             routeGoal = goal;
@@ -94,6 +96,7 @@ namespace YourBuddy
         {
             // An ordered hide waits for an order, and this is one: nothing else would ever end it.
             LeaveAnOrderedHide("decide for myself");
+            EndAnomalyForOrder("decide for myself");
             if (orderedMode.HasValue)
             {
                 YourBuddyPlugin.Log.LogInfo("[mind] Order '" + OrderName(orderedMode.Value) + "' revoked - deciding for myself");
@@ -163,6 +166,8 @@ namespace YourBuddy
             if (!YourBuddyPlugin.ConfigAutonomy.Value) return;
 
             ExpireOrder();
+            // Deadly air outranks an anomaly as it does an order: docs/invariants.md#survival-outranks-an-order
+            if (anomaly.HasValue && !vanished && !AnomalyIsLooks && lifeSupport.AirIsDangerous()) EndAnomaly("the air is dangerous");
             if (TrySaveOwnLife()) return;
             if (Time.time < decideAt) return;
 
@@ -212,6 +217,9 @@ namespace YourBuddy
             if (InDialog) return "being talked to";
 
             if (Hiding) return hideState + " " + hideName;
+
+            // Blood is only a look: it goes about its day with it. docs/anomalies.md#bloody
+            if (anomaly.HasValue && !AnomalyIsLooks) return "acting out " + Anomalies.Info(anomaly.Value).Name;
             // docs/invariants.md#fear-owns-the-buddy
             if (fearState != FearState.Calm || mode == BuddyMode.Flee) return "fear is " + fearState;
 
@@ -333,7 +341,8 @@ namespace YourBuddy
         internal string DescribeTimers() =>
             "Mind: " + DescribeMind() + "\nWhy: " + DescribeUrges() + "\nAir: " + lifeSupport.Describe() +
             "\nSnack: " + snacks.Describe() + "\nTidy: " + tidying.Describe() + "\nSell: " + selling.Describe() +
-            "\nPlay: " + play.Describe() + "\nFetch suit: " + suitFetch.Describe();
+            "\nPlay: " + play.Describe() + "\nFetch suit: " + suitFetch.Describe() + "\nOdd: " + DescribeAnomaly() +
+            "\nAnomalies: " + AnomalyDirector.Describe();
 
         /// <summary>
         /// The HUD's Mind and Why lines, without repeating what the Mode and Orders lines already say:
@@ -400,7 +409,18 @@ namespace YourBuddy
         /// </summary>
         private string? BusyForCommand(bool whileAlert = false, bool preemptErrand = false, bool outsideOk = false)
         {
+            string? busy = BusyForCommandBeforeAnomaly(whileAlert, preemptErrand, outsideOk);
+            // A task given now ends what it was acting out, as an order does. docs/anomalies.md
+            if (busy == null && !AnomalySurvivesOrders) EndAnomaly("you gave me something to do");
+
+            return busy;
+        }
+
+        private string? BusyForCommandBeforeAnomaly(bool whileAlert, bool preemptErrand, bool outsideOk)
+        {
             if (IsDead) return Name + " is dead";
+
+            if (IgnoresYou) return Name + " does not answer";
 
             if (Asleep || !gameObject.activeInHierarchy) return Name + " is not awake here";
 
