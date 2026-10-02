@@ -3,11 +3,11 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// Smile and UnderTheSuit: its skin flickers when you look it in the face. docs/anomalies.md#smile-and-underthesuit
+    /// Smile and UnderTheSuit. Its skin flickers when you look it in the face. docs/anomalies.md#smile-and-underthesuit
     /// </summary>
     public sealed partial class BuddyBehaviour
     {
-        // Smile and UnderTheSuit: the flicker's texture, what it wore, and the beat it is on. docs/anomalies.md#smile-and-underthesuit
+        // Smile and UnderTheSuit state, with the flicker's texture, what it wore, and the beat it is on. docs/anomalies.md#smile-and-underthesuit
         private Texture2D? flickerTexture = null;
         private Texture? flickerWearing = null;
         private bool flickerOn = false;
@@ -23,17 +23,15 @@ namespace YourBuddy
         private static readonly float[] SmileBeats = [0.2f, 0.12f, 0.12f];
         private static readonly float[] FleshBeats = [0.12f];
 
-        // ------------------------------------------------------------------
         // Skin flickers
-        // ------------------------------------------------------------------
 
         /// <summary>
-        /// Armed: the next time you look it in the face, close, the skin flickers for a blink - a bloody grin
-        /// on the visor, or flesh with a face behind the glass. docs/anomalies.md#smile-and-underthesuit
+        /// Armed. The next time you look it in the face up close, the skin flickers for a blink, a bloody
+        /// grin on the visor or flesh with a face behind the glass. docs/anomalies.md#smile-and-underthesuit
         /// </summary>
-        private string? StartFlicker(AnomalyKind kind, bool sameVessel)
+        private string? StartFlicker(AnomalyKind kind, bool withYou)
         {
-            if (!sameVessel) return "you are on another vessel";
+            if (!withYou) return "you are on another vessel, not docked to its";
 
             if (suit.Suited) return "it wears a suit";
 

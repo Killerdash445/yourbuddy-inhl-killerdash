@@ -47,7 +47,7 @@ is a goto that names a room, which is tried right after "decide" ("go to the wor
 
 | Word | Console | Effect |
 |---|---|---|
-| decide / yourself / your call | `buddy_manage auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
+| decide / yourself / your call | `buddy_order auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
 | unsuit / take off the suit / remove the suit | `buddy_order suit off` | take the worn suit off - never outside or in an airlock ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)); before the airlock orders |
 | inside / come in / back in | `buddy_order inside` | from outside, walk into an airlock's chamber and wait for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the outside order |
 | outside / eva / space walk | `buddy_order outside` | suit up if a spare is free, then wait in an airlock (a station's, or the ship's own while undocked) for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |

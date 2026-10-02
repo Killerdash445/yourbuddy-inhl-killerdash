@@ -19,7 +19,7 @@ Console and dialog both go through `BuddyCommands`. `SetMode` and `StartRoute` a
 
 An order ends when it is:
 
-- **revoked** - "decide for yourself" or `buddy_manage auto on`;
+- **revoked** - "decide for yourself" or `buddy_order auto on`;
 - **expired** - `OrderPersistence = Expires`, after `OrderExpirySeconds`, only while autonomy is on;
 - **a goto that arrived** (`FinishRoute`), or one a flee interrupted and that can no longer be
   planned (`EndFlee`);
@@ -42,7 +42,7 @@ Neither order nor mode is saved. A loaded buddy starts in Follow with no order.
 | `UntilRevoked` | until another order, or "decide for yourself" | **yes** |
 | `Expires` | `OrderExpirySeconds` (at least 5 s), then the decider takes over | |
 
-`Autonomy = false`: the buddy never decides; it keeps its last order, or Follow. `buddy_manage auto on`
+`Autonomy = false`: the buddy never decides; it keeps its last order, or Follow. `buddy_order auto on`
 also revokes the current order, or switching it on would visibly do nothing.
 
 ---
@@ -154,6 +154,22 @@ clears the bout.
 The owner of the nearest active node - never `CurrentOwner`. A wander needs nodes to walk to, and
 only the graph knows where they are.
 
+An autonomous wander keeps that owner for its whole bout. An ordered wander (`buddy_order wander`)
+starts on it too, and every `WanderBoutMin`..`Max` draws a side: each owner with an active indoor
+node is equally likely, the ship as much as the station.
+
+**Why.** Picking any node of either side favours the side with more nodes. Docked at Shipyard, 57
+station nodes against 16 ship ones: it reached the ship and left at once.
+
+### Where a wander ends
+
+Never in the docked station's docking corridor: the room its `Docker.entryRoom` names (FuelDocker,
+YardEntry, OxygenDocker, SolarDocker), with the nodes `StationRooms` puts in it. Routes still pass
+through.
+
+**Why.** The corridor is a dead end for either owner's wander. A goal there meant walking halfway
+down the tube, then straight back out.
+
 ### Range
 
 Search radii are a cheap broad phase. What keeps them safe is an **owner filter**: a candidate must
@@ -230,7 +246,7 @@ and `EndFlee` cancel the step-off themselves (`CancelStepOff`).
 | Say | Console | Effect |
 |---|---|---|
 | decide / yourself / your call | - | `BuddyCommands.DecideForYourself` → `RevokeOrder`; refuses while `Autonomy` is off |
-| - | `buddy_manage auto [on\|off]` | sets `Autonomy`; `on` also revokes |
+| - | `buddy_order auto [on\|off]` | sets `Autonomy`; `on` also revokes |
 
 "Decide" is matched **before** Follow, so "decide for yourself whether to follow" is not a follow
 order. Other words: [dialog.md §3](dialog.md#3-the-orders).

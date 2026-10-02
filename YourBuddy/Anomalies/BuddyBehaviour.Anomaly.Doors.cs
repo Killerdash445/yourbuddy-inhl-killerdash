@@ -7,7 +7,7 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// ShutDoors: it goes round shutting the doors. docs/anomalies.md#shutdoors
+    /// ShutDoors. It runs round shutting the doors, then hides in a closet. docs/anomalies.md#shutdoors
     /// </summary>
     public sealed partial class BuddyBehaviour
     {
@@ -18,23 +18,24 @@ namespace YourBuddy
         private int doorPasses = 0;
         private int doorsShutAtPass = 0;
         /// <summary>
-        /// Past this door it has already stepped further out of the doorway once.
+        /// The pass is walked; the closes it owes have until doorsSettleUntil to land before another pass.
         /// </summary>
-        private bool doorSteppedClear = false;
+        private bool doorsSettling = false;
+        private float doorsSettleUntil = 0f;
+        /// <summary>The doors are done and it is in, or on its way into, a closet.</summary>
+        private bool doorsHiding = false;
         private static readonly float[] DoorPassDists = [DoorPassDist, 1.1f];
         private const float DoorPassDist = 1.6f;
-        private const float DoorClearDist = 1.8f;
-        private const int MaxDoorPasses = 3;
-        private const float DoorLegSeconds = 25f;
-        private const float DoorWaitSeconds = 4f;
-        private const int MaxDoors = 6;
+        private const float DoorClearDist = 1.6f;
+        private const int MaxDoorPasses = 2;
+        private const float DoorLegSeconds = 20f;
+        private const float DoorSettleSeconds = 3f;
+        private const int MaxDoors = 4;
 
-        // ------------------------------------------------------------------
         // Doors
-        // ------------------------------------------------------------------
 
         /// <summary>
-        /// A round of the open room doors aboard, nearest next: it walks through each and the agent shuts
+        /// A round of the open room doors aboard, nearest next. It walks through each and the agent shuts
         /// it behind it (CloseBehind), clear of the doorway and of you. Airlocks, locked and password doors
         /// are left alone. npc-core:docs/invariants.md#close-only-what-you-walked-through
         /// </summary>
@@ -64,6 +65,7 @@ namespace YourBuddy
             anomalyStep = -1;
             doorPasses = 1;
             doorsShutAtPass = 0;
+            doorsSettling = false;
             if (NextDoor()) return null;
 
             anomaly = null;
@@ -119,38 +121,12 @@ namespace YourBuddy
                 anomalyWalking = true;
                 anomalyStand = beyond;
                 anomalyArrival = 0.6f;
-                doorSteppedClear = false;
                 anomalyFace = gate.transform.position;
                 anomalyGiveUpAt = Time.time + DoorLegSeconds;
                 TraceDoors($"through '{gate.name}' ({anomalyStep + 1} of {doorsToShut.Count})");
                 return true;
             }
             return false;
-        }
-
-        /// <summary>
-        /// Still in reach of the door it waits to see shut: a straight step further out, once.
-        /// </summary>
-        private void StepClearOf(Gate gate, float now)
-        {
-            doorSteppedClear = true;
-            Vector3 away = transform.position - gate.transform.position;
-            away.y = 0f;
-            if (away.sqrMagnitude < 0.01f) away = transform.forward;
-
-            Vector3 floor = agent.FloorUnderNpc();
-            Vector3 clear = gate.transform.position + away.normalized * (DoorClearDist + 0.4f);
-            clear.y = floor.y;
-            if (!NavProbe.WalkLos(floor, clear, 0.5f))
-            {
-                TraceDoors($"in reach of '{gate.name}' and no room to step clear");
-                return;
-            }
-            anomalyWalking = true;
-            anomalyStand = clear;
-            anomalyArrival = 0.3f;
-            anomalyGiveUpAt = now + 4f;
-            YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name} steps clear of '{gate.name}' so it can shut");
         }
 
         private void SkipDoor(Gate gate, string why) =>
@@ -162,8 +138,17 @@ namespace YourBuddy
             anomalyWalking = false;
             if (NextDoor()) return;
 
-            // Another pass over what is still open - a door the agent had not shut by the time it moved on,
-            // or one planned around, from a different side now - while a pass still shuts something.
+            // It never waits at a door; the closes it owes land behind it. Once per pass, a moment for the last.
+            if (!doorsSettling && DoorsShut() < doorsToShut.Count)
+            {
+                doorsSettling = true;
+                doorsSettleUntil = Time.time + DoorSettleSeconds;
+                return;
+            }
+            doorsSettling = false;
+
+            // Another pass over what is still open (a door the agent had not shut by the time it moved on,
+            // or one planned around, from a different side now) while a pass still shuts something.
             int shut = DoorsShut();
             if (shut < doorsToShut.Count && doorPasses < MaxDoorPasses && (doorPasses == 1 || shut > doorsShutAtPass))
             {
@@ -176,7 +161,25 @@ namespace YourBuddy
                 if (NextDoor()) return;
             }
             string open = OpenDoorNames();
-            EndAnomaly($"{DoorsShut()} of {doorsToShut.Count} doors shut ({why})" + (open.Length > 0 ? " - left open: " + open : ""));
+            HideAfterDoors($"{DoorsShut()} of {doorsToShut.Count} doors shut ({why})" + (open.Length > 0 ? " - left open: " + open : ""));
+        }
+
+        /// <summary>
+        /// The round done, it gets into a closet and waits there, stepping out in silence when you find it.
+        /// Without a closet it ends.
+        /// </summary>
+        private void HideAfterDoors(string doors)
+        {
+            string? why = StartAmbushHide();
+            if (why != null)
+            {
+                EndAnomaly(doors + " - no closet: " + why);
+                return;
+            }
+            hideAmbushSilent = true;
+            doorsHiding = true;
+            anomalyUntil = Time.time + AmbushMaxSeconds + 30f;
+            YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name}: {doors} - now it hides in a closet");
         }
 
         private string OpenDoorNames()
@@ -208,7 +211,7 @@ namespace YourBuddy
             Vector3 middle = gate.transform.position;
             if (NavProbe.TryFloorHeight(middle + Vector3.up * 0.5f, out float floorY)) middle.y = floorY;
 
-            // A narrow room behind the door may not leave 1.6 m clear: a shorter step is tried next.
+            // A narrow room behind the door may not leave 1.6 m clear, so a shorter step is tried next.
             foreach (float pass in DoorPassDists)
             {
                 foreach (Vector3 axis in new[] { gate.transform.forward, gate.transform.right })
@@ -223,7 +226,7 @@ namespace YourBuddy
 
                     Vector3 far = FlatDistance(a, here) > FlatDistance(b, here) ? a : b;
                     Vector3 dir = (far - middle).normalized;
-                    // Clear of the doorway: the agent never closes a door on itself, and the anomaly holds it
+                    // Clear of the doorway, since the agent never closes a door on itself, and the anomaly holds it
                     // still past the door. npc-core:docs/invariants.md#never-force-a-close-into-the-npc
                     Vector3? node = NodeNear(far, 0f, 1.5f);
                     if (node != null && Vector3.Dot(node.Value - middle, dir) > 0f && FlatDistance(node.Value, middle) >= DoorClearDist) return node;

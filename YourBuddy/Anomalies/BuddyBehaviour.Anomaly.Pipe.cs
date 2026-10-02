@@ -3,33 +3,34 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// Pipe: it brings you a bloody pipe and drops it when you see it. docs/anomalies.md#pipe
+    /// Pipe. It brings you a bloody pipe and drops it when you see it. docs/anomalies.md#pipe
     /// </summary>
     public sealed partial class BuddyBehaviour
     {
-        // Pipe: the bloody pipe in its hands, and the frame it was made. docs/anomalies.md#pipe
+        // Pipe state, the bloody pipe in its hands and the frame it was made. docs/anomalies.md#pipe
         private Grabbable? pipe = null;
         private int pipeFrame = 0;
         private const float PipeMinDist = 5f;
         private const float PipeMaxDist = 30f;
         private const float PipeGiveUpSeconds = 120f;
         private const float PipeStartleDist = 4f;
+        /// <summary>After the drop, out of your sight this long and it is gone; watched this long, it lets go.</summary>
+        private const float PipeGoneUnseenSeconds = 1f;
+        private const float PipeWatchedSeconds = 60f;
         /// <summary>
-        /// The pipe's hold, from the body: its bloody top end down and forward, a little to one side.
+        /// The pipe's hold relative to the body, bloody top end down and forward, a little to one side.
         /// </summary>
         private static readonly Quaternion PipeHold = Quaternion.Euler(150f, 0f, 20f);
 
-        // ------------------------------------------------------------------
         // The bloody pipe
-        // ------------------------------------------------------------------
 
         /// <summary>
-        /// Out of your sight a bloody pipe is put in its hands; it comes up to you with it, not answering, and
-        /// the moment you spot it, puts it down without a word. docs/anomalies.md#pipe
+        /// Out of your sight a bloody pipe is put in its hands. It comes up to you with it, not answering,
+        /// and the moment you spot it, puts it down without a word. docs/anomalies.md#pipe
         /// </summary>
-        private string? StartPipe(float dist, bool sameVessel)
+        private string? StartPipe(float dist, bool withYou)
         {
-            if (!sameVessel) return "you are on another vessel";
+            if (!withYou) return "you are on another vessel, not docked to its";
 
             if (dist < PipeMinDist || dist > PipeMaxDist) return $"it is {dist:0.0}m from you - it needs {PipeMinDist:0}-{PipeMaxDist:0}m";
 
@@ -48,17 +49,37 @@ namespace YourBuddy
 
             StartHold(AnomalyKind.Pipe, PipeGiveUpSeconds);
             pipe = made;
-            // Picked up next frame: the item's Start puts it back where its data says.
+            // Picked up next frame, since the item's Start puts it back where its data says.
             pipeFrame = Time.frameCount;
             return null;
         }
 
         /// <summary>
-        /// Takes the pipe up and comes to you as a Follow does; the moment you see it, it puts the pipe down.
-        /// Never seen in PipeGiveUpSeconds: down unseen.
+        /// Takes the pipe up and comes to you as a Follow does; the moment you see it, it puts the pipe down,
+        /// and once you look away it is gone, as a vanish. If never seen in PipeGiveUpSeconds, it puts it down unseen.
         /// </summary>
-        private void UpdatePipe(float now, float dist)
+        private void UpdatePipe(float now, float dist, Transform you)
         {
+            if (anomalyStep == 2)
+            {
+                if (!anomalySeen && now - anomalyUnseenSince >= PipeGoneUnseenSeconds)
+                {
+                    anomalyStep = 3;
+                    anomalyUntil = now + Random.Range(VanishMinSeconds, VanishMaxSeconds);
+                    anomalyGiveUpAt = anomalyUntil + 60f;
+                    Disappear();
+                    YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name} is gone from where it put the pipe down - you looked away");
+                    return;
+                }
+                if (now >= anomalyUntil) EndAnomaly("you never looked away");
+
+                return;
+            }
+            if (anomalyStep == 3)
+            {
+                UpdateVanished(now, you);
+                return;
+            }
             if (anomalyStep == 0)
             {
                 if (Time.frameCount <= pipeFrame) return;
@@ -83,9 +104,18 @@ namespace YourBuddy
             if (anomalySeen && dist < PipeStartleDist) Startle(15);
 
             agent.Hands.Drop(anomalySeen ? "you saw it" : "nobody saw");
+            AnomalyProps.GoneWhenUnseen(pipe.gameObject);
             pipe = null;
-
-            EndAnomaly(anomalySeen ? $"you spotted it {dist:0.0}m away - it put the pipe down" : "put the pipe down unseen");
+            if (!anomalySeen)
+            {
+                EndAnomaly("put the pipe down unseen");
+                return;
+            }
+            anomalyStep = 2;
+            anomalyUntil = now + PipeWatchedSeconds;
+            agent.ClearMoveTarget();
+            agent.ReleasePlan();
+            YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name}: you spotted it {dist:0.0}m away - it put the pipe down");
         }
     }
 }

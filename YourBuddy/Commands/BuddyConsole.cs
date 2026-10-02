@@ -10,9 +10,9 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// The buddy console commands: `buddy` for help, buddy_spawn, buddy_despawn and buddy_kill, then one
-    /// command per category, registered through NPC.Core so no other mod's are overwritten. Per-buddy subcommands take @2, @name
-    /// or @all. docs/reference.md#2-debug-commands
+    /// The buddy console commands. `buddy` is help, then buddy_spawn, buddy_despawn, buddy_kill, buddy_list and one
+    /// command per category. Registered through NPC.Core so no other mod's are overwritten. Per-buddy
+    /// subcommands take @2, @name or @all. docs/reference.md#2-debug-commands
     /// </summary>
     internal static class BuddyConsole
     {
@@ -25,7 +25,7 @@ namespace YourBuddy
         private const float SpawnSameDeck = 0.5f;
 
         /// <summary>
-        /// One subcommand: its arguments and what it does, for the help, and its body.
+        /// One subcommand and its body, with the arguments and description the help shows.
         /// </summary>
         private sealed record Sub(string Args, string Help, Action<string[]> Run);
 
@@ -48,20 +48,15 @@ namespace YourBuddy
                 return b.Name + " despawned";
             }),
             ["buddy_kill"] = PerBuddy("[force]", "kill it, pushed away from you", Kill),
+            ["buddy_list"] = new("", "the buddies, their numbers and names; * marks the one commands go to", List),
         };
 
         internal static void Register()
         {
-            Add(new Category("buddy_manage", "list and set up buddies", new()
-            {
-                ["list"] = new("", "the buddies, their numbers and names; * marks the one commands go to", List),
-                ["skin"] = PerBuddy("<name|default>", "wear skins/<name>.png; no name lists them", Skin),
-                ["auto"] = new("[on|off]", "let the buddies decide for themselves, or only do as told",
-                    args => Print(BuddyCommands.SetAutonomy(Toggle(args, 0, YourBuddyPlugin.ConfigAutonomy.Value)))),
-            }));
-
             Add(new Category("buddy_order", "tell a buddy what to do; the dialog gives the same orders", new()
             {
+                ["auto"] = new("[on|off]", "let the buddies decide for themselves, or only do as told",
+                    args => Print(BuddyCommands.SetAutonomy(NpcConsole.Toggle(args, 0, YourBuddyPlugin.ConfigAutonomy.Value)))),
                 ["follow"] = Order("follow you", BuddyCommands.Follow),
                 ["stop"] = Order("drop what it is doing and follow you", BuddyCommands.Follow),
                 ["wander"] = Order("wander about", BuddyCommands.Wander),
@@ -95,9 +90,11 @@ namespace YourBuddy
                 ["mind"] = Order("what it is weighing and when it acts next", BuddyCommands.Mind),
                 ["bout"] = Order("end the current follow or wander stretch now", BuddyCommands.EndBout),
                 ["visuals"] = new("[on|off]", "path, probe and target markers", Visuals),
+                ["sound"] = PerBuddy("[<category> [<n>]]", "play an anomaly sound from it; no category lists them", Sound),
+                ["skin"] = PerBuddy("<name|default>", "wear skins/<name>.png; no name lists them", Skin),
                 ["hud"] = new("[on|off]", "the status HUD", args =>
                 {
-                    YourBuddyPlugin.ConfigShowHud.Value = Toggle(args, 0, YourBuddyPlugin.ConfigShowHud.Value);
+                    YourBuddyPlugin.ConfigShowHud.Value = NpcConsole.Toggle(args, 0, YourBuddyPlugin.ConfigShowHud.Value);
                     Print("Status HUD: " + (YourBuddyPlugin.ConfigShowHud.Value ? "ON" : "OFF"));
                 }),
             }));
@@ -136,7 +133,7 @@ namespace YourBuddy
         private static string Line(string name, Sub sub) => "  " + name + (sub.Args.Length > 0 ? " " + sub.Args : "") + " - " + sub.Help;
 
         /// <summary>
-        /// The first argument that is not an @who picks the subcommand; it gets every other one.
+        /// The first argument that is not an @who picks the subcommand, which gets the rest.
         /// </summary>
         private static void Dispatch(Category category, string[] args)
         {
@@ -161,12 +158,10 @@ namespace YourBuddy
         private static Sub PerBuddy(string args, string help, Func<BuddyBehaviour, string[], string> run) =>
             new(args.Length > 0 ? args + " [@who]" : "[@who]", help, a => ForTargets(a, run));
 
-        // ------------------------------------------------------------------
         // Bodies
-        // ------------------------------------------------------------------
 
         /// <summary>
-        /// Replaces every buddy: one as before, or a number for that many. docs/reference.md#2-debug-commands
+        /// Replaces every buddy with one, or with the given number. docs/reference.md#2-debug-commands
         /// </summary>
         private static void Spawn(string[] args)
         {
@@ -231,12 +226,31 @@ namespace YourBuddy
             return buddy.Name + " killed";
         }
 
+        /// <summary>
+        /// One anomaly sound from the buddy's chest, as an anomaly plays it: docs/anomalies.md#7-testing
+        /// </summary>
+        private static string Sound(BuddyBehaviour buddy, string[] rest)
+        {
+            if (rest.Length < 1) return ScareSounds.List();
+
+            if (!System.Enum.TryParse(rest[0], true, out ScareSound kind)) return "Categories: " + string.Join(", ", System.Enum.GetNames(typeof(ScareSound)));
+
+            int? index = null;
+            if (rest.Length >= 2)
+            {
+                if (!int.TryParse(rest[1], out int n)) return "Usage: buddy_dev sound [<category> [<n>]] [@who]";
+
+                index = n;
+            }
+            return ScareSounds.Audition(kind, index, buddy.Agent.GroundPos(1.2f), buddy.transform);
+        }
+
         private static string Skin(BuddyBehaviour buddy, string[] rest)
         {
             if (rest.Length >= 1) return BuddySkin.Apply(buddy, rest[0]);
 
             List<string> names = BuddySkin.Available();
-            return "Usage: buddy_manage skin <name|default> [@who] - skins in " + BuddySkin.Folder + ": " +
+            return "Usage: buddy_dev skin <name|default> [@who] - skins in " + BuddySkin.Folder + ": " +
                    (names.Count == 0 ? "none" : string.Join(", ", names));
         }
 
@@ -257,7 +271,7 @@ namespace YourBuddy
                 Print("No buddy exists");
                 return;
             }
-            YourBuddyPlugin.ConfigDebugVisuals.Value = Toggle(args, 0, YourBuddyPlugin.ConfigDebugVisuals.Value);
+            YourBuddyPlugin.ConfigDebugVisuals.Value = NpcConsole.Toggle(args, 0, YourBuddyPlugin.ConfigDebugVisuals.Value);
             foreach (BuddyBehaviour buddy in BuddyManager.All)
             {
                 if (buddy != null) buddy.Agent.EnsureDebugVisuals(YourBuddyPlugin.ConfigDebugVisuals.Value);
@@ -304,8 +318,8 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Runs a per-buddy command for each buddy "@2", "@buddy2" or "@all" names, anywhere in `args`, or
-        /// for the focused one; `run` gets the other arguments. Naming exactly one moves the focus to it.
+        /// Runs a per-buddy command for each buddy named by "@2", "@buddy2" or "@all" anywhere in `args`,
+        /// else for the focused one. `run` gets the other arguments. Naming exactly one moves the focus.
         /// docs/reference.md#2-debug-commands
         /// </summary>
         private static void ForTargets(string[] args, Func<BuddyBehaviour, string[], string> run)
@@ -333,7 +347,7 @@ namespace YourBuddy
                 BuddyBehaviour? found = int.TryParse(who, out int number) ? BuddyManager.ByNumber(number) : BuddyManager.ByName(who);
                 if (found == null)
                 {
-                    Print("No buddy called '" + arg + "' - buddy_manage list shows them");
+                    Print("No buddy called '" + arg + "' - buddy_list shows them");
                     return;
                 }
                 if (!targets.Contains(found)) targets.Add(found);
@@ -359,8 +373,8 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// The spawn row: 2 m ahead, SpawnSpacing apart across the view. A point with no floor, or no
-        /// knee-height walk to it on the same deck from the middle one, falls back to the middle.
+        /// The spawn row, 2 m ahead and SpawnSpacing apart across the view. A point with no floor, or no
+        /// knee-height walk to it from the middle on the same deck, falls back to the middle.
         /// </summary>
         private static Vector3 SpawnPoint(Transform view, int index, int count)
         {
@@ -370,23 +384,6 @@ namespace YourBuddy
 
             Vector3 point = middle + view.right * offset;
             return NavProbe.TryFloorHeight(point, out _) && NavProbe.WalkLos(middle, point, SpawnSameDeck) ? point : middle;
-        }
-
-        /// <summary>
-        /// "on"/"off"/"true"/"false" at args[index], or a flip when it is absent.
-        /// </summary>
-        private static bool Toggle(string[] args, int index, bool current)
-        {
-            if (args.Length <= index) return !current;
-
-            string value = args[index];
-            if (bool.TryParse(value, out bool parsed)) return parsed;
-
-            if (value.Equals("on", StringComparison.OrdinalIgnoreCase)) return true;
-
-            if (value.Equals("off", StringComparison.OrdinalIgnoreCase)) return false;
-
-            return !current;
         }
 
         private static void Print(string text) => NpcConsole.Print(text);

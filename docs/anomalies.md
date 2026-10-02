@@ -55,26 +55,31 @@ Never while the talk window is open, you are outside, the Breathless is within `
 
 | Kind | Severity | Starts when | What happens | Ends |
 |---|---|---|---|---|
-| `Whisper` | strange | within 8 m, same vessel | says something unsettling | at once |
+| `Whisper` | strange | with you; within `WhisperDist` (4 m), or Follow or Wander within 30 m | comes up to you ([below](#coming-up-to-you)), then says something unsettling | at once, once near |
 | `FakeCommand` | strange | the window is not open on it | its talk log gains an order you never typed | at once |
 | `WrongName` | strange | - | the talk window opens under the wrong name, once | when next opened, or 15 min |
 | `Vanish` | strange | out of your sight, 6 m+ | gone; comes back elsewhere | see below |
-| `Noises` | strange | behind you, 1.2-7 m, unseen | clicks, a wet squelch; scary and worse add the monster's sounds, cut short | 2-3 sounds, or you turn round |
+| `Noises` | strange | unseen, within 30 m; Follow or Wander unless already behind you, 1.2-7 m | comes up behind you ([below](#coming-up-to-you)), then odd noises (`Odd`), never the same twice, each after the last has ended and `NoisesGapMin`..`Max` (3-5 s) of silence; scary and worse end on a `Creature` sound, cut short, and may make the second one too | 2 sounds (scary and worse 4), or you turn round: it is seen or no longer behind you, and what still plays fades out over `FadeOutSeconds` (0.25 s) |
 | `WindowStare` | strange | a window within 20 m on its vessel | walks to it and stares out | 50-140 s |
-| `WallStare` | strange | a wall within 4 m | walks up to it and faces it | 50-140 s |
+| `WallStare` | strange | an inside corner within 5 m | walks into it and faces the corner | 50-140 s |
 | `BotTalk` | strange | docked at the Shipyard, you on the ship side, unseen | talks with the station's robot; looks round as you come, then runs off | see below |
 | `Bloody` | scary | out of your sight, 3 m+, no suit | its suit is spattered with blood; it goes about its day but takes no orders | see below |
 | `ClosetAmbush` | scary | out of your sight, 4 m+ | hides in a closet, jumps out with a shriek | see below |
-| `ShutDoors` | scary | you and it aboard, 2+ doors open | walks a round of the open doors, nearest next, and shuts each behind itself | the round, at most 6 doors |
+| `ShutDoors` | scary | you and it aboard, 2+ doors open | runs a round of the open doors, nearest next, shuts each behind itself, then hides in a closet | when you find it, see below |
 | `Meat` | scary | docked at the Shipyard, 8-60 m from its cryo room's door, unseen, no suit | bloody in the cryo room over raw meat and blood; stares when you open the door, runs when you step in, then vanishes | see below |
 | `Move` | scary | left on a station that is switched off; you aboard another station | turns up near you, out of your sight, and waits facing you; found, it says you left it | until you see it, at most 300 s |
 | `Pipe` | scary | out of your sight, 5-30 m, Follow or Wander, hands empty | comes up to you holding a bloody pipe, not answering; the moment you spot it, puts it down without a word | until you spot it, at most 120 s |
 | `Smile` | scary | no suit | the next time you look it in the face, a bloody grin on its visor for a blink | see below |
 | `Statue` | scary | 3-30 m, Follow or Wander | follows you, but only while you are not looking; freezes, staring, when you do | 50-90 s, once unseen |
-| `Stalker` | extreme | out of your sight, no suit | `Bloody` and `Statue` together, with sounds at your back; ignores you; opens pin-code doors without the code | 50-90 s, once unseen |
-| `BehindYou` | extreme | out of your sight, 6 m+ | vanishes, then stands right behind you and speaks | when you turn round, or 15 s |
+| `Stalker` | extreme | out of your sight, no suit | `Bloody` and `Statue` together, with up to `StalkerSounds` (3) different sounds at your back; ignores you; opens pin-code doors without the code | 50-90 s, once unseen |
+| `BehindYou` | extreme | out of your sight, 6 m+ | vanishes, then stands right behind you with a `Creature` sound, silent; its line comes [later](#3-what-it-says) | when you turn round, or 15 s |
 | `UnderTheSuit` | extreme | no suit | as `Smile`: raw flesh where the suit was, a face behind the glass | see below |
 | `Sleeper` | extreme | you and it aboard your ship, it in Follow or Wander within 25 m, you 8 m+ from its capsule | its cryo capsule is shut again; walk up to it and it opens on the buddy, asleep inside, while it follows you all the same | see below |
+
+`Whisper`, `Noises`, `Pipe`, `Statue`, `Stalker`, `Smile` and `UnderTheSuit` need it with you: on your
+vessel, or your ship docked at the station it is on, or the other way round (`DockedTogether`, from
+`Autopilot.DockedStation`). Docked, it walks to you through the hatch. Undocked, a buddy on another vessel is
+parked or far away. `Sleeper` and `ShutDoors` need you both aboard your ship.
 
 An order, or a task you give it, ends most of them. It does not end:
 
@@ -116,6 +121,23 @@ too. After 40-110 s it comes back at a ground node on your vessel, 6-16 m from y
 If there is none, it waits, then comes back where it vanished once you look away. Its sidecar position
 is where it vanished; a load brings it back there.
 
+It will never walk through the doors it owes a close, so it leaves them to close behind it
+(`NpcAgent.LeaveDoors`, npc-core:docs/doors.md §7), with the open door it stands in, whoever opened it.
+
+### Coming up to you
+
+`Whisper` and `Noises` need it near. Not near, but within `ComeMaxDist` (30 m) and in Follow or Wander, it
+comes up to you first: a Wander buddy is put in Follow and walks up as a Follow does. Seen on the way does
+not count as seeing it ([once per save](#once-per-save)). Never there within `ComeSeconds` (60 s), it ends
+quietly and stays in Follow.
+
+- `Whisper`: within `WhisperDist` (4 m) it says its line, seen or not. Heard counts as seen.
+- `Noises`: 1.2-7 m (`NoisesMinDist`..`MaxDist`) behind you and unseen, it stops, faces you and the noises begin.
+
+### Noises
+
+Its sounds play at `NoisesVolume` (1.25) times their own volume.
+
 ### Bloody
 
 `BuddyGore` copies the texture the body wears (through a render target, so it need not be readable) and
@@ -151,8 +173,11 @@ open is normal again.
 ### WindowStare and WallStare
 
 A window is a renderer named `Glass*`: every ship and station window block has one. It stands on the
-ground node nearest the pane, 0.8-4 m from it, and faces the pane's centre. A wall stare casts eight
-rays at chest height and walks straight to the nearest wall that is not a body or an item. The walk
+ground node nearest the pane, 0.8-4 m from it, and faces the pane's centre. A wall stare casts 16
+rays at chest height and keeps the walls they hit (not a body or an item). Two of them, roughly
+square to each other, make an inside corner if each runs from the crossing towards the other's front;
+a ray to the crossing must reach it, so a doorway in the corner or a crate before it does not count.
+It walks straight to the nearest such corner, stands on its bisector and faces into it. The walk
 gives up after a time limit.
 
 Standing still, the agent turns an idle body after the brain's `OverrideMovement` (`TryIdleFacing`).
@@ -196,14 +221,15 @@ its furniture, and some of those lie in the hallway: a buddy put there is never 
 | Step | What happens | Next |
 |---|---|---|
 | placed | bloody (`Bloody`'s texture), back to the door. Raw meat lies `CaughtMeatAhead` (0.7 m) beyond it, blood under it, round it and at its feet | at once |
-| eating | a wet sound every 2.5-4.5 s, facing the meat | you open a door, see it, or come within `CaughtNearDist` (3 m) |
-| caught | a creature sound, your stress; it turns and stares at you, at least `CaughtTurnSeconds` (0.6 s) | you step in: on the room's side within `CaughtEnterDist` (3 m) of the door, or within 3 m of it. After `CaughtCorneredSeconds` (120 s) it runs if you see it, else it is gone |
+| eating | a feeding sound (`Gore`), 2-4 s of silence after each, facing the meat | you open a door, see it, or come within `CaughtNearDist` (3 m) |
+| caught | a creature sound, your stress; it turns and stares at you, at least `CaughtTurnSeconds` (0.6 s) | you step in: on the room's side within `CaughtEnterDist` (3 m) of the door, or within 3 m of it; or you have watched it `CaughtStareSeconds` (3 s). After `CaughtCorneredSeconds` (120 s) it runs if you see it, else it is gone |
 | runs | at flee speed, inside the room: a node `CaughtRunMin` (2 m) away and `CaughtRunGain` (1 m) further from you, else 1 m away and no nearer. None: cornered | there |
 | cornered | faces you until you look away for `CaughtGoneUnseenSeconds` (1 s), at most 120 s. It never goes before you have seen it, unless it ran | gone |
 | gone | a vanish ([§2](#vanish)); it comes back clean | back |
 
 You never come: it ends after `CaughtWaitSeconds` (480 s) and walks back to you, clean. Undocked first,
-it is put back aboard. Either way the meat and blood stay.
+it is put back aboard. Either way the meat and blood stay until you have been there and left
+([the mess](#the-mess-and-the-meat-model)).
 
 ### The mess and the meat model
 
@@ -218,10 +244,22 @@ saved: a load finds the room clean
 ([an-anomaly-prop-never-enters-the-save](invariants.md#an-anomaly-prop-never-enters-the-save)). At most
 `MaxProps` (16) at once; the oldest go first.
 
+A mess goes once you have been there and left. It counts as visited once you see a piece of it within
+`MessSeenDist` (10 m) or come within `MessNearDist` (4 m). After that, each piece goes as soon as you are
+`MessGoneDist` (15 m) from it and cannot see it; the meat in your hands stays. Never visited, it stays.
+
+The meat squelches (`Slime`) as you pick it up, let go or throw it, and when it lands faster than
+`LandSpeed` (1.5 m/s), at most once per `GapSeconds` (0.4 s) (`MeatSounds`). The sound starts at the
+middle of the meat's mesh, not its pivot, and moves with it. The Skull's own landing
+clonk is muted through its `lastImpactTime`.
+
 The meat is `YourBuddy/Resources/Meat.bbmodel`, a Blockbench model embedded in the dll and read as it is
-(`BbModel`): cubes only, unrotated, one texture, 1 unit = 1 cm. Edit it in Blockbench and rebuild.
-It is a rib-eye outline in 2 cm rows of cubes that never overlap, and a 32 x 32 texture painted in the
-game's flat style.
+(`BbModel`): cubes and meshes (triangles and quads), unrotated, one texture, 1 unit = 1 cm. Edit it in
+Blockbench and rebuild. It is a slice of a human thigh: one mesh, skin and yellow fat round the whole
+rim, and a 512 x 512 texture (muscle groups, femur, fat, skin), filtered smoothly. Mesh normals are smoothed over shared vertices, so a hard edge
+needs split vertices. Its collider is not the mesh but its outline as a
+low 16-sided prism: Unity's convex hull keeps at most 255 polygons. The material is matte (no highlight or
+reflection), as flesh is not glossy.
 
 ### Pipe
 
@@ -233,9 +271,13 @@ its data says, so a same-frame pick-up would be undone. It holds it low, bloody 
 | Step | What happens | Next |
 |---|---|---|
 | coming | walks up to you as a Follow does, taking no orders, and stands at your back | you spot it |
-| the drop | puts the pipe down in front of it at once, without a word; within `PipeStartleDist` (4 m), your stress | the end |
+| the drop | puts the pipe down in front of it at once, without a word; within `PipeStartleDist` (4 m), your stress | you look away |
+| still | stands where it put the pipe down, facing you | out of your sight `PipeGoneUnseenSeconds` (1 s) |
+| gone | a vanish ([§2](#vanish)), as in `Meat` | back |
 
-Never spotted in `PipeGiveUpSeconds` (120 s), it puts the pipe down unseen.
+Watched `PipeWatchedSeconds` (60 s) after the drop, it ends where it stands. Never spotted in
+`PipeGiveUpSeconds` (120 s), it puts the pipe down unseen and stays. The pipe, however it was put down,
+is gone the moment you cannot see it and it is not in your hands (`AnomalyProps.GoneWhenUnseen`).
 
 Fear, bad air, or the pipe leaving its hands ends it early; the pipe goes down where it stands. The pipe
 is a prop, as the meat is ([the mess](#the-mess-and-the-meat-model)): "Bloody pipe", binned but never
@@ -259,7 +301,7 @@ controller for `TeleportTo` and no `OriginToFeet` yet; the feet offset comes fro
 | Step | What happens | Next |
 |---|---|---|
 | waiting | stands still, facing you | you see it, or `MoveWaitSeconds` (300 s) |
-| found | says you left it (`AnomalyLines.LeftBehind`), a line not said before; within `MoveStartleDist` (4 m), your stress | the end: it follows you |
+| found | stares at you `MoveStareSeconds` (3 s) without a word; within `MoveStartleDist` (4 m), your stress. That it was left (`AnomalyLines.LeftBehind`) it says [later](#3-what-it-says) | the end: it follows you |
 
 Orders end it, as most do.
 
@@ -299,21 +341,25 @@ keeps it open.
 
 ### ShutDoors
 
-The open room doors aboard, airlocks, locked and password doors left out, at most `MaxDoors` (6),
+The open room doors aboard, airlocks, locked and password doors left out, at most `MaxDoors` (4),
 nearest to the buddy next. For each door it plans to a ground node past the doorway, on the side
-away from it, at least `DoorClearDist` (1.8 m) from the door, and hands the door to the agent with
+away from it, at least `DoorClearDist` (1.6 m) from the door, and hands the door to the agent with
 NPC.Core's `CloseBehind`. The
 agent shuts it once the buddy has walked through and is clear of the doorway, and waits while you stand
 in it ([close-only-what-you-walked-through](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#close-only-what-you-walked-through)).
-Past the door it stands facing it until it shuts, at most `DoorWaitSeconds` (4 s), then goes on. The
-agent never closes a door while the buddy itself is within its 1.4 m of it, and the anomaly holds the
-body still: so a stand nearer than `DoorClearDist` would wait for ever. Still that near, it steps once
-straight further out. The doorway's axis is whichever of the gate's own two walks clear both ways from
+It runs, at flee speed, and never waits at a door: through one, it heads for the next, and the agent shuts
+the door behind it once it is clear. At the end of a pass it stands facing the last door for at most
+`DoorSettleSeconds` (3 s), until the closes still owed have landed. The agent never closes a door while the
+buddy is within its 1.4 m of it, so a stand is at least `DoorClearDist` from the door. The doorway's axis is whichever of the gate's own two walks clear both ways from
 its middle, `DoorPassDist` (1.6 m) out, else 1.1 m. A door it cannot plan through is skipped with a level-1 line naming it and why; a leg gives
-up after `DoorLegSeconds` (25 s). Once through the list it goes round again for the doors still open:
-up to `MaxDoorPasses` (3) passes, the third only if the second shut something. The end line names any
+up after `DoorLegSeconds` (20 s). Once through the list it goes round again for the doors still open:
+up to `MaxDoorPasses` (2) passes. The end line names any
 door left open. `CloseBehind` arms each door afresh from where the buddy stands, so a close owed from an earlier
 walk cannot leave it waiting for a crossing that already happened the other way.
+
+The round done, it gets into a closet as [`ClosetAmbush`](#closetambush) does and waits there. Walking
+past does not bring it out: open the closet and it steps out in silence, your stress, no shriek. Nobody comes in
+`AmbushMaxSeconds` (240 s), it leaves. No closet it can reach, and it ends after the doors.
 
 ---
 
@@ -326,6 +372,11 @@ look, low in the middle of the screen, wrapped, for 3-8 s by length. The line al
 log, and the station robot's talk blips play at the buddy as its voice: one per three letters, 4-16 of
 them, `BlipGapMin`..`BlipGapMax` (0.07-0.12 s) apart, as its own typewriter plays them. Lines lean toward the worst
 severity allowed.
+
+`Move` and `BehindYou` are silent when you find them. The line is kept back (`SayLater`) and said
+`LaterLineSeconds` (10 s) later, once nothing else runs and it is within `LaterLineDist` (8 m)
+of you, out of your sight. Speech follows the scare; it does not explain it. Not said within
+`LaterLineGiveUpSeconds` (120 s) of being due, the line is only written into the talk log.
 
 ---
 
@@ -342,18 +393,37 @@ off the view. The running anomaly samples this every 0.1 s.
 ## 5. Sounds
 
 FMOD events borrowed from the game, read off the first instance of their owner in the scene
-(`GameInternals.ScareSoundAccess`) and kept until the world resets:
+(`GameInternals.ScareSoundAccess`) and kept until the world resets, and the mod's own clips:
 
-| `ScareSound` | Events |
+| `ScareSound` | Events and clips |
 |---|---|
 | `Voice` | `AssistanceBot.talkSound` |
-| `Click` | the robot's talk blips, `Gate.closeFailSound` |
-| `Wet` | `Cleanable.cleanSound` |
-| `Creature` | `Breathless.movingSound`, `BreathlessActivity.sound`, `RandomSound.sound`, `BackgroundSound.scarySound` |
+| `Odd` | clips `odd_*`: cracking, creaking wood, a snap, knocks, sighs, grinding teeth |
+| `Gore` | clips `gore_*`: tearing, a splash, a snap, wet pops |
+| `Slime` | clips `slime*`: squishes, for the meat in your hands |
+| `Creature` | `RandomSound.sound`, `BackgroundSound.scarySound` |
 | `Shriek` | `Breathless.screechSound`, `UnsealScream.screamSound` |
 
 A category found empty is looked for again after 60 s, and is silent until then. `Creature` and
-`Shriek` can run for many seconds, so they are cut short with a fade after `SoundCapSeconds` (2.5 s).
+`Shriek` can run for many seconds: they fade to silence over the last `SoundFadeSeconds` (1.5 s) before
+`SoundCapSeconds` (3 s), and stop there.
+Every sound but `Voice` is tracked with the buddy it came from, so `ScareSounds.FadeOut` can silence
+that buddy's sounds at once.
+`Breathless.movingSound` and `BreathlessActivity.sound` are not used: played from the buddy, they are silent.
+
+A pick is never one of its category's last `RecentCount` (2) picks, so three sounds in a row from one
+category all differ.
+
+The clips are mono mp3s in `YourBuddy/Resources/Sounds`, embedded in the dll and found by their prefix.
+`ModSounds` plays them through FMOD's core API on the game's sfx bus, so the sfx volume applies. They
+fade out with distance to `MaxDistance` (20 m). Studio does not place core sounds, so while a clip
+plays the core listener is moved to the game's each frame. A clip played from a source (the buddy, the
+meat) moves with it. A clip you could not see when it started, by the test for
+being seen ([§4](#4-being-seen)), is muffled: a low-pass at `MuffledCutoff` (1400 Hz), at `MuffledVolume` (0.8).
+
+`ScareSounds.Play` says how long the sound lasts: a clip's length, an event's from its description
+(1 s when unknown), a capped one at most `SoundCapSeconds`. Each sound at level 2 logs
+`[anomaly] Sound <category>: <event path or clip> (<seconds>)`.
 
 ---
 
@@ -374,9 +444,11 @@ ambush 35, behind you 30, stalker 25 (close), shriek 25, statue 15 (close), crea
 | `buddy_anomaly end [@who]` | ends the running one |
 | `buddy_anomaly roll` | a draw now, as the director would, with a certain hit |
 | `buddy_anomaly forget` | this save forgets which kinds and lines it had |
+| `buddy_dev sound [@who]` | every category's sounds, numbered: clip name, or event path, length and 3D range |
+| `buddy_dev sound <category> [<n>] [@who]` | plays that one (or a pick, as an anomaly makes it) from the buddy's chest, muffled and cut short as in play |
 
 Log tag `[anomaly]`: starts, ends and lines at level 1; draws that did not fit, the chance and the sounds
-found at level 2.
+found, and each sound played (`[anomaly] Sound ...`), at level 2.
 
 ```
 [anomaly] Buddy: vanishing (strange, 9.4m from you, out of sight)

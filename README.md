@@ -9,8 +9,6 @@ bit unnerving. Try it yourself.
 > ⚠️ **Disclaimer**: the game is single-player by design, and this mod may break immersion. Best played after
 > you finish the story.
 
-[Watch the showcase on YouTube](https://www.youtube.com/watch?v=zlu82lW7UME)
-
 ---
 
 ## Features
@@ -121,7 +119,7 @@ level, the bundled nav graph and the node editor keys belong to NPC.Core, in `co
 | `Fear` | General | `true` | The buddy reacts to the Breathless: watches it, keeps away from it, runs from it or hides. Off: it ignores the monster (which can still kill it). |
 | `HideInClosets` | General | `true` | A frightened buddy may get into a closet or locker instead of running, shut the doors, and wait there until the Breathless is no longer about. It never uses one you are in. |
 | `FleeHideBias` | General | `0.5` | How readily it hides rather than runs: `0` never, `1` always try. The chance drops while the Breathless can see it - it would watch the buddy climb in - or is too close to beat to the doors, and rises when there is nowhere to run to. |
-| `Autonomy` | General | `true` | The buddy decides for itself whenever no order is in force. Off: it only ever does what it was last told. Also `buddy_manage auto`. |
+| `Autonomy` | General | `true` | The buddy decides for itself whenever no order is in force. Off: it only ever does what it was last told. Also `buddy_order auto`. |
 | `OrderPersistence` | General | `UntilRevoked` | `UntilRevoked`: an order holds until you give another one or tell it to decide for itself. `Expires`: it decides for itself again after `OrderExpirySeconds`. A goto always runs to completion. |
 | `OrderExpirySeconds` | General | `90` | How long an order holds under `Expires`. |
 | `Terminals` | General | `true` | When oxygen runs low or it gets too cold or hot aboard and the oxygen generator or climate control is off, a buddy walks over and switches it on - deciding for itself, and even under an order, since deadly air outranks one. When no unit can be switched on, it puts a spare suit on instead (`EvaSuit`). |
@@ -153,30 +151,24 @@ Type `buddy` in the console for the list.
 <details>
 <summary>Show all console commands</summary>
 
-Type `buddy` in the console for this list, grouped. Spawning, despawning and killing are commands of
-their own:
+Type `buddy` in the console for this list, grouped. Spawning, despawning, killing and listing are
+commands of their own:
 
 | Command | Arguments | Description |
 |------------|-----------|-------------|
 | `buddy_spawn` | `[number]` | Replaces every buddy with one in front of you, or with that many in a row. |
 | `buddy_despawn` | `[@who]` | Despawns a buddy. |
 | `buddy_kill` | `[force] [@who]` | Kills a buddy (ragdoll), with an optional forward impulse force (0–100). |
+| `buddy_list` | – | Lists the buddies with their numbers and names; `*` marks the one commands go to. |
 
 Everything else is grouped: each category is one command, and the first word after it picks what to do:
 `buddy_order follow @2`. A category alone lists its subcommands.
-
-**`buddy_manage`** - list and set up buddies
-
-| Subcommand | Arguments | Description |
-|------------|-----------|-------------|
-| `list` | – | Lists the buddies with their numbers and names; `*` marks the one commands go to. |
-| `skin` | `<name\|default> [@who]` | Debug: put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
-| `auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
 
 **`buddy_order`** - tell a buddy what to do (the dialog gives the same orders)
 
 | Subcommand | Arguments | Description |
 |------------|-----------|-------------|
+| `auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
 | `follow` | `[@who]` | Switch to follow mode. |
 | `stop` | `[@who]` | Stop current route/wander and follow. |
 | `wander` | `[@who]` | Switch to wander mode (uses nav nodes as points of interest). |
@@ -205,6 +197,7 @@ Everything else is grouped: each category is one command, and the first word aft
 | `bout` | `[@who]` | End the current follow or wander stretch now, so the other one weighs full at its next decision (for testing). |
 | `visuals` | `[on/off]` | Toggle debug visuals (path, probes, target markers). |
 | `hud` | `[on/off]` | Toggle status HUD. It shows the buddy commands go to. |
+| `skin` | `<name\|default> [@who]` | Put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
 
 **NPC.Core's** ([its commands](https://github.com/bytenull1/npc-core-inhl#console-commands)): `npc_node`, `npc_gates`,
 `node_editor`, `debug_level`, and:
@@ -294,6 +287,8 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 ---
 
 ## Showcase
+
+[Watch the showcase on YouTube](https://www.youtube.com/watch?v=zlu82lW7UME)
 
 ![The order window with the list of commands](docs/images/commands.png)
 

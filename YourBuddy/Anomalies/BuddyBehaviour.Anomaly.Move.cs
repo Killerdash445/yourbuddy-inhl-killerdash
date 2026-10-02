@@ -5,19 +5,19 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// Move: left on a station, it turns up where you are. docs/anomalies.md#move
+    /// Move. Left on a station, it turns up where you are. docs/anomalies.md#move
     /// </summary>
     public sealed partial class BuddyBehaviour
     {
         private const float MoveWaitSeconds = 300f;
         private const float MoveStartleDist = 4f;
+        /// <summary>Found, it stares at you this long, silent, before it follows.</summary>
+        private const float MoveStareSeconds = 3f;
 
-        // ------------------------------------------------------------------
         // Turning up far from where you left it
-        // ------------------------------------------------------------------
 
         /// <summary>
-        /// Why it cannot turn up near you, or null: it must be parked on a station, its interior switched
+        /// Why it cannot turn up near you, or null. It must be parked on a station with its interior switched
         /// off. The only kind a parked buddy acts out. docs/anomalies.md#move
         /// </summary>
         internal string? MoveReady()
@@ -35,8 +35,8 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Out of the switched-off interior and onto the station you are on, out of your sight; any order it had
-        /// is gone. Never onto a ship: it came without one.
+        /// Out of the switched-off interior and onto the station you are on, out of your sight. Any order it had
+        /// is gone. Never onto a ship, since it came without one.
         /// </summary>
         private string? StartMove(Transform you)
         {
@@ -53,7 +53,7 @@ namespace YourBuddy
             if (spot == null) return "no spot near you out of your sight";
 
             // Placed while still parked, then woken by riding your station. A buddy parked since its load never ran
-            // its agent's Start, which TeleportTo's controller and OriginToFeet come from: docs/anomalies.md#move
+            // its agent's Start, which TeleportTo's controller and OriginToFeet come from. docs/anomalies.md#move
             CharacterController body = GetComponent<CharacterController>();
             float toFeet = body != null ? body.center.y - body.height * 0.5f : agent.OriginToFeet;
             transform.position = spot.Value - Vector3.up * toFeet;
@@ -73,23 +73,32 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Stands where it turned up until you find it; then a line, and it follows you again.
+        /// Stands where it turned up until you find it, stares a moment without a word, and follows you
+        /// again. Its line comes later. docs/anomalies.md#move
         /// </summary>
         private void UpdateMove(float now, float dist)
         {
-            // Its first frame awake, the agent started: where it stands against the floor under it.
+            // Its first frame awake, with the agent started. Where it stands against the floor under it.
             if (anomalyStep == 0)
             {
                 anomalyStep = 1;
                 YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name} stands with its feet at {transform.position.y + agent.OriginToFeet:0.00}, " +
                                             $"the floor under it at {agent.FloorUnderNpc().y:0.00}");
             }
+            if (anomalyStep == 2)
+            {
+                if (now >= anomalyUntil) EndAnomaly("it stared, and follows you");
+
+                return;
+            }
             if (anomalySeen)
             {
                 if (dist < MoveStartleDist) Startle(20);
 
-                SpeakNew(AnomalyLines.LeftBehind());
-                EndAnomaly($"you found it {dist:0.0}m away");
+                anomalyStep = 2;
+                anomalyUntil = now + MoveStareSeconds;
+                SayLater(AnomalyLines.LeftBehind());
+                YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name}: you found it {dist:0.0}m away - it stares, silent");
                 return;
             }
             if (now >= anomalyUntil) EndAnomaly("you never looked its way");

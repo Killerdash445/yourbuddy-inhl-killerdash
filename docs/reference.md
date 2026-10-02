@@ -220,9 +220,11 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | Constant | Value | Meaning |
 |---|---|---|
 | `SightSampleSeconds` | 0.1 s | how often a running anomaly asks whether you see it |
-| `StareMinSeconds` / `StareMaxSeconds` | 50 / 140 s | a window or wall stare, once there |
+| `StareMinSeconds` / `StareMaxSeconds` | 50 / 140 s | a window or corner stare, once there |
 | `StareSearchRadius` | 20 m | a window this near |
-| `WallSearchDist` / `WallStandOff` | 4 / 0.45 m | a wall this near; it stops this far from it |
+| `CornerRays` / `WallSearchDist` | 16 / 4 m | rays for the walls of a corner, and how far they reach |
+| `CornerSearchDist` / `CornerStandOff` | 5 / 0.65 m | a corner this near; it stops this far from it |
+| `CornerSlack` | 0.35 m | how near the corner a ray towards it must hit |
 | `VanishMinSeconds` / `VanishMaxSeconds` | 40 / 110 s | gone this long |
 | `ReappearMinDist` / `ReappearMaxDist` | 6 / 16 m | back at a node this far from you, out of your sight |
 | `BloodySeconds` | 150 s | how long the blood lasts unwatched |
@@ -230,9 +232,15 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `BloodyUnseenSeconds` | 5 s | it goes only once you have not seen the buddy this long |
 | `BloodyRunRetrySeconds` | 6 s | its time up and still seen, it tries to run out of your sight this often |
 | `BehindYouDist` | 1.2 m | how far behind you it stands |
+| `StalkerSounds` | 3 | the most sounds a stalker makes at your back |
+| `NoisesGapMin` / `NoisesGapMax` | 3 / 5 s | silence between Noises' sounds, after each has ended |
+| `NoisesMinDist` / `NoisesMaxDist` | 1.2 / 7 m | behind you this near, Noises makes its sounds |
+| `ComeMaxDist` / `ComeSeconds` | 30 m / 60 s | Whisper and Noises not near: it comes up to you from this far, for at most this long |
+| `WhisperDist` | 4 m | Whisper says its line this near |
+| `NoisesVolume` | 1.25 | Noises' sounds over their own volume |
 | `DoorPassDist` | 1.6 m | how far past a doorway it walks before the door is shut behind it |
-| `DoorLegSeconds` / `DoorWaitSeconds` | 25 / 4 s | a walk through one door gives up; past it, the most it waits for the door to shut |
-| `MaxDoors` | 6 | doors in one round |
+| `DoorLegSeconds` / `DoorSettleSeconds` | 20 / 3 s | a walk through one door gives up; at the end of a pass, the most it waits for the doors still owed to shut |
+| `MaxDoors` | 4 | doors in one round |
 | `WrongNameSeconds` | 900 s | the wrong name waits this long for the window |
 | `BotTalkMinDist` / `BotTalkMaxDist` | 12 / 45 m | you this far from the Shipyard's robot ([anomalies.md](anomalies.md#bottalk)) |
 | `BotStandMin` / `BotStandMax` | 1.2 / 2.2 m | where it stands from the robot |
@@ -249,13 +257,18 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `CaughtWaitSeconds` | 480 s | how long it waits for you |
 | `CaughtNearDist` | 3 m | you this near give it away, door shut or not |
 | `CaughtEnterDist` | 3 m | on the room's side and this near the doorway, you are in: it runs |
+| `CaughtStareSeconds` | 3 s | watched this long when caught, it runs even if you do not step in |
 | `CaughtTurnSeconds` / `CaughtCorneredSeconds` / `CaughtGoneUnseenSeconds` | 0.6 / 120 / 1 s | the least it stares at you; the most it stares or waits cornered; unseen this long (after you saw it), it is gone |
 | `CaughtRunMin` / `CaughtRunGain` | 2 / 1 m | its run inside the room; else 1 / 0 m |
 | `PipeMinDist` / `PipeMaxDist` | 5 / 30 m | Pipe: you this far when it starts ([anomalies.md](anomalies.md#pipe)) |
 | `PipeGiveUpSeconds` | 120 s | never spotted this long, it puts the pipe down unseen |
 | `PipeStartleDist` | 4 m | spotted this near, your stress |
+| `PipeGoneUnseenSeconds` / `PipeWatchedSeconds` | 1 / 60 s | after the drop: unseen this long, it vanishes; watched this long, it ends |
 | `MoveWaitSeconds` | 300 s | Move: waits this long to be found ([anomalies.md](anomalies.md#move)) |
 | `MoveStartleDist` | 4 m | found this near, your stress |
+| `MoveStareSeconds` | 3 s | found, it stares this long, silent, before it follows |
+| `LaterLineSeconds` | 10 s | Move's and BehindYou's line comes this long after ([anomalies.md](anomalies.md#3-what-it-says)) |
+| `LaterLineDist` / `LaterLineGiveUpSeconds` | 8 m / 120 s | said within this of you, out of your sight; not said this long after due, only logged |
 | `FlickerWaitSeconds` | 240 s | Smile, UnderTheSuit: the most it waits for you to look ([anomalies.md](anomalies.md#smile-and-underthesuit)) |
 | `FlickerMinDist` / `FlickerMaxDist` | 1.5 / 7 m | you this far from it |
 | `FlickerLookAngle` / `FlickerFacingAngle` | 25° / 50° | its head this near the middle of your view; it faces you this squarely |
@@ -267,16 +280,31 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `SleeperSeeDist` / `SleeperLookAngle` / `SleeperGoneUnseenSeconds` | 6 m / 45° / 1 s | found, you still look at it within these; not for 1 s, the capsule is empty |
 | `SleeperStareSeconds` | 30 s | the most the buddy stands facing you, waiting to be seen |
 | `MeatScale` | 1.5 | the meat's size over its model ([anomalies.md](anomalies.md#the-mess-and-the-meat-model)) |
-| `DoorClearDist` | 1.8 m | the least a ShutDoors stand is from the door |
-| `MaxDoorPasses` | 3 | passes over the doors still open |
+| `MessSeenDist` / `MessNearDist` | 10 / 4 m | a mess counts as visited once you see it within, or come within |
+| `MessGoneDist` | 15 m | a visited mess's pieces go this far from you, out of sight |
+| `LandSpeed` / `GapSeconds` | 1.5 m/s / 0.4 s | the meat squelches landing faster than this; at most this often |
+| `DoorClearDist` | 1.6 m | the least a ShutDoors stand is from the door |
+| `MaxDoorPasses` | 2 | passes over the doors still open |
 
 ### Sounds - `ScareSounds.cs`
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `SoundCapSeconds` | 2.5 s | a creature or shriek sound is faded out after this |
+| `SoundCapSeconds` | 3 s | a creature or shriek sound stops here, silent by then |
+| `SoundFadeSeconds` | 1.5 s | it fades to silence over this, before the cap |
+| `FadeOutSeconds` | 0.25 s | a buddy's sounds die away this fast when FadeOut is called (you turned round) |
 | `BlipGapMin` / `BlipGapMax` | 0.07 / 0.12 s | between the voice blips of a spoken line |
 | `BlipHeight` | 1.5 m | where they play, above the speaker's origin |
+| `RecentCount` | 2 | a category's last picks, not picked again yet |
+
+### The mod's clips - `ModSounds.cs`
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `MinDistance` / `MaxDistance` | 1.5 / 20 m | full volume within, silent past |
+| `Volume` | 0.85 | a clip's volume, under the sfx bus |
+| `OddVolume` / `SlimeVolume` | 0.35 / 0.25 | the `odd_` and `slime` clips' instead |
+| `MuffledCutoff` / `MuffledVolume` | 1400 Hz / 0.8 | a clip behind a wall: low-pass cutoff, and volume over `Volume` |
 
 ### Being seen - `PlayerView.cs`
 
@@ -309,9 +337,9 @@ The graph, gate and editor commands, `debug_level`, `ai_disable` and `ai_notarge
 still means `ai_disable npc`.
 
 The full command list is in the [README](../README.md#console-commands-reference); `buddy` prints it in
-game. `buddy_spawn`, `buddy_despawn` and `buddy_kill` are commands of their own (`BuddyConsole.Singles`):
-they are used most. Each category (`buddy_manage`, `buddy_order`, `buddy_anomaly`, `buddy_dev`) is one
-console command whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why
+game. `buddy_spawn`, `buddy_despawn`, `buddy_kill` and `buddy_list` are commands of their own
+(`BuddyConsole.Singles`): they are used most. Each category (`buddy_order`, `buddy_anomaly`, `buddy_dev`)
+is one console command whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why
 categories: about 30 flat `buddy_*` names made the console list hard to read. Commands live in
 `BuddyConsole.cs`; order bodies live in `BuddyCommands.cs` so the [dialog](dialog.md) shares them.
 `buddy_dev goto` calls `FindPath` then `ApplyRouteOrder`, so `NavPath` changes must update it.
@@ -319,7 +347,7 @@ categories: about 30 flat `buddy_*` names made the console list hard to read. Co
 **Which buddy.** A per-buddy command takes `@2` (a number), `@buddy2` (a name, case and spaces
 ignored) or `@all` anywhere among its arguments (`BuddyConsole.ForTargets`). Without one it goes to
 `BuddyManager.Focus`: the buddy last talked to or named, else the nearest living one. Naming exactly
-one moves the focus, which is also the buddy the HUD shows. `buddy_manage list` lists numbers and names and
+one moves the focus, which is also the buddy the HUD shows. `buddy_list` lists numbers and names and
 marks the focus. `buddy_spawn N` replaces every buddy with N.
 
 **`ai_notarget` leaves the buddy huntable.** Its catch is the agent's own `BreathlessCheck`, which only

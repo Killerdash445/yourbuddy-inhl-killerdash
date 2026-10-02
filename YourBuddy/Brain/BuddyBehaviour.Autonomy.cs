@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NPC.Core.World;
 using NPC.Core;
 using NPC.Core.Agents;
@@ -8,8 +9,8 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// Orders and independent decisions: what the player told the buddy, kept apart from
-    /// what it is doing, and the decider that acts when no order holds. docs/behaviour.md
+    /// Orders and independent decisions. What the player told the buddy is kept apart from what
+    /// it is doing, and the decider acts when no order holds. docs/behaviour.md
     /// </summary>
     public sealed partial class BuddyBehaviour
     {
@@ -32,9 +33,7 @@ namespace YourBuddy
         private const float WanderBoutMin = 40f;
         private const float WanderBoutMax = 90f;
 
-        // ------------------------------------------------------------------
-        // Orders - given only through BuddyCommands
-        // ------------------------------------------------------------------
+        // Orders, given only through BuddyCommands
 
         /// <summary>
         /// Records an order and carries it out, or keeps it for when a flee is over.
@@ -48,7 +47,7 @@ namespace YourBuddy
             EndAnomalyForOrder(OrderName(order));
             orderedMode = order;
             orderedAt = Time.time;
-            if (order == BuddyMode.Wander) wanderOwner = null;
+            if (order == BuddyMode.Wander) orderedSide = null;
 
             if (mode == BuddyMode.Flee)
             {
@@ -60,7 +59,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// A goto order: the plan to walk now, and the goal to plan for again after a flee.
+        /// A goto order, with the plan to walk now and the goal to plan for again after a flee.
         /// </summary>
         public bool ApplyRouteOrder(NavPath plan, Vector3 goal)
         {
@@ -83,7 +82,7 @@ namespace YourBuddy
 
         /// <summary>
         /// A hide the player asked for ends when they ask for something else. A hide a flee started
-        /// does not: docs/invariants.md#fear-owns-the-buddy
+        /// does not. docs/invariants.md#fear-owns-the-buddy
         /// </summary>
         private void LeaveAnOrderedHide(string order)
         {
@@ -91,11 +90,11 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// "Decide for yourself": no order in force, and a decision at the next chance.
+        /// "Decide for yourself" clears the order and decides at the next chance.
         /// </summary>
         public void RevokeOrder()
         {
-            // An ordered hide waits for an order, and this is one: nothing else would ever end it.
+            // An ordered hide waits for an order, and this is one. Nothing else would ever end it.
             LeaveAnOrderedHide("decide for myself");
             EndAnomalyForOrder("decide for myself");
             if (orderedMode.HasValue)
@@ -131,7 +130,7 @@ namespace YourBuddy
         private static float OrderExpiry => Mathf.Max(5f, YourBuddyPlugin.ConfigOrderExpirySeconds.Value);
 
         /// <summary>
-        /// The player never said "route": they said goto.
+        /// The player never said "route", they said goto.
         /// </summary>
         private static string OrderName(BuddyMode order) => order == BuddyMode.Route ? "Goto" : order.ToString();
 
@@ -153,9 +152,7 @@ namespace YourBuddy
             return order + ", " + Mathf.Max(0f, OrderExpiry - (Time.time - orderedAt)).ToString("0") + "s left";
         }
 
-        // ------------------------------------------------------------------
         // The decider
-        // ------------------------------------------------------------------
 
         /// <summary>
         /// Phase 3 of SlowUpdate, throttled to DecideInterval. docs/behaviour.md
@@ -167,7 +164,7 @@ namespace YourBuddy
             if (!YourBuddyPlugin.ConfigAutonomy.Value) return;
 
             ExpireOrder();
-            // Deadly air outranks an anomaly as it does an order: docs/invariants.md#survival-outranks-an-order
+            // Deadly air outranks an anomaly as it does an order. docs/invariants.md#survival-outranks-an-order
             if (anomaly.HasValue && !vanished && !AnomalyInBackground && lifeSupport.AirIsDangerous()) EndAnomaly("the air is dangerous");
             if (TrySaveOwnLife()) return;
             if (Time.time < decideAt) return;
@@ -175,7 +172,7 @@ namespace YourBuddy
             decideAt = Time.time + DecideInterval;
 
             string? standDown = StandDownReason(player);
-            // Deadly air outranks an order: docs/invariants.md#survival-outranks-an-order
+            // Deadly air outranks an order. docs/invariants.md#survival-outranks-an-order
             if (standDown != null && OrderInForce && StandDownReason(player, ignoreOrder: true) == null &&
                 TrySurvival())
             {
@@ -219,7 +216,7 @@ namespace YourBuddy
 
             if (Hiding) return hideState + " " + hideName;
 
-            // Blood is a look: it goes about its day with it, until it runs off to be clean. docs/anomalies.md#bloody
+            // Blood is only a look. It goes about its day with it until it runs off to get clean. docs/anomalies.md#bloody
             if (anomaly.HasValue && (!AnomalyInBackground || (anomaly == AnomalyKind.Bloody && anomalyStep > 0)))
             {
                 return "acting out " + Anomalies.Info(anomaly.Value).Name;
@@ -228,8 +225,8 @@ namespace YourBuddy
             if (fearState != FearState.Calm || mode == BuddyMode.Flee) return "fear is " + fearState;
 
             if (mode == BuddyMode.Route) return DescribeReachTask() is { } task ? task : "walking a route";
-            // Follow already waits inside for a spacewalk; there is nothing to choose. Outside
-            // itself, it still chooses between following and wandering: ScoreUrges.
+            // Follow already waits inside for a spacewalk, so there is nothing to choose. Once
+            // outside, ScoreUrges still chooses between following and wandering.
             if (!agent.IsOutside && NpcAgent.IsPlayerInSpace(player)) return "the player is outside";
 
             return null;
@@ -238,10 +235,10 @@ namespace YourBuddy
         private float lifeCheckAt;
 
         /// <summary>
-        /// The air is killing the buddy now (NpcAgent.LifeInDanger): drop whatever it is doing - an
-        /// order, an errand, the walk to a terminal, whose air would come back too slowly - and put a
-        /// spare suit on. Checked every second, not every DecideInterval: the death counter runs out
-        /// in about six ticks. docs/invariants.md#survival-outranks-an-order
+        /// The air is killing the buddy now (NpcAgent.LifeInDanger). Drop any order, errand or terminal
+        /// walk (the air would come back too slowly) and put a spare suit on. Checked every second, not
+        /// every DecideInterval, since the death counter runs out in about six ticks.
+        /// docs/invariants.md#survival-outranks-an-order
         /// </summary>
         private bool TrySaveOwnLife()
         {
@@ -264,16 +261,16 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Under an order, the air aboard turning deadly: switch a terminal on, or when none can be
-        /// tried, put a spare suit on - the same two urges the decider weighs first. The order
-        /// resumes when the task ends (ModeAfterTask). True when one started.
+        /// The air aboard turned deadly during an order. Switch a terminal on, or put a spare suit on
+        /// when none can be tried; these are the two urges the decider weighs first. The order resumes
+        /// when the task ends (ModeAfterTask). True when one started.
         /// </summary>
         private bool TrySurvival()
         {
             if (!lifeSupport.AirIsDangerous()) return false;
 
             string order = OrderName(orderedMode.GetValueOrDefault());
-            // Already dying: only the suit is fast enough (TrySaveOwnLife runs first).
+            // Already dying, so only the suit is fast enough (TrySaveOwnLife runs first).
             if (!agent.LifeInDanger && lifeSupport.TryStart())
             {
                 YourBuddyPlugin.Log.LogInfo("[mind] The air aboard is dangerous - fixing it before order '" + order + "'");
@@ -314,7 +311,7 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// For the HUD and buddy_dev mind: why the decider waits, or the bout it is timing and when it looks next.
+        /// Why the decider waits, or the bout it is timing and when it looks next. For the HUD and buddy_dev mind.
         /// </summary>
         private string DescribeMind()
         {
@@ -349,10 +346,10 @@ namespace YourBuddy
             "\nAnomalies: " + AnomalyDirector.Describe();
 
         /// <summary>
-        /// The HUD's Mind and Why lines, without repeating what the Mode and Orders lines already say:
-        /// a stand-down for the task in Mode's brackets or for the order in force is left out, and the
-        /// Why line (the scored urges) is left out while the decider is standing down, since it would
-        /// only copy the reason. Null when there is nothing to add.
+        /// The HUD's Mind and Why lines, minus what the Mode and Orders lines already say. A stand-down
+        /// for the task in Mode's brackets or for the order in force is left out. So is the Why line
+        /// while the decider stands down, since it would only copy the reason. Null when there is
+        /// nothing to add.
         /// </summary>
         private string? DescribeHudMind()
         {
@@ -368,11 +365,11 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// buddy_dev bout: the bout being timed is over now, so the decider's next look switches Follow and Wander.
+        /// buddy_dev bout. Ends the timed bout now, so the decider's next look switches Follow and Wander.
         /// </summary>
         internal string EndBoutNow()
         {
-            if (!YourBuddyPlugin.ConfigAutonomy.Value) return "Autonomy is off - 'buddy_manage auto on' first";
+            if (!YourBuddyPlugin.ConfigAutonomy.Value) return "Autonomy is off - 'buddy_order auto on' first";
 
             Player? player = NpcPlayer.Pilot;
             if (player == null || player.Controller == null) return "No player";
@@ -407,9 +404,9 @@ namespace YourBuddy
         /// <summary>
         /// Why a command cannot start a task now, or null. `whileAlert` is for hiding, the one thing
         /// worth asking for with the Breathless about; a flee still owns the buddy either way.
-        /// `preemptErrand` lets a command take the buddy off a job it is already doing -
-        /// docs/invariants.md#a-command-outranks-an-errand. Outside, only the airlock orders
-        /// (`outsideOk`) run: every job is inside. docs/eva.md
+        /// `preemptErrand` lets a command take the buddy off a job it is already doing
+        /// (docs/invariants.md#a-command-outranks-an-errand). Outside only the airlock orders
+        /// (`outsideOk`) run, since every job is inside. docs/eva.md
         /// </summary>
         private string? BusyForCommand(bool whileAlert = false, bool preemptErrand = false, bool outsideOk = false)
         {
@@ -436,8 +433,141 @@ namespace YourBuddy
 
             if (reachTask != null && !preemptErrand) return Name + " is busy " + DescribeReachTask();
 
-            // A goto is a standing order of yours, not something the buddy chose: it is not an errand.
+            // A goto is the player's standing order, not the buddy's choice, so it is not an errand.
             return GotoUnderway ? Name + " is walking to a node you sent it to" : null;
+        }
+
+        // An ordered wander's side: one owner for a bout, then a side drawn afresh. docs/behaviour.md#which-owner-a-wander-stays-on
+        private string? orderedSide = null;
+        private float orderedSideUntil = 0f;
+        private float orderedSideCheckAt = 0f;
+
+        /// <summary>
+        /// The owner a wander picks its goals on. An autonomous one keeps the owner it was chosen on.
+        /// An ordered one starts on the side it stands on, then every WanderBoutMin..Max draws a side.
+        /// </summary>
+        private string? WanderOwnerNow()
+        {
+            if (orderedMode != BuddyMode.Wander) return wanderOwner;
+
+            // Outside, the outdoor nodes are the only choice. docs/eva.md
+            if (agent.IsOutside) return null;
+
+            if (orderedSide != null && Time.time < orderedSideUntil)
+            {
+                // A side can go away (undocked); checked now and then, not every frame.
+                if (Time.time < orderedSideCheckAt) return orderedSide;
+
+                orderedSideCheckAt = Time.time + 2f;
+                if (OwnerHasIndoorNode(orderedSide)) return orderedSide;
+            }
+
+            string? previous = orderedSide;
+            orderedSide = previous == null
+                ? NavGraph.NearestActiveNodeOwner(transform.position, DecideNodeOwnerRadius)
+                : RandomIndoorOwner();
+            orderedSideUntil = Time.time + Random.Range(WanderBoutMin, WanderBoutMax);
+            YourBuddyPlugin.Log.LogInfo(orderedSide == null
+                ? "[mind] Ordered wander: no owner found, any node will do"
+                : $"[mind] Ordered wander on '{orderedSide}' for {orderedSideUntil - Time.time:0}s" +
+                  (previous != null && previous != orderedSide ? $", crossing over from '{previous}'" : ""));
+            return orderedSide;
+        }
+
+        private static bool OwnerHasIndoorNode(string owner)
+        {
+            for (int i = 0; i < NavGraph.NodeCount; i++)
+            {
+                if (NavGraph.GetNodeOwner(i) == owner && NavGraph.GetNodeType(i) != NodeType.Outdoor &&
+                    NavGraph.IsNodeActive(i)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// One of the owners with an active indoor node, each as likely as the next however many nodes it has.
+        /// </summary>
+        private static string? RandomIndoorOwner()
+        {
+            List<string> owners = [];
+            for (int i = 0; i < NavGraph.NodeCount; i++)
+            {
+                string? owner = NavGraph.GetNodeOwner(i);
+                if (owner == null || owners.Contains(owner) || NavGraph.GetNodeType(i) == NodeType.Outdoor ||
+                    !NavGraph.IsNodeActive(i)) continue;
+
+                owners.Add(owner);
+            }
+            return owners.Count > 0 ? owners[Random.Range(0, owners.Count)] : null;
+        }
+
+        // The docked station's docking corridor, by room name; looked up once per station.
+        private System.Predicate<Vector3> inDockCorridor = null!; // set in Awake
+        private System.Predicate<Vector3> nearMonsterOrCorridor = null!; // set in Awake
+        private string? corridorStation = null;
+        private string? corridorRoom = null;
+        private float corridorTraceAt = 0f;
+
+        /// <summary>
+        /// What a wander turns down: nodes near the monster while on edge, and the docking corridor.
+        /// Null when neither applies. docs/behaviour.md#where-a-wander-ends
+        /// </summary>
+        private System.Predicate<Vector3>? WanderAvoid()
+        {
+            bool docked = DockCorridorRoom() != null;
+            bool onEdge = fearState != FearState.Calm;
+            if (!docked && !onEdge) return null;
+
+            return docked && onEdge ? nearMonsterOrCorridor : docked ? inDockCorridor : nearMonster;
+        }
+
+        private string? DockCorridorRoom()
+        {
+            GameManager gm = GameManager.Instance;
+            string? station = gm != null && gm.PlayerShip != null ? gm.PlayerShip.Autopilot.DockedStation : null;
+            if (string.IsNullOrEmpty(station)) return null;
+            if (station == corridorStation) return corridorRoom;
+
+            corridorStation = station;
+            SpaceStation? spaceStation = StationNamed(station);
+            Room? room = spaceStation != null ? GameInternals.DockerAccess.GetEntryRoom(spaceStation.Docker) : null;
+            corridorRoom = room != null ? room.gameObject.name : null;
+            YourBuddyPlugin.Log.LogInfo(corridorRoom != null
+                ? $"[mind] Wander goals at {station} leave out its docking corridor '{corridorRoom}' ({CorridorNodes()})"
+                : $"[mind] No docking corridor found at {station} - wander goals may end in it");
+            return corridorRoom;
+        }
+
+        private bool InDockCorridor(Vector3 node)
+        {
+            if (corridorRoom == null) return false;
+
+            foreach (StationRooms.Entry room in StationRooms.Current(out _))
+            {
+                if (room.Name != corridorRoom) continue;
+
+                foreach (int index in room.Nodes)
+                {
+                    if ((NavGraph.GetNodeWorld(index) - node).sqrMagnitude > 0.01f) continue;
+
+                    if (NpcLog.Level >= 2 && Time.time >= corridorTraceAt)
+                    {
+                        corridorTraceAt = Time.time + 10f;
+                        YourBuddyPlugin.Log.LogInfo($"[mind] Wander passed over node {index} in '{corridorRoom}'");
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private string CorridorNodes()
+        {
+            foreach (StationRooms.Entry room in StationRooms.Current(out _))
+            {
+                if (room.Name == corridorRoom) return "nodes " + string.Join(" ", room.Nodes);
+            }
+            return "no nodes";
         }
     }
 }
