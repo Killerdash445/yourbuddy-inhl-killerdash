@@ -196,7 +196,7 @@ too ("no sell station within 80m" of four boxes).
 **Rule.** Every way an anomaly ends - its own end, an order, a task, fear, deadly air, death,
 parking, a rebuild - goes through `EndAnomaly`. That puts back exactly what the anomaly changed: the
 renderers it switched off and no others, the controller's collisions, `Asleep`, the texture the body
-wore, a flicker's skin, a prank's closet, a stare's walk, the robot it talked to, a stalker's door codes,
+wore, a flicker's skin, an ambush's closet, a stare's walk, the robot it talked to, a stalker's door codes,
 a double it made and the capsule it shut. The doubles live outside the buddy, so its `OnDestroy` removes
 them too.
 
@@ -206,7 +206,7 @@ texture instead of the one it wore strips a skin the player chose.
 
 **Enforced in.** `EndAnomaly`, from `UpdateAnomaly`, `EndAnomalyForOrder`, `BusyForCommand`,
 `AnomalyHoldsBody` (fear), `UpdateAutonomy` (air), `OnInterrupted` and `OnDied`; `Reappear`,
-`BuddyGore.Remove`, `ShowFlicker`, `ReleaseBot`, `RemoveShadow`, `RemoveSleeper`; `BuddyBehaviour.OnDestroy`.
+`BuddyGore.Remove`, `ShowFlicker`, `ReleaseBot`, `RemoveSleeper`; `BuddyBehaviour.OnDestroy`.
 
 ### an-anomaly-prop-never-enters-the-save
 

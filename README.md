@@ -1,96 +1,110 @@
 # YourBuddy Mod
 
-A BepInEx 5 plugin that adds a player-like NPC companion to Isolated Inhale.
+A BepInEx 5 plugin that adds a player-like NPC companion to Isolated Inhale - a fun stand-in for the
+multiplayer the game does not have.
 
-It was primarily created as a fun alternative to multiplayer, as the game's creator has no plans to add it anytime soon.
+In theory it should make you less anxious. In practice, after a long time alone, someone always nearby is a
+bit unnerving. Try it yourself.
 
-In theory, the mod should reduce anxiety; in practice, after playing alone for a long time, having someone constantly nearby is a bit unnerving. Anyway, try it yourself.
+> ⚠️ **Disclaimer**: the game is single-player by design, and this mod may break immersion. Best played after
+> you finish the story.
 
-> ⚠️ **Disclaimer**: This mod may break immersion, the game is single‑player by design. Use after finishing the storyline for best experience.
+[Watch the showcase on YouTube](https://www.youtube.com/watch?v=zlu82lW7UME)
 
 ---
 
 ## Features
 
-**The buddy**
-- A companion NPC that uses the player's model.
-- A new game starts with it asleep in the cryo capsule next to yours; it wakes shortly after you step out. In an existing save, `buddy_manage spawn` brings one in - or several: `buddy_manage spawn 3`.
-- Can be killed by deadly atmospheres or the Breathless, and becomes a ragdoll you can pick up and carry with the Grab key.
-
-**Orders**
-- Look at it and press Interact to open an order window: follow, wander, stay, walk to a node, hide, tidy up, sell, play, or decide for itself. Wording is matched loosely.
-- Give it door PIN codes; it uses each one only on the keypad it belongs to.
-- Orders hold until you revoke them, or expire after a while if you prefer.
-
-**Its own mind**
-- With no order in force, it **weighs** what is worth doing - how long since it last did it, how much there is to do, how far away - and picks between the best few at random, so it never runs the same routine twice.
-- Switches the oxygen generator or climate control back on when the air turns dangerous and the unit is off. It never switches anything off or clears a fault.
-- Now and then eats or drinks something nearby, from a fridge, cabinet, chest or locker (closing it again) or off the floor. It leaves the food alone while you are hungry.
-- Tidies up: collects several pieces of rubbish in a row, loose or out of a cupboard, and takes them to a trash can.
-- Carries every trash box it can find to a sell station and sells the lot in one press - the money is yours.
-- Messes about with loose objects when bored: carries one across the room or into the next, or throws it about and fetches it.
-
-**Fear**
-- Reacts to the Breathless: watches it, refuses to walk toward it, and when it has stared too long or the monster comes too close, either **runs** - first away, then to you - or **hides** in a closet or locker until the monster is gone.
-
-**Anomalies**
-- Now and then the buddy is not quite itself, and you start to wonder whether it is still the friend you woke up with. It may vanish and turn up elsewhere, jump out of a closet at you, stare out of a window for minutes, mutter something it should not know, show up spattered with blood, shut every door aboard, move only while you are not looking, or stand right behind you. Its talk log may hold an order you never gave. Some stations have more than one of it. Each moment, and every line it says, comes once per save.
-- How far it goes follows the difficulty and your progress: Harmless only gets funny moments; Normal starts strange, turns scary after the first story task and extreme after the third; Expert allows scary and extreme ones after the first story task.
-
-**Navigation**
-- Ships with a ready-made nav graph for the ship and every station.
-- Opens room doors in its path and routes around the ones it cannot open; stays out of airlocks and open space.
-- Build or adjust your own graph with the in-game node editor, automatically or by hand.
-
-**Saves and tools**
-- Its state is saved in a `.buddy` sidecar file next to your save, so removing the mod leaves your save untouched.
-- Console commands for full control, an on-screen HUD, debug visuals and adjustable log verbosity.
+- **A companion** with the player's model. A new game starts with it asleep in the cryo capsule next to
+  yours; in an existing save, `buddy_spawn` brings one in (or several: `buddy_spawn 3`).
+- **Orders.** Look at it and press Interact: follow, wander, stay, go to a room, hide, tidy up, sell, play,
+  or decide for itself. It also learns door PIN codes you give it.
+- **Its own mind.** With no order, it picks something worth doing: switches dead life support back on, has
+  a snack, tidies rubbish, sells trash boxes for you, plays with loose objects, wanders or keeps you company.
+- **Space suits.** It can wear a spare suit, go outside with you and come back in.
+- **Fear.** It watches the Breathless, keeps away from it, and runs or hides in a closet.
+- **Anomalies.** Now and then the buddy is not quite itself, and you start to wonder whether it is still the
+  friend you woke up with. What it does, and when, is left for you to find out. Nothing it does happens twice
+  in a save. Harmless difficulty has none; Normal and Expert grow darker as the story goes on.
+- **Mortal.** Deadly air or the Breathless can kill it; the body is a ragdoll you can carry.
+- **Navigation** on a bundled nav graph for the ship and every station, with doors, stairs and an in-game
+  node editor.
+- **Saves** go to a `.buddy` file next to your save, so removing the mod leaves the save untouched.
 
 ---
 
 ## Installation
 
-1. Install **[BepInEx 5](https://github.com/BepInEx/BepInEx/releases)** for Isolated Inhale - the Windows x64 build (`BepInEx_win_x64_5.x.x.zip`), extracted into the game folder next to `Isolated Inhale.exe`.
-2. Download the latest `YourBuddy.dll` from the [Releases](https://github.com/bytenull1/yourbuddy-inhl/releases) page, and
-   `NPC.Core.dll` from [NPC.Core's releases](https://github.com/bytenull1/npc-core-inhl/releases) - the shared NPC library the buddy walks with.
-3. Place both `.dll` files into `BepInEx/plugins/`.
-4. Launch the game. The mod will create a configuration file at `BepInEx/config/com.bytenull1.yourbuddy.cfg`.
+1. Install **[BepInEx 5](https://github.com/BepInEx/BepInEx/releases)** (Windows x64,
+   `BepInEx_win_x64_5.x.x.zip`), extracted next to `Isolated Inhale.exe`.
+2. Download `YourBuddy.dll` from [Releases](https://github.com/bytenull1/yourbuddy-inhl/releases) and
+   `NPC.Core.dll` from [NPC.Core's releases](https://github.com/bytenull1/npc-core-inhl/releases) - the shared
+   NPC library the buddy walks with.
+3. Put both into `BepInEx/plugins/` and launch the game.
 
-> For debugging, you can enable the console in `BepInEx/config/BepInEx.cfg`, the `[Logging.Console]` block is responsible for this, change the value of the parameter `Enabled = false` to `Enabled = true`
+> To see the log while playing, set `Enabled = true` under `[Logging.Console]` in `BepInEx/config/BepInEx.cfg`.
 
 ---
 
-## Building from Source
+## Usage
 
-The project is an SDK-style class library targeting **.NET Standard 2.1**, so no Visual Studio project system or `.NET Framework` targeting pack is required - the .NET SDK is enough to build it.
+**Spawning.** A new game gives you a buddy that wakes a few seconds after you step out of your pod. In an
+existing save, open the console (`~`) and type `buddy_spawn`. Running it again replaces the buddy.
 
-1. **Install required tools**
-   - [.NET SDK](https://dotnet.microsoft.com/en-us/download) (a recent version)
-   - Optional: **Visual Studio**, **Rider**, or **Visual Studio Code** with the C# extension.
+**Talking.** Walk up, look at it and press **Interact**. Type an order or pick one from the list; **Escape**
+closes the window. Wording is matched loosely: "follow me" and "wait here" work too.
 
-2. **Clone the repository** (or extract the source archive).
+<details>
+<summary>Orders, its own decisions, several buddies, doors</summary>
 
-3. **Provide the reference assemblies**
-   Copy the DLLs the project compiles against out of your own game install into
-   `YourBuddy/lib/`. The list and where each one comes from is in
-   [`YourBuddy/lib/README.md`](YourBuddy/lib/README.md). They are not redistributed
-   here and are not copied into the build output.
-   YourBuddy builds on [NPC.Core](https://github.com/bytenull1/npc-core-inhl): clone it beside this repository
-   (`../npc-core-inhl`) and it is built with YourBuddy, or copy its `NPC.Core.dll` into `YourBuddy/lib/`.
+| Order | What it does |
+|---|---|
+| `follow` | Follows you. |
+| `wander` | Walks between nav nodes, doing its own thing. |
+| `stay` | Holds position. It still steps aside if it is blocking a door. |
+| `goto library` | Walks to a room of the docked station, by the name the debug HUD shows. `goto` alone (or the **Goto** button) lists them. |
+| `decide for yourself` | Cancels your order and lets it choose again. |
+| `hide` | Gets into a closet or locker and stays there until you say something else - another order, or "decide for yourself". |
+| `tidy up` | Clears the rubbish nearby into a trash can, several pieces in a row. |
+| `sell` | Takes every trash box nearby to a sell station and sells them in one press. |
+| `play` | Goes and messes about with something loose. |
+| `password 1423` | Remembers a door PIN code. A bare number works too. |
 
-4. **Build the project**
-   - From the command line, in the repository root: `dotnet build YourBuddy/YourBuddy.csproj -c Release`
-   - In Visual Studio / Rider: open `YourBuddy.slnx` and build the `Release` configuration.
-   - There is no framework/toolset mismatch to worry about - `netstandard2.1` builds the same way on any platform with the .NET SDK installed.
+**Orders and its own mind.** With no order in force - which is how it starts, and how it comes back after loading a save - the buddy decides for itself every few seconds. It scores everything it might do: switching the life support back on (which always wins), selling trash boxes, tidying up, a snack, messing about with something, wandering off, or coming back to you. Each score is made of how overdue the thing is, how much of it there is, and how far away - so distance makes something *less* attractive rather than invisible, and it will cross a room or two for the only job going. Then it picks between the best few **at random**, which is why it does not repeat itself.
 
-5. **Output file**
-   After a successful build, `YourBuddy.dll` will appear in `YourBuddy/bin/Release/netstandard2.1/`. Copy it to `BepInEx/plugins/` in your game directory, together with `NPC.Core.dll`, and launch the game.
+The first five words above are orders; `hide`, `tidy up`, `sell` and `play` just start that job now. An order holds until you give another one or tell it to decide for itself; with `OrderPersistence = Expires` it also runs out, and a `goto` ends when the buddy arrives. An order given while it is running from the Breathless is carried out once it has got away. `Autonomy = false` turns its own decisions off.
+
+**Doors.** The buddy only uses codes you gave it, and only on keypads whose own code matches; the window tells you straight away whether a code opens any door it knows about. Codes are saved with your game. It plans a route around doors it cannot open, and if there is no other way, it waits for you.
+
+**Several buddies.** `buddy_spawn 3` replaces your buddies with three in a row: Buddy, Buddy 2 and Buddy 3.
+A save keeps all of them. They share the door codes you give and never go for the same box, cupboard, sell
+station or closet. In the window, the one you look at most directly answers; add "everyone" to talk to all:
+"everyone follow me". In the console, `@2`, `@buddy2` or `@all` picks who a command goes to; without one it
+goes to the buddy you last talked to or named.
+
+</details>
+
+<details>
+<summary>The nav graph and node editor</summary>
+
+Wandering and long walks follow a node graph. **NPC.Core ships one for the ship and every station**, so
+there is nothing to set up. To edit it, press `F8` in game - the editor, its keys and where your own graph is
+saved (`BepInEx/config/NPC.Core/nodegraph.json`) are described in
+[NPC.Core's README](https://github.com/bytenull1/npc-core-inhl#the-node-editor). A graph you edited under an
+older YourBuddy is carried over on first start.
+
+To make the buddy use a staircase, put a Stair node (`T`) on the bottom and top landings and link them
+(`K`); check with `L` that the connection is there.
+
+</details>
 
 ---
 
 ## Configuration
 
-The buddy's settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, sections `General` and `Anomalies` (listed below). The debug level, the bundled nav graph and the node editor keys belong to NPC.Core and live in its own file, `com.bytenull1.npccore.cfg` ([its README](https://github.com/bytenull1/npc-core-inhl#configuration)). On first start NPC.Core copies over any of those values you had set in the YourBuddy file.
+Settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, sections `General` and `Anomalies`. The debug
+level, the bundled nav graph and the node editor keys belong to NPC.Core, in `com.bytenull1.npccore.cfg`
+([its README](https://github.com/bytenull1/npc-core-inhl#configuration)).
 
 <details>
 <summary>Show all settings</summary>
@@ -124,33 +138,38 @@ The buddy's settings live in `BepInEx/config/com.bytenull1.yourbuddy.cfg`, secti
 | `DebugVisuals` | General | `false` | Draws navigation probes, target markers, and path lines. |
 | `ShowHud` | General | `false` | Displays an on‑screen status panel (mode, orders, position, room, environment, fear, mind, errand timers, target); hidden while the console is open. |
 | `MoveSpeed` | General | `3.5` | Default movement speed in m/s. |
-| `Anomalies` | Anomalies | `true` | Now and then the buddy does something funny, strange or frightening. How far it goes follows `AnomalyDifficulty` and your story progress. `buddy_anomaly` lists them and starts one now. |
-| `AnomalyDifficulty` | Anomalies | `Game` | `Game` follows the game's difficulty; `Harmless` (funny only), `Normal` or `Expert` sets it for the buddy alone. |
+| `Anomalies` | Anomalies | `true` | Now and then the buddy does something strange or frightening. How far it goes follows `AnomalyDifficulty` and your story progress. `buddy_anomaly` lists them and starts one now. |
+| `AnomalyDifficulty` | Anomalies | `Game` | `Game` follows the game's difficulty; `Harmless` (none), `Normal` or `Expert` sets it for the buddy alone. |
 | `AnomalyFrequency` | Anomalies | `1` | Multiplies how often they happen. `0`: never by themselves. |
 
 </details>
-
-You can change these values in the config file or via console commands (see below).
 
 ---
 
 ## Console Commands Reference
 
+Type `buddy` in the console for the list.
+
 <details>
 <summary>Show all console commands</summary>
 
-Type `buddy` in the console for this list, grouped. Each category is one command; the first word
-after it picks what to do: `buddy_order follow @2`, `buddy_manage spawn 3`. A category alone lists its
-subcommands.
+Type `buddy` in the console for this list, grouped. Spawning, despawning and killing are commands of
+their own:
 
-**`buddy_manage`** - spawn, remove and set up buddies
+| Command | Arguments | Description |
+|------------|-----------|-------------|
+| `buddy_spawn` | `[number]` | Replaces every buddy with one in front of you, or with that many in a row. |
+| `buddy_despawn` | `[@who]` | Despawns a buddy. |
+| `buddy_kill` | `[force] [@who]` | Kills a buddy (ragdoll), with an optional forward impulse force (0–100). |
+
+Everything else is grouped: each category is one command, and the first word after it picks what to do:
+`buddy_order follow @2`. A category alone lists its subcommands.
+
+**`buddy_manage`** - list and set up buddies
 
 | Subcommand | Arguments | Description |
 |------------|-----------|-------------|
-| `spawn` | `[number]` | Replaces every buddy with one in front of you, or with that many in a row. |
 | `list` | – | Lists the buddies with their numbers and names; `*` marks the one commands go to. |
-| `despawn` | `[@who]` | Despawns a buddy. |
-| `kill` | `[force] [@who]` | Kills a buddy (ragdoll), with an optional forward impulse force (0–100). |
 | `skin` | `<name\|default> [@who]` | Debug: put `skins/<name>.png` (next to the plugin dll) on the buddy's body, or `default` to restore. With no name it lists the skins. |
 | `auto` | `[on\|off]` | Let the buddy decide for itself (`on` also cancels the order in force), or stop it deciding. Saved in the config. |
 
@@ -199,48 +218,66 @@ subcommands.
 
 ---
 
-## Usage
+## Known Issues / Limitations
 
-### Spawning the Buddy
+- The buddy can still get stuck now and then.
+- It goes into space only with you, in a spare suit: the game's airlocks cycle only for the player.
+- Doors sometimes stay open behind it.
+- Room names in the HUD are unreliable (often `Front_M00` for most of the ship): the game has no room volumes.
+  Cosmetic only.
 
-Start a new game: your buddy sleeps in the cryo capsule next to yours and wakes a few seconds after you step out of your own. In an existing save, open the in‑game console (`~`) and type `buddy_manage spawn` - the NPC appears a few meters in front of you. Running the command again replaces it.
+Found a bug? Report it on the [issue tracker](https://github.com/bytenull1/yourbuddy-inhl/issues) or the
+mod's discussion thread. Pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Technical docs
+are in [docs/](docs/README.md).
 
-**More than one.** `buddy_manage spawn 3` replaces your buddies with three, standing in a row. They are called Buddy, Buddy 2 and Buddy 3, and a save keeps all of them. They walk through each other, share the door codes you give, and never go for the same box, cupboard, sell station or closet. `buddy_manage list` shows who is who.
+---
 
-**Which one a command means.** Every buddy command takes `@2`, `@buddy2` or `@all` anywhere among its arguments: `buddy_order follow @all`, `buddy_dev goto 12 @3`. Without one, it goes to the buddy you last talked to or named - or, if that one is gone, the nearest. With a single buddy you never need any of this.
+## When will the mod be updated?
 
-### Talking to the Buddy
+- If major updates break something important (tested on version v0.8.9).
+- If the map changes (AI node updates, such as when ObservingStation is released).
+- If enemy behavior changes or new enemies are added (aggro on the NPC).
+- If the AI needs improvement (the main focus is on navigation, the set of supported actions, and behavior).
 
-Walk up close, look at it and press **Interact**. Type an order, or pick one from the list behind the speech-bubble button; **Escape** closes the window. Wording is matched loosely, so "follow me" or "wait here" work too. With several buddies, the one you look at most directly answers, and its name is on the window. Add "everyone" to give an order to all of them: "everyone follow me".
+---
 
-| Order | What it does |
-|---|---|
-| `follow` | Follows you. |
-| `wander` | Walks between nav nodes, doing its own thing. |
-| `stay` | Holds position. It still steps aside if it is blocking a door. |
-| `goto library` | Walks to a room of the docked station, by the name the debug HUD shows. `goto` alone (or the **Goto** button) lists them. |
-| `decide for yourself` | Cancels your order and lets it choose again. |
-| `hide` | Gets into a closet or locker and stays there until you say something else - another order, or "decide for yourself". |
-| `tidy up` | Clears the rubbish nearby into a trash can, several pieces in a row. |
-| `sell` | Takes every trash box nearby to a sell station and sells them in one press. |
-| `play` | Goes and messes about with something loose. |
-| `password 1423` | Remembers a door PIN code. A bare number works too. |
+## Building from Source
 
-**Orders and its own mind.** With no order in force - which is how it starts, and how it comes back after loading a save - the buddy decides for itself every few seconds. It scores everything it might do: switching the life support back on (which always wins), selling trash boxes, tidying up, a snack, messing about with something, wandering off, or coming back to you. Each score is made of how overdue the thing is, how much of it there is, and how far away - so distance makes something *less* attractive rather than invisible, and it will cross a room or two for the only job going. Then it picks between the best few **at random**, which is why it does not repeat itself. Following you and wandering off still take turns, but the switch no longer lands on the same second every time.
+<details>
+<summary>Show build steps</summary>
 
-The first five words above are orders; `hide`, `tidy up`, `sell` and `play` just start that job now. An order holds until you give another one or tell it to decide for itself; with `OrderPersistence = Expires` it also runs out, and a `goto` ends when the buddy arrives. An order given while it is running from the Breathless is carried out once it has got away. `Autonomy = false` turns its own decisions off.
+The project is an SDK-style class library targeting **.NET Standard 2.1**, so no Visual Studio project system or `.NET Framework` targeting pack is required - the .NET SDK is enough to build it.
 
-**Doors.** The buddy only uses codes you gave it, and only on keypads whose own code matches; the window tells you straight away whether a code opens any door it knows about. Codes are saved with your game. It plans a route around doors it cannot open, and if there is no other way, it waits for you.
+1. **Install required tools**
+   - [.NET SDK](https://dotnet.microsoft.com/en-us/download) (a recent version)
+   - Optional: **Visual Studio**, **Rider**, or **Visual Studio Code** with the C# extension.
 
-### The Nav Graph & Node Editor
+2. **Clone the repository** (or extract the source archive).
 
-Wandering and long walks follow a node graph. **NPC.Core ships one for the ship and every station**, so there is nothing to set up. To edit it, press `F8` in game - the editor, its keys and where your own graph is saved (`BepInEx/config/NPC.Core/nodegraph.json`) are described in [NPC.Core's README](https://github.com/bytenull1/npc-core-inhl#the-node-editor). A graph you edited under an older YourBuddy is carried over on first start.
+3. **Provide the reference assemblies**
+   Copy the DLLs the project compiles against out of your own game install into
+   `YourBuddy/lib/`. The list and where each one comes from is in
+   [`YourBuddy/lib/README.md`](YourBuddy/lib/README.md). They are not redistributed
+   here and are not copied into the build output.
+   YourBuddy builds on [NPC.Core](https://github.com/bytenull1/npc-core-inhl): clone it beside this repository
+   (`../npc-core-inhl`) and it is built with YourBuddy, or copy its `NPC.Core.dll` into `YourBuddy/lib/`.
 
-To make the buddy use a staircase, put a Stair node (`T`) on the bottom and top landings and link them (`K`); check with `L` that the connection is there.
+4. **Build the project**
+   - From the command line, in the repository root: `dotnet build YourBuddy/YourBuddy.csproj -c Release`
+   - In Visual Studio / Rider: open `YourBuddy.slnx` and build the `Release` configuration.
+   - There is no framework/toolset mismatch to worry about - `netstandard2.1` builds the same way on any platform with the .NET SDK installed.
+
+5. **Output file**
+   After a successful build, `YourBuddy.dll` will appear in `YourBuddy/bin/Release/netstandard2.1/`. Copy it to `BepInEx/plugins/` in your game directory, together with `NPC.Core.dll`, and launch the game.
+
+</details>
 
 ---
 
 ## Development Notes
+
+<details>
+<summary>Show development notes</summary>
 
 Navigation - the plugin's biggest headache.
 
@@ -252,48 +289,11 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 
 > ⚠️ **Before touching this code, read this**: The navigation/pathfinding system is cursed. If you want to make any changes there, you'd better have a PhD in mathematics. It's difficult to debug, involves many magic constants, and carries a high risk of regression. Known AI regression hot spots: stairs, elevated railings, long sections, the spacecraft‑station airlock, and the spacecraft itself.
 
----
-
-## Known Issues / Limitations
-
-- Navigation is good, but not perfect - the buddy can still get stuck sometimes.
-- Outside in zero gravity it only follows, stays or comes back in, and it finds its way along the path you took. Without a suit it cannot go outside at all.
-- Sometimes, doors may not close behind NPCs.
-- Room names in the HUD are unreliable - you may see `Front_M00` for most of the ship. The game has no room volumes; a "room" is whichever doorway sensor you last walked through. Cosmetic only, and not fixable.
-
----
-
-## Plans
-
-**Priority 0 - Fixes**
-- All done.
-
-**Priority 1 - Improvements**
-- All done.
-
-**Priority 2 - Major features**
-- [x] Add EVA suit support for dangerous atmospheres and space walks through FuelStation. A redrawn pilot suit texture is needed, since the game doesn’t have an isolated suit skin for the player model, only an item texture.
-
-**Priority 3 - Other**
-- [ ] Add funny, strange, or scary events involving the NPC.
-- [ ] Add Russian and other language translations (not sure).
-
----
-
-## When will the mod be updated?
-
-- If major updates break something important (tested on version v0.8.9).
-- If the map changes (AI node updates, such as when ObservingStation is released).
-- If enemy behavior changes or new enemies are added (aggro on the NPC).
-- If the AI needs improvement (the main focus is on navigation, the set of supported actions, and behavior).
-
-If you encounter bugs, please report them on the [issue tracker](https://github.com/bytenull1/yourbuddy-inhl/issues) (or the mod's discussion thread). You can also make changes to the mod yourself by creating a PR - see [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs usefully, build, and test. Technical documentation is in [docs/](docs/README.md).
+</details>
 
 ---
 
 ## Showcase
-
-[Watch the mod showcase on YouTube](https://www.youtube.com/watch?v=zlu82lW7UME)
 
 ![The order window with the list of commands](docs/images/commands.png)
 

@@ -108,15 +108,13 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Harmless: funny only. Normal escalates with the story: strange, then scary after
+        /// Harmless: none. Normal escalates with the story: strange, then scary after
         /// NormalScaryTasks, extreme after NormalExtremeTasks. Expert: strange, then scary and extreme
         /// together after ExpertAllTasks. docs/anomalies.md#1-how-often-and-how-far
         /// </summary>
         internal static bool Allows(AnomalySeverity severity)
         {
             float frequency = Frequency;
-            if (severity == AnomalySeverity.Funny) return true;
-
             if (frequency <= 0f) return false;
 
             if (severity == AnomalySeverity.Strange) return true;
@@ -151,17 +149,17 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// The worst severity allowed now: what the line pools lean toward.
+        /// The worst severity allowed now, strange at the least: what the line pools lean toward.
         /// </summary>
         internal static AnomalySeverity Ceiling
         {
             get
             {
-                for (AnomalySeverity s = AnomalySeverity.Extreme; s > AnomalySeverity.Funny; s--)
+                for (AnomalySeverity s = AnomalySeverity.Extreme; s > AnomalySeverity.Strange; s--)
                 {
                     if (Allows(s)) return s;
                 }
-                return AnomalySeverity.Funny;
+                return AnomalySeverity.Strange;
             }
         }
 
@@ -197,7 +195,6 @@ namespace YourBuddy
             bool expert = Frequency >= 1.5f;
             return severity switch
             {
-                AnomalySeverity.Funny => Frequency <= 0f ? 1f : expert ? 0.25f : 0.5f,
                 AnomalySeverity.Strange => expert ? 0.8f : 1f,
                 AnomalySeverity.Scary => 0.7f + 0.2f * tier,
                 _ => 0.5f + 0.3f * tier,
@@ -254,6 +251,8 @@ namespace YourBuddy
             Player? player = NpcPlayer.Pilot;
             if (player == null || player.Controller == null) return "no player";
 
+            if (Frequency <= 0f) return "none on Harmless";
+
             if (NpcInteraction.IsOpen) return "the talk window is open";
 
             Breathless? monster = GameManager.Instance != null ? GameManager.Instance.Breathless : null;
@@ -278,8 +277,8 @@ namespace YourBuddy
             Actors.Clear();
             foreach (BuddyBehaviour buddy in BuddyManager.All)
             {
-                // Left on a station, it is parked: it may still turn up near you. Outside, only the shadow plays.
-                if (buddy != null && (buddy.AnomalyReady(outsideOk: true) == null || buddy.MoveReady() == null)) Actors.Add(buddy);
+                // Left on a station, it is parked: it may still turn up near you.
+                if (buddy != null && (buddy.AnomalyReady() == null || buddy.MoveReady() == null)) Actors.Add(buddy);
             }
             if (Actors.Count == 0) return false;
 

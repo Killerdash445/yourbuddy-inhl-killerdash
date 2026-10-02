@@ -53,7 +53,7 @@ The `OxygenStation` stairwell has its own notes: [navigation.md §8](https://git
 |---|---|---|
 | HUD's `Pos:` line ends `on world` while the buddy is aboard | `[ai] Riding 'world' now` - the floor under it belongs to no ship or station, so it rides the world container and can be carried off on undock | [an-npc-rides-its-own-floor](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#an-npc-rides-its-own-floor) |
 | buddy missing after undock | `[ai] Undocked with nothing underfoot - moved to the ship airlock` | [game-model.md](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/game-model.md#undocking-does-not-unload-a-station) |
-| no buddy on a new game | `[mgr] New game: …, … - no buddy. Use 'buddy_manage spawn'.` | [reference.md §2](reference.md#2-debug-commands) |
+| no buddy on a new game | `[mgr] New game: …, … - no buddy. Use 'buddy_spawn'.` | [reference.md §2](reference.md#2-debug-commands) |
 
 ## Lifecare scanner
 

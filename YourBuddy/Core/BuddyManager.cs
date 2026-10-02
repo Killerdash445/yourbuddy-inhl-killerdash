@@ -244,7 +244,7 @@ namespace YourBuddy
                 string who = state.Name ?? "Buddy";
                 if (!state.Alive)
                 {
-                    YourBuddyPlugin.Log.LogInfo($"[mgr] {who} was dead in this save file - not spawning. Use 'buddy_manage spawn'.");
+                    YourBuddyPlugin.Log.LogInfo($"[mgr] {who} was dead in this save file - not spawning. Use 'buddy_spawn'.");
                     continue;
                 }
                 Vector3 position = RestorePosition(state);

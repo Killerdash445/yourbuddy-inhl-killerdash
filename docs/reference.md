@@ -200,7 +200,7 @@ See [fear.md §6](fear.md#6-hiding-in-a-closet-or-locker). Walking up uses the `
 | `HideDoorShutSeconds` | 6 s | grace for the doors' close animation |
 | `HideWaitLogSeconds` | 15 s | between "still in here" lines |
 | `HideSkipSeconds` | 600 s | a spot it could not use |
-| `PrankTriggerDist` / `PrankMaxSeconds` | 1.5 m / 240 s | a prank hide jumps out once you are this near the spot; comes out quietly after this ([anomalies.md](anomalies.md#peekaboo-and-closetambush)) |
+| `AmbushTriggerDist` / `AmbushMaxSeconds` | 1.5 m / 240 s | the closet ambush jumps out with a shriek once you are this near the spot; with nobody near by then, it gives up and leaves the closet without jumping ([anomalies.md](anomalies.md#closetambush)) |
 
 ### The anomaly director - `AnomalyDirector.cs`
 
@@ -220,7 +220,6 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | Constant | Value | Meaning |
 |---|---|---|
 | `SightSampleSeconds` | 0.1 s | how often a running anomaly asks whether you see it |
-| `SpinSeconds` | 1.8 s | two turns |
 | `StareMinSeconds` / `StareMaxSeconds` | 50 / 140 s | a window or wall stare, once there |
 | `StareSearchRadius` | 20 m | a window this near |
 | `WallSearchDist` / `WallStandOff` | 4 / 0.45 m | a wall this near; it stops this far from it |
@@ -257,13 +256,6 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 | `PipeStartleDist` | 4 m | spotted this near, your stress |
 | `MoveWaitSeconds` | 300 s | Move: waits this long to be found ([anomalies.md](anomalies.md#move)) |
 | `MoveStartleDist` | 4 m | found this near, your stress |
-| `ShadowDoorMin` / `ShadowDoorMax` | 6 / 25 m | Shadow: the door it runs through, this far from you and in your view ([anomalies.md](anomalies.md#shadow)) |
-| `ShadowStartMin` / `ShadowStartMax` | 3 / 10 m | where it starts, this far from that door on your side |
-| `ShadowRouteMax` | 25 m | its run, at most this long |
-| `ShadowDoorwayHalfWidth` | 1.2 m | its path must cross the door's plane this near its middle |
-| `ShadowOpenDist` / `ShadowPastDoor` | 1.2 / 1.5 m | the door opens when it is this near; this far past, it is gone and the door shuts |
-| `ShadowSeenSeconds` / `ShadowNearDist` | 0.8 s / 4 m | seen this long, or seen this near, it is gone |
-| `ShadowRunSeconds` / `ShadowWaitSeconds` | 30 / 120 s | the run gives up; behind the shut door, the most it waits for you to open it |
 | `FlickerWaitSeconds` | 240 s | Smile, UnderTheSuit: the most it waits for you to look ([anomalies.md](anomalies.md#smile-and-underthesuit)) |
 | `FlickerMinDist` / `FlickerMaxDist` | 1.5 / 7 m | you this far from it |
 | `FlickerLookAngle` / `FlickerFacingAngle` | 25° / 50° | its head this near the middle of your view; it faces you this squarely |
@@ -305,7 +297,7 @@ See [anomalies.md §1](anomalies.md#1-how-often-and-how-far).
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `SpawnSpacing` | 0.8 m | gap between buddies in `buddy_manage spawn N`'s row |
+| `SpawnSpacing` | 0.8 m | gap between buddies in `buddy_spawn N`'s row |
 | `SpawnSameDeck` | 0.5 m | a row point is used only on the middle point's deck, else it falls back to the middle |
 
 ---
@@ -317,9 +309,10 @@ The graph, gate and editor commands, `debug_level`, `ai_disable` and `ai_notarge
 still means `ai_disable npc`.
 
 The full command list is in the [README](../README.md#console-commands-reference); `buddy` prints it in
-game. Each category (`buddy_manage`, `buddy_order`, `buddy_anomaly`, `buddy_dev`) is one console command
-whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why categories: about 30
-flat `buddy_*` names made the console list hard to read. Commands live in
+game. `buddy_spawn`, `buddy_despawn` and `buddy_kill` are commands of their own (`BuddyConsole.Singles`):
+they are used most. Each category (`buddy_manage`, `buddy_order`, `buddy_anomaly`, `buddy_dev`) is one
+console command whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why
+categories: about 30 flat `buddy_*` names made the console list hard to read. Commands live in
 `BuddyConsole.cs`; order bodies live in `BuddyCommands.cs` so the [dialog](dialog.md) shares them.
 `buddy_dev goto` calls `FindPath` then `ApplyRouteOrder`, so `NavPath` changes must update it.
 
@@ -327,7 +320,7 @@ flat `buddy_*` names made the console list hard to read. Commands live in
 ignored) or `@all` anywhere among its arguments (`BuddyConsole.ForTargets`). Without one it goes to
 `BuddyManager.Focus`: the buddy last talked to or named, else the nearest living one. Naming exactly
 one moves the focus, which is also the buddy the HUD shows. `buddy_manage list` lists numbers and names and
-marks the focus. `buddy_manage spawn N` replaces every buddy with N.
+marks the focus. `buddy_spawn N` replaces every buddy with N.
 
 **`ai_notarget` leaves the buddy huntable.** Its catch is the agent's own `BreathlessCheck`, which only
 `ai_disable` stops; `CatchRoutine` restores the aggressor flag it borrowed only while

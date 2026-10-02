@@ -37,11 +37,11 @@ the buddy through a few `internal` members, never its fields.
 | `BuddyBehaviour.Modes.cs` | `UpdateFollow` (on the agent's `Pursue`), `UpdateRoute` (on `SimpleAdvance`), `FinishRoute`, `StartRoute`, `SetMode`, the reach task in hand | `NpcAgent` | [behaviour](behaviour.md) |
 | `BuddyBehaviour.Fear.cs` | seeing the Breathless, stress, `FearState`, `HoldBackFromMonster`, the `Flee` mode | `NavProbe`, `NavGraph`, `GameInternals` | [fear](fear.md) |
 | `BuddyBehaviour.Hide.cs` | hiding in a closet or locker: walk, teleport in/out, doors, who ends it | `NpcAgent` | [fear](fear.md) |
-| `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: starting one (`TryStartAnomaly`), the per-frame update, holds while watched, `EndAnomaly`, `Speak`; each set piece's own fields, constants and steps are in `BuddyBehaviour.Anomaly.<Name>.cs` (Shadow, Sleeper, Shipyard, Doors, Stare, Vanish, Pipe, Move, Flicker) | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
+| `BuddyBehaviour.Anomaly.cs` | acting out an anomaly: starting one (`TryStartAnomaly`), the per-frame update, holds while watched, `EndAnomaly`, `Speak`; each set piece's own fields, constants and steps are in `BuddyBehaviour.Anomaly.<Name>.cs` (Sleeper, Shipyard, Doors, Stare, Vanish, Pipe, Move, Flicker, Nodes) | `PlayerView`, `BuddyGore`, `ScareSounds`, NPC.Core's `NpcInteraction` | [anomalies](anomalies.md) |
 | `AnomalyDirector.cs` | when an anomaly happens and how far it may go: difficulty, the game's event tier, the roll, cooldown, the draw; the player's stress | `BuddyBehaviour`, `GameManager.EventSystem` | [anomalies](anomalies.md#1-how-often-and-how-far) |
 | `Anomaly.cs`, `AnomalyLines.cs` | the catalogue (`AnomalyKind`, severity, weight, once only) and what the buddy says | - | [anomalies](anomalies.md#2-the-anomalies) |
 | `AnomalyMemory.cs` | the kinds a save has had and the lines said, kept in the sidecar | `BuddySaveFile` | [anomalies](anomalies.md#once-per-save) |
-| `BuddyDouble.cs` | a copy of the buddy's body with nothing else: the shadow and the sleeper | - | [anomalies](anomalies.md#shadow) |
+| `BuddyDouble.cs` | a copy of the buddy's body with nothing else: the sleeper | - | [anomalies](anomalies.md#sleeper) |
 | `AnomalyProps.cs`, `BbModel.cs` | the meat and blood an anomaly leaves, never saved; a Blockbench model read from the dll | `GameInternals`, Newtonsoft | [anomalies](anomalies.md#the-mess-and-the-meat-model) |
 | `PlayerView.cs`, `ScareSounds.cs`, `BuddyGore.cs` | what the player sees; the game's FMOD events borrowed; the bloody texture and the flickers' overlays | `NavProbe`, `GameInternals`, `BuddySkin` | [anomalies](anomalies.md#4-being-seen) |
 | `BuddyBehaviour.Autonomy.cs` | orders (`ApplyOrder`, `ApplyRouteOrder`, `RevokeOrder`), persistence, expiry, stand-down, bouts | `NavGraph` | [behaviour](behaviour.md) |
@@ -175,7 +175,7 @@ NPC.Core deletes sidecars with their save and sweeps orphans
 Three ways in, all through `YourBuddyPlugin.SpawnBuddy`, which adds one buddy to `BuddyManager.All`
 (no cap):
 
-- `buddy_manage spawn [N]`, which despawns every buddy first and spawns N in a row;
+- `buddy_spawn [N]`, which despawns every buddy first and spawns N in a row;
 - a save's sidecar (`BuddyManager.Tick`), every buddy it holds;
 - **a new game** (`SpawnOnNewGame`): the buddy spawns **asleep** (the agent's `Asleep`: no AI, no slow
   phases, no dialog) in the nearest shut prop capsule beside the player's pod, or at the Shipyard's

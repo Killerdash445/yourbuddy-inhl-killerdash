@@ -14,7 +14,6 @@ namespace YourBuddy
         private bool vanished = false;
         private readonly List<Renderer> vanishedRenderers = [];
 
-        private static readonly List<Vector3> ReappearNodes = [];
         private static readonly float[] BehindTurns = [0f, 30f, -30f];
         private const float VanishMinSeconds = 40f;
         private const float VanishMaxSeconds = 110f;
@@ -67,27 +66,13 @@ namespace YourBuddy
         private Vector3? HiddenSpotNear(Transform you)
         {
             NpcVessels.FloorOwner(you.position, out string? owner, out _);
-            ReappearNodes.Clear();
-            for (int i = 0; i < NavGraph.NodeCount; i++)
+            List<Vector3> nodes = GroundNodes(you.position, owner, ReappearMinDist, ReappearMaxDist, 3f);
+            for (int tries = 0; tries < 12 && nodes.Count > 0; tries++)
             {
-                if (!NavGraph.IsNodeActive(i) || NavGraph.GetNodeType(i) != NodeType.Ground) continue;
-
-                if (owner != null && NavGraph.GetNodeOwner(i) != owner) continue;
-
-                Vector3 node = NavGraph.GetNodeWorld(i);
-                if (Mathf.Abs(node.y - you.position.y) > 3f) continue;
-
-                float d = FlatDistance(node, you.position);
-                if (d < ReappearMinDist || d > ReappearMaxDist) continue;
-
-                ReappearNodes.Add(node);
-            }
-            for (int tries = 0; tries < 12 && ReappearNodes.Count > 0; tries++)
-            {
-                int index = Random.Range(0, ReappearNodes.Count);
-                Vector3 node = ReappearNodes[index];
-                ReappearNodes.RemoveAt(index);
-                if (!PlayerView.Sees(node + Vector3.up * 1.1f, null) && !PlayerView.Sees(node + Vector3.up * 0.3f, null)) return node;
+                int index = Random.Range(0, nodes.Count);
+                Vector3 node = nodes[index];
+                nodes.RemoveAt(index);
+                if (Unseen(node)) return node;
             }
             return null;
         }

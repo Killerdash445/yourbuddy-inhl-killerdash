@@ -10,8 +10,8 @@ using UnityEngine;
 namespace YourBuddy
 {
     /// <summary>
-    /// The buddy console commands: `buddy` for help, then one command per category with subcommands,
-    /// registered through NPC.Core so no other mod's are overwritten. Per-buddy subcommands take @2, @name
+    /// The buddy console commands: `buddy` for help, buddy_spawn, buddy_despawn and buddy_kill, then one
+    /// command per category, registered through NPC.Core so no other mod's are overwritten. Per-buddy subcommands take @2, @name
     /// or @all. docs/reference.md#2-debug-commands
     /// </summary>
     internal static class BuddyConsole
@@ -19,7 +19,7 @@ namespace YourBuddy
         private const string Owner = "YourBuddy";
 
         /// <summary>
-        /// Gap between buddies in `buddy_manage spawn`'s row, and the most a point's floor may differ from the middle's.
+        /// Gap between buddies in `buddy_spawn`'s row, and the most a point's floor may differ from the middle's.
         /// </summary>
         private const float SpawnSpacing = 0.8f;
         private const float SpawnSameDeck = 0.5f;
@@ -36,18 +36,25 @@ namespace YourBuddy
 
         private static readonly List<Category> Categories = [];
 
+        /// <summary>
+        /// Commands of their own, used too often to sit under a category.
+        /// </summary>
+        private static readonly Dictionary<string, Sub> Singles = new()
+        {
+            ["buddy_spawn"] = new("[number]", "replace every buddy with that many (1 by default)", Spawn),
+            ["buddy_despawn"] = PerBuddy("", "remove it", (b, _) =>
+            {
+                BuddyManager.Despawn(b);
+                return b.Name + " despawned";
+            }),
+            ["buddy_kill"] = PerBuddy("[force]", "kill it, pushed away from you", Kill),
+        };
+
         internal static void Register()
         {
-            Add(new Category("buddy_manage", "spawn, remove and set up buddies", new()
+            Add(new Category("buddy_manage", "list and set up buddies", new()
             {
-                ["spawn"] = new("[number]", "replace every buddy with that many (1 by default)", Spawn),
                 ["list"] = new("", "the buddies, their numbers and names; * marks the one commands go to", List),
-                ["despawn"] = PerBuddy("", "remove it", (b, _) =>
-                {
-                    BuddyManager.Despawn(b);
-                    return b.Name + " despawned";
-                }),
-                ["kill"] = PerBuddy("[force]", "kill it, pushed away from you", Kill),
                 ["skin"] = PerBuddy("<name|default>", "wear skins/<name>.png; no name lists them", Skin),
                 ["auto"] = new("[on|off]", "let the buddies decide for themselves, or only do as told",
                     args => Print(BuddyCommands.SetAutonomy(Toggle(args, 0, YourBuddyPlugin.ConfigAutonomy.Value)))),
@@ -96,6 +103,8 @@ namespace YourBuddy
             }));
 
             NpcConsole.Register(Owner, "buddy", _ => Print(Help()));
+            foreach (KeyValuePair<string, Sub> single in Singles) NpcConsole.Register(Owner, single.Key, single.Value.Run);
+
             foreach (Category category in Categories)
             {
                 Action<string[]> run = category.Name == "buddy_anomaly" ? Anomaly : args => Dispatch(category, args);
@@ -111,6 +120,8 @@ namespace YourBuddy
         private static string Help()
         {
             StringBuilder text = new("YourBuddy commands. A per-buddy one takes @2, @name or @all; without, it goes to the * buddy.");
+            foreach (KeyValuePair<string, Sub> single in Singles) text.Append('\n').Append(Line(single.Key, single.Value).TrimStart());
+
             foreach (Category category in Categories)
             {
                 text.Append('\n').Append(category.Name).Append(" - ").Append(category.About);
@@ -165,7 +176,7 @@ namespace YourBuddy
             int count = 1;
             if (args.Length > 0 && (!int.TryParse(args[0], out count) || count < 1))
             {
-                Print("Usage: buddy_manage spawn [number] - replaces every buddy with that many (1 by default)");
+                Print("Usage: buddy_spawn [number] - replaces every buddy with that many (1 by default)");
                 return;
             }
 

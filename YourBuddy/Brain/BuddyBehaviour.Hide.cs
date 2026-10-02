@@ -85,16 +85,14 @@ namespace YourBuddy
         private const float HideMaxSeconds = 240f;
 
         /// <summary>
-        /// In the closet as an anomaly, to jump out at you: docs/anomalies.md#peekaboo-and-closetambush.
-        /// `hidePrankScary` is the ambush; without it, a peek-a-boo.
+        /// In the closet as an anomaly, to jump out at you: docs/anomalies.md#closetambush.
         /// </summary>
-        private bool hidePrank = false;
-        private bool hidePrankScary = false;
+        private bool hideAmbush = false;
         /// <summary>
-        /// It jumps out once you are this near the spot on its deck, and gives up after PrankMaxSeconds.
+        /// It jumps out once you are this near the spot on its deck, and gives up after AmbushMaxSeconds.
         /// </summary>
-        private const float PrankTriggerDist = 1.5f;
-        private const float PrankMaxSeconds = 240f;
+        private const float AmbushTriggerDist = 1.5f;
+        private const float AmbushMaxSeconds = 240f;
 
         /// <summary>
         /// Only used to reuse the reach walk's node and stand-point search; the walk itself is the flee's.
@@ -427,7 +425,7 @@ namespace YourBuddy
         {
             if (!hideDoorsShut && !ConfirmHideDoorsShut()) return;
 
-            if (AnyHideDoorOpen() && hidePrank)
+            if (AnyHideDoorOpen() && hideAmbush)
             {
                 JumpOut("you opened the door");
                 return;
@@ -446,7 +444,7 @@ namespace YourBuddy
             // docs/invariants.md#a-hidden-buddy-waits-out-a-monster-it-can-hear
             bool monsterNear = monsterDist <= HideMonsterNearDist;
 
-            if (hidePrank)
+            if (hideAmbush)
             {
                 WaitToJumpOut(inside);
                 return;
@@ -557,7 +555,7 @@ namespace YourBuddy
             hideSpot = null;
             hideFromFear = false;
             hideOrdered = false;
-            hidePrank = false;
+            hideAmbush = false;
             hideStillAfraid = true;
             agent.ClearMoveTarget();
             agent.DropPlan();
@@ -639,22 +637,22 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// The closet anomalies: in, out of your sight, to wait for you. Null once the walk there started.
-        /// docs/anomalies.md#peekaboo-and-closetambush
+        /// The closet ambush: in, out of your sight, to wait for you. Null once the walk there started.
+        /// docs/anomalies.md#closetambush
         /// </summary>
-        private string? StartPrankHide(bool scary)
+        private string? StartAmbushHide()
         {
             if (!TryStartHide(false, out string report)) return report;
 
             // BeginHide took it for an ordered hide: this one ends on its own.
             hideOrdered = false;
-            hidePrank = true;
-            hidePrankScary = scary;
+            hideAmbush = true;
             return null;
         }
 
         /// <summary>
-        /// Hidden for a prank: out at you once you come near, or quietly out after PrankMaxSeconds.
+        /// Hidden for the ambush: out at you with a shriek once you come near. Nobody near within
+        /// AmbushMaxSeconds: it gives up and leaves without a jump.
         /// </summary>
         private void WaitToJumpOut(float inside)
         {
@@ -664,15 +662,15 @@ namespace YourBuddy
                 Transform you = player.Controller.CachedTransform;
                 Vector3 toYou = you.position - hideStand;
                 toYou.y = 0f;
-                if (toYou.sqrMagnitude <= PrankTriggerDist * PrankTriggerDist && OnPlayersDeck(you))
+                if (toYou.sqrMagnitude <= AmbushTriggerDist * AmbushTriggerDist && OnPlayersDeck(you))
                 {
                     JumpOut("you walked past");
                     return;
                 }
             }
-            if (inside >= PrankMaxSeconds)
+            if (inside >= AmbushMaxSeconds)
             {
-                YourBuddyPlugin.Log.LogInfo($"[anomaly] Gave up waiting in {hideName} after {PrankMaxSeconds:0}s - coming out quietly");
+                YourBuddyPlugin.Log.LogInfo($"[anomaly] Gave up waiting in {hideName} after {AmbushMaxSeconds:0}s - giving up the ambush, no jump");
                 LeaveHidingSpot("nobody came", false);
                 return;
             }
@@ -683,15 +681,13 @@ namespace YourBuddy
         }
 
         /// <summary>
-        /// Doors open and out at once - no pause to open them - in silence, or with a shriek.
+        /// Doors open and out at once - no pause to open them - with a shriek.
         /// </summary>
         private void JumpOut(string why)
         {
             YourBuddyPlugin.Log.LogInfo($"[anomaly] Jumps out of {hideName} - {why}");
             LeaveHidingSpot(why, false);
             hidePhaseUntil = Time.time + 0.1f;
-            if (!hidePrankScary) return;
-
             if (!ScareSounds.Play(ScareSound.Shriek, agent.GroundPos(1.2f))) ScareSounds.Play(ScareSound.Creature, agent.GroundPos(1.2f));
 
             Startle(35);
@@ -707,7 +703,7 @@ namespace YourBuddy
 
             if (hideState == HideState.Hidden)
             {
-                string why = hidePrank ? ", waiting for you to pass"
+                string why = hideAmbush ? ", waiting for you to pass"
                     : hideOrdered ? ", you asked - and I stay until you say otherwise"
                     : monsterDist <= HideMonsterNearDist ? $", it is {monsterDist:0.0}m away" : "";
                 return $"hidden in {hideName} {Time.time - hiddenSince:0}s{why}";

@@ -15,7 +15,7 @@ namespace YourBuddy
             "Someone was standing here.",
             "I keep counting three of us.",
             "What is my name?",
-            "The window was open. Out there.",
+            "Something looked in through the window.",
             "Were we always two?",
         ];
 
@@ -36,8 +36,8 @@ namespace YourBuddy
             "The other one is still in the pod.",
             "Let him in.",
             "Stop looking at me.",
-            "You taste like oxygen.",
-            "Your buddy says hello.",
+            "I can hear you breathing. Even in your sleep.",
+            "I'm not the one who woke up with you.",
         ];
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace YourBuddy
             "You left without me.",
             "I took the long way.",
             "Did you think I would stay there?",
-            "The door was open.",
+            "Nobody had to open the door for me.",
             "It was cold out there. Don't do that again.",
             "I'm always with you. Always.",
         ];

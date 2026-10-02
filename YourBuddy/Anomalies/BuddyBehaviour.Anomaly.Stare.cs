@@ -119,35 +119,6 @@ namespace YourBuddy
             return t.GetComponentInParent<NpcAgent>() == null && t.GetComponentInParent<Grabbable>() == null;
         }
 
-        /// <summary>
-        /// The active node nearest `point` on the flat, between `min` and `max` from it.
-        /// </summary>
-        private static Vector3? NodeNear(Vector3 point, float min, float max)
-        {
-            Vector3? best = null;
-            float bestDist = float.MaxValue;
-            for (int i = 0; i < NavGraph.NodeCount; i++)
-            {
-                if (!NavGraph.IsNodeActive(i) || NavGraph.GetNodeType(i) != NodeType.Ground) continue;
-
-                Vector3 node = NavGraph.GetNodeWorld(i);
-                if (Mathf.Abs(node.y - point.y) > 2.5f) continue;
-
-                float d = FlatDistance(node, point);
-                if (d < min || d > max || d >= bestDist) continue;
-
-                best = node;
-                bestDist = d;
-            }
-            return best;
-        }
-
-        private static float FlatDistance(Vector3 a, Vector3 b)
-        {
-            a.y = 0f;
-            b.y = 0f;
-            return Vector3.Distance(a, b);
-        }
 
         /// <summary>
         /// Steer, while it walks to a window, a wall or through a door: the plan, then a straight stretch

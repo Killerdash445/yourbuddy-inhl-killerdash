@@ -40,21 +40,26 @@ namespace YourBuddy
         /// </summary>
         private string? StartMove(Transform you)
         {
-            if (NpcVessels.FloorOwner(you.position, out string? yours, out _) != FloorOwnership.Elsewhere || yours == null ||
-                StationNamed(yours) == null)
-            {
-                return "you are not aboard a station - it joins you only on another station";
-            }
+            if (StationUnder(you.position) is not { } station) return "you are not aboard a station - it joins you only on another station";
 
+            string yours = station.gameObject.name;
             string from = agent.CurrentOwner ?? "?";
             if (yours == from) return "you are on its station";
+
+            Transform? anchor = NpcVessels.AnchorForOwner(yours);
+            if (anchor == null) return $"'{yours}' has no frame to ride";
 
             Vector3? spot = HiddenSpotNear(you);
             if (spot == null) return "no spot near you out of your sight";
 
-            // Into a live frame: the ship's is the scene root, a station's MoveTo rides. It wakes there.
-            transform.SetParent(null, true);
-            MoveTo(spot.Value);
+            // Placed while still parked, then woken by riding your station. A buddy parked since its load never ran
+            // its agent's Start, which TeleportTo's controller and OriginToFeet come from: docs/anomalies.md#move
+            CharacterController body = GetComponent<CharacterController>();
+            float toFeet = body != null ? body.center.y - body.height * 0.5f : agent.OriginToFeet;
+            transform.position = spot.Value - Vector3.up * toFeet;
+            agent.RideOwner(yours, anchor);
+            if (!gameObject.activeInHierarchy) return $"it did not wake on '{yours}'";
+
             agent.ClearMoveTarget();
             if (orderedMode.HasValue)
             {
@@ -72,6 +77,13 @@ namespace YourBuddy
         /// </summary>
         private void UpdateMove(float now, float dist)
         {
+            // Its first frame awake, the agent started: where it stands against the floor under it.
+            if (anomalyStep == 0)
+            {
+                anomalyStep = 1;
+                YourBuddyPlugin.Log.LogInfo($"[anomaly] {Name} stands with its feet at {transform.position.y + agent.OriginToFeet:0.00}, " +
+                                            $"the floor under it at {agent.FloorUnderNpc().y:0.00}");
+            }
             if (anomalySeen)
             {
                 if (dist < MoveStartleDist) Startle(20);
@@ -81,18 +93,6 @@ namespace YourBuddy
                 return;
             }
             if (now >= anomalyUntil) EndAnomaly("you never looked its way");
-        }
-
-        /// <summary>
-        /// The station by its owner name (its GameObject's), or null for a ship or anything else.
-        /// </summary>
-        private static SpaceStation? StationNamed(string owner)
-        {
-            foreach (SpaceStation station in Object.FindObjectsOfType<SpaceStation>())
-            {
-                if (station != null && station.gameObject.name == owner) return station;
-            }
-            return null;
         }
     }
 }

@@ -55,7 +55,7 @@ namespace YourBuddy
 
             if (PlayerView.Sees(bed.Position + Vector3.up * 1.2f, bed.Capsule)) return "you can see its capsule";
 
-            GameObject? copy = BuddyDouble.Make(Model, transform, bed.Capsule, bed.Position, bed.Rotation, shadow: false, "YB_Sleeper");
+            GameObject? copy = BuddyDouble.Make(Model, transform, bed.Capsule, bed.Position, bed.Rotation, "YB_Sleeper");
             if (copy == null) return "it has no body to copy";
 
             BuddyDouble.Walk(copy, 0f);

@@ -415,7 +415,7 @@ namespace YourBuddy
         {
             string? busy = BusyForCommandBeforeAnomaly(whileAlert, preemptErrand, outsideOk);
             // A task given now ends what it was acting out, as an order does. docs/anomalies.md
-            if (busy == null && !AnomalySurvivesOrders) EndAnomaly("you gave me something to do");
+            if (busy == null && !AnomalyInBackground) EndAnomaly("you gave me something to do");
 
             return busy;
         }

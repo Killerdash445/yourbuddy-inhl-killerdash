@@ -170,8 +170,8 @@ that fails ([fear-owns-the-buddy](invariants.md#fear-owns-the-buddy)).
 ## 6. Hiding in a closet or locker
 
 `BuddyBehaviour.Hide.cs`. Config `HideInClosets` (default on), `FleeHideBias`; console `buddy_order hide`;
-dialog word **Hide**. Two anomalies use the same hide as a prank
-([anomalies.md](anomalies.md#peekaboo-and-closetambush)).
+dialog word **Hide**. The closet ambush anomaly uses the same hide
+([anomalies.md](anomalies.md#closetambush)).
 
 `HidingSpot` is the game's mountable closet, cabinet or locker. The game hides a *player* via
 `Player.hidden`; the buddy is not a `Player`. What protects it is the mod: walls block sight, the

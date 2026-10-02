@@ -240,16 +240,10 @@ namespace YourBuddy
             NpcVessels.FloorOwner(view, out string? owner, out _);
             Vector3? best = null;
             float bestOff = float.MaxValue;
-            for (int i = 0; i < NavGraph.NodeCount; i++)
+            foreach (Vector3 at in GroundNodes(view, owner, CaughtStandMin, CaughtStandMax, 1f))
             {
-                if (!NavGraph.IsNodeActive(i) || NavGraph.GetNodeType(i) != NodeType.Ground) continue;
-
-                if (owner != null && NavGraph.GetNodeOwner(i) != owner) continue;
-
-                Vector3 at = NavGraph.GetNodeWorld(i);
-                float d = FlatDistance(at, view);
-                float off = Mathf.Abs(d - CaughtStandDist);
-                if (d < CaughtStandMin || d > CaughtStandMax || off >= bestOff || Mathf.Abs(at.y - view.y) > 1f) continue;
+                float off = Mathf.Abs(FlatDistance(at, view) - CaughtStandDist);
+                if (off >= bestOff) continue;
 
                 if (!InCryo(doorway, cryo, at) || !NavProbe.WalkLos(view, at, 0.5f)) continue;
 
@@ -485,24 +479,12 @@ namespace YourBuddy
             toYou.Normalize();
             Vector3? best = null;
             float bestDot = -2f;
-            for (int i = 0; i < NavGraph.NodeCount; i++)
+            foreach (Vector3 node in GroundNodes(botPos, owner, BotStandMin, BotStandMax, 1.5f))
             {
-                if (!NavGraph.IsNodeActive(i) || NavGraph.GetNodeType(i) != NodeType.Ground) continue;
-
-                if (owner != null && NavGraph.GetNodeOwner(i) != owner) continue;
-
-                Vector3 node = NavGraph.GetNodeWorld(i);
-                if (Mathf.Abs(node.y - botPos.y) > 1.5f) continue;
-
-                float d = FlatDistance(node, botPos);
-                if (d < BotStandMin || d > BotStandMax) continue;
-
                 Vector3 dir = node - botPos;
                 dir.y = 0f;
                 float dot = Vector3.Dot(dir.normalized, toYou);
-                if (dot <= bestDot) continue;
-
-                if (PlayerView.Sees(node + Vector3.up * 1.1f, null) || PlayerView.Sees(node + Vector3.up * 0.3f, null)) continue;
+                if (dot <= bestDot || !Unseen(node)) continue;
 
                 best = node;
                 bestDot = dot;
@@ -602,17 +584,9 @@ namespace YourBuddy
             toYou.y = 0f;
             float yours = toYou.magnitude;
             RunOffNodes.Clear();
-            for (int i = 0; i < NavGraph.NodeCount; i++)
+            foreach (Vector3 node in GroundNodes(here, agent.CurrentOwner, minDist, RunOffMaxDist, 3f))
             {
-                if (!NavGraph.IsNodeActive(i) || NavGraph.GetNodeType(i) != NodeType.Ground) continue;
-
-                if (agent.CurrentOwner != null && NavGraph.GetNodeOwner(i) != agent.CurrentOwner) continue;
-
-                Vector3 node = NavGraph.GetNodeWorld(i);
-                if (Mathf.Abs(node.y - here.y) > 3f) continue;
-
-                float d = FlatDistance(node, here);
-                if (d < minDist || d > RunOffMaxDist || FlatDistance(node, yourPos) < yours + gain) continue;
+                if (FlatDistance(node, yourPos) < yours + gain) continue;
 
                 Vector3 away = node - here;
                 away.y = 0f;

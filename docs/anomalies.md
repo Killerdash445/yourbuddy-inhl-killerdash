@@ -1,6 +1,6 @@
 # Anomalies - when the buddy is not quite itself
 
-Now and then the buddy does something funny, strange or frightening. The aim is doubt: is this still
+Now and then the buddy does something strange or frightening. The aim is doubt: is this still
 the friend you woke up with? `AnomalyDirector.cs` decides when and how far; `BuddyBehaviour.Anomaly.cs`
 acts it out. Config section `Anomalies`: `Anomalies` (on), `AnomalyDifficulty` (`Game`),
 `AnomalyFrequency` (1).
@@ -23,12 +23,11 @@ The game has no single "danger level". Its own random events use two numbers, an
 
 | Severity | Allowed when |
 |---|---|
-| funny | always |
 | strange | frequency above 0 |
 | scary | frequency above 0, and `NormalScaryTasks` (1) story task done; on Expert `ExpertAllTasks` (1) |
 | extreme | frequency above 0, and `NormalExtremeTasks` (3) story tasks done; on Expert `ExpertAllTasks` (1) |
 
-So Harmless only ever gets funny moments. Normal escalates with the story: strange from the start,
+So Harmless gets none. Normal escalates with the story: strange from the start,
 scary after the first task, extreme after the third. Expert starts strange and allows scary and
 extreme together after the first task. Progress, not the tier, gates them: the tier drops back to 0 for a quiet
 stretch, which would make the buddy tamer halfway through the story. The tier still raises the chance
@@ -36,7 +35,7 @@ and leans the draw scarier.
 
 **When.** Every `CheckSeconds` (60 s), after `FirstCheckSeconds` (300 s) and outside the cooldown, one
 roll with chance `(0.05 + 0.07 f + 0.03 t max(0.5, f)) x AnomalyFrequency` (f frequency, t tier):
-0.05 on Harmless, 0.12-0.21 on Normal, 0.19-0.37 on Expert. The cooldown after one is
+0.12-0.21 on Normal, 0.19-0.37 on Expert; Harmless never rolls. The cooldown after one is
 `CooldownSeconds` (600 s) / (1 + 0.25 t) / (1.5 on Expert) / `AnomalyFrequency`. On Normal that is
 roughly one every 15-20 minutes.
 
@@ -47,7 +46,7 @@ Once every kind allowed has happened, the buddy is itself for good. A kind that 
 start conditions below) is dropped and the draw repeats. If none fits, the next roll comes in
 `RetrySeconds` (20 s).
 
-Never while the talk window is open, you are outside (but for [`Shadow`](#shadow)), the Breathless is within `MonsterClearance`
+Never while the talk window is open, you are outside, the Breathless is within `MonsterClearance`
 (25 m) of you, or another buddy is acting one out.
 
 ---
@@ -56,8 +55,6 @@ Never while the talk window is open, you are outside (but for [`Shadow`](#shadow
 
 | Kind | Severity | Starts when | What happens | Ends |
 |---|---|---|---|---|
-| `Spin` | funny | you watch it, within 10 m | two turns on the spot | 1.8 s |
-| `PeekABoo` | funny | out of your sight, 4 m+ | hides in a closet, jumps out in silence | see below |
 | `Whisper` | strange | within 8 m, same vessel | says something unsettling | at once |
 | `FakeCommand` | strange | the window is not open on it | its talk log gains an order you never typed | at once |
 | `WrongName` | strange | - | the talk window opens under the wrong name, once | when next opened, or 15 min |
@@ -67,12 +64,11 @@ Never while the talk window is open, you are outside (but for [`Shadow`](#shadow
 | `WallStare` | strange | a wall within 4 m | walks up to it and faces it | 50-140 s |
 | `BotTalk` | strange | docked at the Shipyard, you on the ship side, unseen | talks with the station's robot; looks round as you come, then runs off | see below |
 | `Bloody` | scary | out of your sight, 3 m+, no suit | its suit is spattered with blood; it goes about its day but takes no orders | see below |
-| `ClosetAmbush` | scary | as PeekABoo | jumps out with a shriek | see below |
+| `ClosetAmbush` | scary | out of your sight, 4 m+ | hides in a closet, jumps out with a shriek | see below |
 | `ShutDoors` | scary | you and it aboard, 2+ doors open | walks a round of the open doors, nearest next, and shuts each behind itself | the round, at most 6 doors |
 | `Meat` | scary | docked at the Shipyard, 8-60 m from its cryo room's door, unseen, no suit | bloody in the cryo room over raw meat and blood; stares when you open the door, runs when you step in, then vanishes | see below |
 | `Move` | scary | left on a station that is switched off; you aboard another station | turns up near you, out of your sight, and waits facing you; found, it says you left it | until you see it, at most 300 s |
 | `Pipe` | scary | out of your sight, 5-30 m, Follow or Wander, hands empty | comes up to you holding a bloody pipe, not answering; the moment you spot it, puts it down without a word | until you spot it, at most 120 s |
-| `Shadow` | scary | you aboard the Fuel, Oxygen or Solar station, or outside the one you are docked at; a door in your view 6-25 m off | a black copy of it runs from out of your sight through that door, and is gone | see below |
 | `Smile` | scary | no suit | the next time you look it in the face, a bloody grin on its visor for a blink | see below |
 | `Statue` | scary | 3-30 m, Follow or Wander | follows you, but only while you are not looking; freezes, staring, when you do | 50-90 s, once unseen |
 | `Stalker` | extreme | out of your sight, no suit | `Bloody` and `Statue` together, with sounds at your back; ignores you; opens pin-code doors without the code | 50-90 s, once unseen |
@@ -84,15 +80,18 @@ An order, or a task you give it, ends most of them. It does not end:
 
 - `Vanish`, `Stalker`, `BehindYou`, `Bloody`, `Meat` and `Pipe`: it is not listening. These, `Statue` and `BotTalk`
   refuse the talk window and every order and task, from the window or the console (`IgnoresYou`).
-- `Spin`: the order waits the 1.8 s for it to finish.
-- `Shadow`, `Smile`, `UnderTheSuit` and `Sleeper`: they play out elsewhere or on its looks. It answers
+- `Smile`, `UnderTheSuit` and `Sleeper`: they play out elsewhere or on its looks. It answers
   and obeys as usual, and they go on.
 
-Fear ends any of them but a vanish, the blood and those four
+Each row of the catalogue (`Anomalies.All`) carries these as `AnomalyTraits`: `IgnoresYou`, `Deaf` (not
+listening), `Background` (those three and the blood), `Lasting` (counts unseen, [below](#once-per-save)) and
+`OwnCue` (witnessed only at its own moment).
+
+Fear ends any of them but a vanish, the blood and those three
 ([fear-owns-the-buddy](invariants.md#fear-owns-the-buddy)). So does deadly air
 ([survival-outranks-an-order](invariants.md#survival-outranks-an-order)). A running anomaly keeps the
 decider standing down, except those that live in the background (`AnomalyInBackground`: the blood before
-it runs off, and the four).
+it runs off, and the three).
 
 The `Stalker` sets NPC.Core's `NpcAgent.KnowsEveryCode` while it runs: a pin-code door you shut behind
 you does not stop it. No code is learned, and `Locked` doors still stop it.
@@ -104,7 +103,7 @@ too; with a pool used up, `Move` and `BehindYou` stay silent.
 
 `AnomalyMemory` holds both lists. They go into the `.buddy` sidecar with every save, and a load reads
 them back; a new game, or a save without a sidecar, starts clean. A kind nobody saw, that left
-nothing behind, is forgotten when it ends and may come again: a shadow that ran unseen, a capsule you
+nothing behind, is forgotten when it ends and may come again: a flicker you never looked at, a capsule you
 never looked into. `Meat`, `Pipe` and `Move` always count, for the meat, the pipe and the buddy are
 where they were left. `buddy_anomaly <kind>` plays a kind whatever the memory says; `buddy_anomaly forget`
 clears it.
@@ -131,11 +130,11 @@ at flee speed as `BotTalk`'s, to a node out of your sight if there is one, tried
 `BloodyRunRetrySeconds` (6 s). There it stands still until it is clean. The Breathless or deadly air
 stop the run; the blood stays on.
 
-### PeekABoo and ClosetAmbush
+### ClosetAmbush
 
-The hide is [fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)'s, with `hidePrank` set. Inside, it
-jumps out once you come within `PrankTriggerDist` (1.5 m) of the spot on its deck, or open the door. The
-doors open and it steps out at once. After `PrankMaxSeconds` (240 s) it comes out quietly. The Breathless
+The hide is [fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)'s, with `hideAmbush` set. Inside, it
+jumps out once you come within `AmbushTriggerDist` (1.5 m) of the spot on its deck, or open the door. The
+doors open and it steps out at once, with a shriek. If you never come within `AmbushMaxSeconds` (240 s), it gives up: it leaves the closet without jumping, as nobody is there to scare. The Breathless
 turns it into a real hide, and it stays in.
 
 ### FakeCommand
@@ -252,8 +251,10 @@ and parked.
 It needs you aboard another station: never your ship, which it would have needed to come with you, nor
 world geometry or its own station. Getting there takes an undock, a flight and a dock, so it is never
 left behind only a moment. It is put on a node `ReappearMinDist`..`Max` (6-16 m) from you, out of your
-sight, as a vanish comes back. It leaves the switched-off interior first, into the station's interior,
-which `MoveTo` rides. It forgets any order it had there, Stay included, and is in Follow.
+sight, as a vanish comes back. It is placed while still parked, then rides your station's frame, which
+wakes it. Why not `MoveTo`: a buddy parked since its load never ran its agent's `Start`, so the agent has no
+controller for `TeleportTo` and no `OriginToFeet` yet; the feet offset comes from its own
+`CharacterController`. It forgets any order it had there, Stay included, and is in Follow.
 
 | Step | What happens | Next |
 |---|---|---|
@@ -261,36 +262,6 @@ which `MoveTo` rides. It forgets any order it had there, Stay included, and is i
 | found | says you left it (`AnomalyLines.LeftBehind`), a line not said before; within `MoveStartleDist` (4 m), your stress | the end: it follows you |
 
 Orders end it, as most do.
-
-### Shadow
-
-A black copy of the buddy runs through a station: only the Fuel, Oxygen and Solar stations, while you are
-aboard one or out in space by the one you are docked at, looking in through its windows. It is the one
-anomaly that plays while you are outside, and the buddy may be out there with you. The copy is `BuddyDouble`'s: the buddy's animated model, every script, joint, body and
-collider stripped, its materials near black, its animator told it runs. It is a picture: no AI, no
-collisions, never saved, and the real buddy goes on as usual wherever it is.
-
-The door is a room door of your station (no airlock, locked or password door) `ShadowDoorMin`..`Max`
-(6-25 m) from you, in your view: the point 0.6 m in front of it on your side, at 1.2 m, is in sight. The
-door itself would not do: NPC.Core's sight test stops at any shut door the line crosses, its own included.
-Outside, sight goes through window panes (`PlayerView.SeesThroughWindows`): a window block's collider
-covers its glass, so a hit within the pane is let through. It starts at a ground node on your side of it, `ShadowStartMin`..`Max`
-(3-10 m) from the doorway and out of your sight, and runs a planned path through the doorway, at most
-`ShadowRouteMax` (25 m), at the buddy's flee speed. Node markers hover over their decks, so the path's
-own floor heights carry it.
-
-"Through the doorway" means a leg of the path crosses the door's plane within `ShadowDoorwayHalfWidth`
-(1.2 m) of its middle. Why not a waypoint near the door: station nodes sit 1.3-2 m either side of most doors
-(every Oxygen door), so no waypoint comes that close. A refusal names, per door, which step failed.
-
-| Step | What happens | Next |
-|---|---|---|
-| running | along the path; a shut door opens when it is `ShadowOpenDist` (1.2 m) off, and it waits for it to open fully | `ShadowPastDoor` (1.5 m) past the doorway |
-| through | gone; the door shuts behind it, unless you stand within 2 m of it | the door is shut |
-| behind the door | nothing; a click when you open the door | you open it, or `ShadowWaitSeconds` (120 s) |
-
-Seen for `ShadowSeenSeconds` (0.8 s) in all, or seen within `ShadowNearDist` (4 m), it is gone at once:
-your stress. The run gives up after `ShadowRunSeconds` (30 s) when you are not watching.
 
 ### Smile and UnderTheSuit
 

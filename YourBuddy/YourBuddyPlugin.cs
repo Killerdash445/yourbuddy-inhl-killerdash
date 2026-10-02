@@ -76,7 +76,7 @@ namespace YourBuddy
             ConfigNativeSpawn = Config.Bind("General", "SpawnOnNewGame", true,
                 "Start every new game with a buddy: it wakes in a closed cryo capsule next to yours, which opens, " +
                 "or stands at the Shipyard station's origin when no capsule can be opened. " +
-                "Off: no buddy until 'buddy_manage spawn'. Loaded saves always bring back their own buddy, or none.");
+                "Off: no buddy until 'buddy_spawn'. Loaded saves always bring back their own buddy, or none.");
             ConfigWakeAfterPodOpen = Config.Bind("General", "WakeAfterPodOpenSeconds", 10f,
                 "SpawnOnNewGame: seconds after your own pod starts opening before the buddy's capsule opens " +
                 "(also after loading a save made while it slept).");
@@ -163,9 +163,9 @@ namespace YourBuddy
             ConfigMoveSpeed = Config.Bind("General", "MoveSpeed", 3.5f,
                 "Default buddy movement speed in m/s.");
             ConfigAnomalies = Config.Bind("Anomalies", "Anomalies", true,
-                "Now and then the buddy does something funny, strange or frightening, and you start to wonder whether it is " +
+                "Now and then the buddy does something strange or frightening, and you start to wonder whether it is " +
                 "still the friend you woke up with. How far it goes follows the difficulty (see AnomalyDifficulty) and your " +
-                "progress: Harmless only funny moments; Normal strange, scary after the first story task, extreme after " +
+                "progress: Harmless none; Normal strange, scary after the first story task, extreme after " +
                 "the third; Expert scary and extreme after the first. " +
                 "'buddy_anomaly' lists them and starts one now. docs/anomalies.md");
             ConfigAnomalyDifficulty = Config.Bind("Anomalies", "AnomalyDifficulty", AnomalyLevel.Game,
