@@ -186,9 +186,6 @@ namespace YourBuddy
                 TraceDecider("standing down: " + standDown);
                 return;
             }
-            if (ResourceDuty.Enabled && TrySurvival()) return;
-            if ((suit.Suited || !lifeSupport.AirIsDangerous()) && resources.TryStart()) return;
-
             // Everything it might want, weighed against everything else. docs/behaviour.md §3
             ChooseAndAct(player);
         }

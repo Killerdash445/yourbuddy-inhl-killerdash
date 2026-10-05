@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NPC.Core;
 using UnityEngine;
 
 namespace YourBuddy
@@ -35,17 +36,16 @@ namespace YourBuddy
             YourBuddyPlugin.Log.LogInfo("[resources] " + text);
         }
 
-        internal static string Describe()
+        internal static void RegisterLifecycle()
         {
-            ResourceDutySettings s = Settings;
-            string result = !YourBuddyPlugin.ConfigAutonomy.Value ? "Buddy autonomy is off. Choose Start duties to enable it." : s.Paused ? "Resource duties paused." : "Resource duties ready when Buddy is free.";
-            for (int i = 0; i < 3; i++)
-            {
-                ResourceRule r = s.Rule(i);
-                result += $"\n{ResourceDutySettings.Label(i)}: {(r.Enabled ? "on" : "off")}, at/below {r.Start}% -> {r.Target}%, buy {(r.Buy ? "on" : "off")}, stock < {r.MinCells}, up to {r.BuyQuantity} cells.";
-            }
-            return result + $"\nShared allowance left: {s.Budget}; keep cash: {s.Reserve}.\n{Status}\n" +
-                "Use Commands for resource controls, or type resources help. Orders take priority; choose Start duties to free this buddy.";
+            NpcEvents.Tick += Tick;
+            NpcEvents.WorldReset += Cancel;
+            NpcEvents.GameStarting += OnGameStarting;
+        }
+
+        internal static void OnGameStarting(bool newGame)
+        {
+            if (newGame) Load(null);
         }
     }
 }

@@ -180,8 +180,7 @@ namespace YourBuddy
 
             // The game's moments and shared services come from NPC.Core, patched once for every NPC mod.
             NpcEvents.Tick += BuddyManager.Tick;
-            NpcEvents.Tick += ResourceDuty.Tick;
-            NpcEvents.WorldReset += () => ResourceDuty.Load(null);
+            ResourceDuty.RegisterLifecycle();
             SaveParser.OnFileSaveInitiated.AddListener(ResourceDuty.Cancel);
             NpcEvents.GameStarting += BuddyCryoSpawn.OnGameStarting;
             NpcEvents.GameStarting += AnomalyMemory.OnGameStarting;

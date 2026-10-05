@@ -14,6 +14,9 @@ namespace YourBuddy
         [Vector3.zero, new(-.4f, 0, 0), new(.4f, 0, 0), new(0, 0, -.4f), new(0, 0, .4f),
             new(-.8f, 0, 0), new(.8f, 0, 0), new(0, 0, -.8f), new(0, 0, .8f),
             new(-.4f, 0, -.4f), new(-.4f, 0, .4f), new(.4f, 0, -.4f), new(.4f, 0, .4f)];
+        private static readonly ResourceProbeBudget ProbeBudget = new(4);
+        internal static bool MayProbe() => ProbeBudget.Take(Time.frameCount);
+
         internal static string LastBlocker { get; private set; } = "no supported floor";
 
         internal static Vector3 Clearance(Vector3 size)

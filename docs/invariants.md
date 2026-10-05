@@ -250,7 +250,7 @@ being found. A stored claim can outlive the errand that made it; a derived one c
 loader under [one-buddy-per-target](#one-buddy-per-target). Refilling starts only with an empty loader; restocking leaves any inserted cell alone. A duty
 ejects only the cell it supplied, including on interruption or before a save snapshot.
 Purchases need an enabled resource rule, explicit purchase permission, enough shared remaining
-allowance and enough cash after preserving the wallet reserve. These conditions are checked
+allowance and enough cash. These conditions are checked
 again immediately before spending. An uncertain purchase pauses the duties.
 Spare-cell delivery targets reachable floor storage independently of the insertion slot.
 Its footprint must have level support and clear space immediately before release; a failed
