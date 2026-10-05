@@ -13,8 +13,8 @@ BuddyManager.Buddies.Add(buddy);
 foreach ((string text, string expected) in new[]
 {
     ("fetch suit", "fetch suit"), ("bring back the suit", "fetch suit"),
-    ("oxygen on", "oxygen"), ("switch on oxygen", "oxygen"), ("climate on", "climate"),
-    ("turn on climate", "climate"), ("turn off oxygen", "unchanged"),
+    ("oxygen on", "unchanged"), ("switch on oxygen", "unchanged"), ("climate on", "unchanged"),
+    ("turn on climate", "unchanged"), ("turn off oxygen", "unchanged"),
     ("no, sell", "unchanged"), ("not outside", "unchanged"), ("dont eat", "unchanged"),
     ("don't fetch suit", "unchanged"), ("do not turn on oxygen", "unchanged"),
     ("come and tidy", "tidy"), ("come and eat", "snack"), ("come here", "follow"),
@@ -22,7 +22,12 @@ foreach ((string text, string expected) in new[]
     ("come and hide", "hide"), ("sell trash box", "sell"), ("go to the workshop", "goto"),
     ("take the suit off outside", "unsuit"), ("come inside", "inside"), ("go outside", "outside"),
     ("decide for yourself whether to follow", "decide"), ("be autonomous", "decide"),
-    ("whatever", "unchanged"), ("display", "unchanged"), ("moneyless", "unchanged"),
+    ("great", "unchanged"), ("display", "unchanged"), ("moneyless", "unchanged"),
+    ("get some snacks", "snack"), ("start cleaning", "tidy"), ("keep following me", "follow"),
+    ("hiding", "hide"), ("stopping", "stay"), ("stopped", "stay"),
+    ("fetches", "unchanged"), ("trash boxes", "sell"), ("cleaned", "tidy"),
+    ("concealed", "hide"), ("notes follow", "follow"), ("nobody follow", "follow"),
+    ("cleanliness", "unchanged"), ("eatingly", "unchanged"),
     ("monkey", "unchanged"), ("don't follow me", "unchanged"),
     ("don\u2019t go outside", "unchanged"), ("do not sell", "unchanged"), ("never eat", "unchanged")
 })
@@ -40,6 +45,16 @@ BuddyManager.Buddies.AddRange([other, sleeping, dead]);
 BuddyDialogCommands.Run(buddy, "everyone follow me");
 Check(buddy.LastOrder == "follow" && other.LastOrder == "follow", "group command");
 Check(sleeping.LastOrder == "unchanged" && dead.LastOrder == "unchanged", "group excludes unavailable buddies");
+other.LastOrder = "unchanged";
+BuddyDialogCommands.Run(buddy, "everyones follow");
+Check(other.LastOrder == "unchanged", "group words stay exact");
+buddy.SetState(BuddyMode.Route);
+Check(buddy.ConversationStatus.Contains("place you chose", StringComparison.Ordinal), "goto status");
+buddy.ReachDescription = "fetching a suit";
+Check(buddy.ConversationStatus.Contains("fetching a suit", StringComparison.Ordinal), "errand status describes task");
+buddy.ReachDescription = null;
+Check(!BuddyDialogCommands.NamesFor(buddy).Contains("Oxygen on") &&
+    !BuddyDialogCommands.NamesFor(buddy).Contains("Climate on"), "omit terminal shortcuts");
 buddy.SetState(BuddyMode.Stay);
 string status = BuddyDialogCommands.Run(buddy, "what are you doing?");
 Check(status.Contains("wait here", StringComparison.Ordinal), "status reflects stay");
@@ -53,9 +68,9 @@ Check(BuddyDialogCommands.NamesFor(buddy).First() == "Status", "inside status bu
 Check(!BuddyDialogCommands.NamesFor(buddy).Contains("Unsuit"), "unsuited command list");
 buddy.SuitSuited = true;
 Check(BuddyDialogCommands.NamesFor(buddy).Contains("Unsuit"), "suited command list");
-Check(BuddyDialogCommands.NamesFor(buddy).Contains("Fetch suit") && BuddyDialogCommands.NamesFor(buddy).Contains("Oxygen on"), "inside task shortcuts");
+Check(BuddyDialogCommands.NamesFor(buddy).Contains("Fetch suit"), "inside task shortcuts");
 buddy.IsOutside = true;
-Check(!BuddyDialogCommands.NamesFor(buddy).Contains("Fetch suit") && !BuddyDialogCommands.NamesFor(buddy).Contains("Oxygen on"), "outside omits inside tasks");
+Check(!BuddyDialogCommands.NamesFor(buddy).Contains("Fetch suit"), "outside omits inside tasks");
 Check(BuddyDialogCommands.NamesFor(buddy).First() == "Status", "outside status button");
 buddy.Floating = true;
 Check(BuddyDialogCommands.NamesFor(buddy).First() == "Status" && !BuddyDialogCommands.NamesFor(buddy).Contains("Goto"), "floating commands");

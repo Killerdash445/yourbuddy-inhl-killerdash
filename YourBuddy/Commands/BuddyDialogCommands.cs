@@ -16,7 +16,7 @@ namespace YourBuddy
         /// The list shown on the commands page, in the order it is drawn.
         /// </summary>
         internal static readonly string[] Names =
-            ["Status", "Follow", "Wander", "Stay", "Hide", "Outside", "Inside", "Unsuit", "Fetch suit", "Oxygen on", "Climate on", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
+            ["Status", "Follow", "Wander", "Stay", "Hide", "Outside", "Inside", "Unsuit", "Fetch suit", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
 
         /// <summary>
         /// Orders that only make sense outside. Every other job is inside. docs/eva.md
@@ -75,13 +75,13 @@ namespace YourBuddy
             }
 
             // Do not turn a negated request into the action it forbids.
-            if (Has(lower, "don't", "don\u2019t", "do not", "never", "not", "no", "dont"))
+            if (HasExact(lower, "don't", "don\u2019t", "do not", "never", "not", "no", "dont"))
             {
                 return "Tell me what to do instead. Try 'stay', 'follow', or 'decide for yourself'.";
             }
             if (Has(lower, "stop following", "stop moving")) return ForAll(targets, BuddyCommands.Stay);
 
-            // First, since "decide for yourself whether to follow" is not a follow order.
+            // Before action orders: "decide for yourself whether to follow" is not Follow.
             if (Has(lower, "decide", "yourself", "autonomy", "autonomous", "your call", "own mind")) return ForAll(targets, BuddyCommands.DecideForYourself);
 
             // Before the outside order, since "take the suit off outside" is an unsuit order.
@@ -94,14 +94,6 @@ namespace YourBuddy
             if (Has(lower, "fetch suit", "fetch a suit", "fetch the suit", "bring back a suit", "bring back the suit"))
             {
                 return ForAll(targets, BuddyCommands.FetchSuit);
-            }
-            if (Has(lower, "oxygen on", "turn on oxygen", "switch on oxygen"))
-            {
-                return ForAll(targets, b => BuddyCommands.Terminal(b, "oxygen"));
-            }
-            if (Has(lower, "climate on", "turn on climate", "switch on climate"))
-            {
-                return ForAll(targets, b => BuddyCommands.Terminal(b, "climate"));
             }
 
             // Before the room goto, since "go outside" and "come inside" are airlock walks, not rooms.
@@ -166,7 +158,7 @@ namespace YourBuddy
             bool group = false;
             foreach (string word in GroupWords)
             {
-                if (!Has(lower, word)) continue;
+                if (!HasExact(lower, word)) continue;
 
                 lower = lower.Replace(word, " ");
                 group = true;
@@ -198,6 +190,25 @@ namespace YourBuddy
         }
 
         private static bool Has(string text, params string[] keywords)
+        {
+            foreach (string word in keywords)
+            {
+                if (HasExact(text, word, word + "s", word + "es", word + "ing", word + "ed")) return true;
+                if (word.EndsWith("e", StringComparison.Ordinal) &&
+                    HasExact(text, word[..^1] + "ing", word + "d")) return true;
+
+                // A short vowel followed by one consonant: stop -> stopping, stopped.
+                int n = word.Length;
+                if (n >= 3 && IsConsonant(word[n - 3]) && "aeiou".IndexOf(word[n - 2]) >= 0 &&
+                    IsConsonant(word[n - 1]) && "wxy".IndexOf(word[n - 1]) < 0 &&
+                    HasExact(text, word + word[n - 1] + "ing", word + word[n - 1] + "ed")) return true;
+            }
+            return false;
+        }
+
+        private static bool IsConsonant(char c) => c >= 'a' && c <= 'z' && "aeiou".IndexOf(c) < 0;
+
+        private static bool HasExact(string text, params string[] keywords)
         {
             foreach (string k in keywords)
             {

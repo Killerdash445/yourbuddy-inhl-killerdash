@@ -22,6 +22,8 @@ namespace YourBuddy
         internal string Name = "Buddy";
         internal object Agent = new();
         internal string LastOrder = "unchanged";
+        internal string? ReachDescription;
+        private string? DescribeReachTask() => ReachDescription;
         private BuddyMode mode = BuddyMode.Follow;
         private FearState fearState = FearState.Calm;
         internal void SetState(BuddyMode value, FearState fear = FearState.Calm)

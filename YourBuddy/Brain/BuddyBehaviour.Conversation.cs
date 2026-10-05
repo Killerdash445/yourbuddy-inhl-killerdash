@@ -19,7 +19,9 @@ namespace YourBuddy
                 {
                     BuddyMode.Stay => "I'll wait here. Tell me when you're ready.",
                     BuddyMode.Wander => "I'm having a look around. Need me?",
-                    BuddyMode.Route => "I'm on my way to finish a task. Need something?",
+                    BuddyMode.Route => DescribeReachTask() is { } task
+                        ? "I'm " + task + ". Need something?"
+                        : "I'm on my way to the place you chose. Need something?",
                     _ => "I'm with you. What do you need?"
                 };
             }

@@ -11,8 +11,6 @@ bit unnerving. Try it yourself.
 
 ---
 
-See [CHANGELOG.md](CHANGELOG.md) for changes in this fork.
-
 ## Features
 
 - **A companion** with the player's model. A new game starts with it asleep in the cryo capsule next to
