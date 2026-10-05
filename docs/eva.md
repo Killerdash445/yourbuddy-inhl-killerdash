@@ -158,7 +158,8 @@ are on the station too. Skipped while you hold the suit or stand within
 
 Once the fetch is due, the HUD's `Fetch suit:` line says what the last look saw instead of a timer
 at 0 s (`due - 4 isolated suit(s): 1 to fetch, 1 already aboard, 2 on a station you are not docked at`); at level 2 the
-same line is logged as `[suit] Buddy suit fetch: ...` whenever it changes.
+same line is logged as `[suit] Buddy suit fetch: ...` whenever it changes. A manual Fetch suit
+request with no eligible target reports this scan reason too, including when the buddy is not aboard.
 
 ## 7. Floating
 

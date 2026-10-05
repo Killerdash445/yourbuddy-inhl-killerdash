@@ -33,6 +33,8 @@ An order given during a flee is recorded at once but only replaces what the flee
 
 Neither order nor mode is saved. A loaded buddy starts in Follow with no order.
 
+Follow waits for the player to move a little before walking again, so small steps don't restart it each time.
+
 ---
 
 ## 2. Persistence

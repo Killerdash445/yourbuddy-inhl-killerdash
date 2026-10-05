@@ -57,6 +57,9 @@ closes the window. Wording is matched loosely: "follow me" and "wait here" work 
 
 | Order | What it does |
 |---|---|
+| `status` | Reports the current state without changing orders. |
+| `fetch suit` | Retrieves an available suit from the docked station. |
+| `oxygen on` / `climate on` | Switches that life-support unit on if its safety checks allow it. |
 | `follow` | Follows you. |
 | `wander` | Walks between nav nodes, doing its own thing. |
 | `stay` | Holds position. It still steps aside if it is blocking a door. |
@@ -70,7 +73,7 @@ closes the window. Wording is matched loosely: "follow me" and "wait here" work 
 
 **Orders and its own mind.** With no order in force - which is how it starts, and how it comes back after loading a save - the buddy decides for itself every few seconds. It scores everything it might do: switching the life support back on (which always wins), selling trash boxes, tidying up, a snack, messing about with something, wandering off, or coming back to you. Each score is made of how overdue the thing is, how much of it there is, and how far away - so distance makes something *less* attractive rather than invisible, and it will cross a room or two for the only job going. Then it picks between the best few **at random**, which is why it does not repeat itself.
 
-The first five words above are orders; `hide`, `tidy up`, `sell` and `play` just start that job now. An order holds until you give another one or tell it to decide for itself; with `OrderPersistence = Expires` it also runs out, and a `goto` ends when the buddy arrives. An order given while it is running from the Breathless is carried out once it has got away. `Autonomy = false` turns its own decisions off.
+`follow`, `wander`, `stay`, `goto` and `decide for yourself` are orders; `hide`, `tidy up`, `sell` and `play` just start that job now. An order holds until you give another one or tell it to decide for itself; with `OrderPersistence = Expires` it also runs out, and a `goto` ends when the buddy arrives. An order given while it is running from the Breathless is carried out once it has got away. `Autonomy = false` turns its own decisions off.
 
 **Doors.** The buddy only uses codes you gave it, and only on keypads whose own code matches; the window tells you straight away whether a code opens any door it knows about. Codes are saved with your game. It plans a route around doors it cannot open, and if there is no other way, it waits for you.
 
