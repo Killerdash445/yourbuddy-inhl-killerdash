@@ -10,6 +10,9 @@ namespace YourBuddy
     /// </summary>
     internal sealed class BuddyConversation(BuddyBehaviour buddy) : INpcConversation
     {
+        private readonly ResourceDutyMenu resources = new(buddy.StartResourceAutomation, () => buddy.ResourceReadiness);
+        private readonly BuddyCommandMenu menu = new();
+
         public INpc Npc => buddy.Agent;
 
         // Not while it is gone or frozen staring at you. docs/anomalies.md
@@ -20,9 +23,9 @@ namespace YourBuddy
 
         public string Greeting => buddy.ConversationStatus;
 
-        public IReadOnlyList<string> Commands => BuddyDialogCommands.NamesFor(buddy);
+        public IReadOnlyList<string> Commands => resources.Commands(menu.Commands(BuddyDialogCommands.NamesFor(buddy)));
 
-        public string Answer(string text) => BuddyDialogCommands.Run(buddy, text);
+        public string Answer(string text) => resources.Answer(text) ?? menu.Answer(text) ?? BuddyDialogCommands.Run(buddy, text);
 
         /// <summary>
         /// While open, untargeted console commands mean this buddy, and it holds still facing you.
@@ -33,6 +36,7 @@ namespace YourBuddy
 
             if (open) BuddyManager.SetFocus(buddy);
             buddy.InDialog = open;
+            if (!open) { resources.Reset(); menu.Reset(); }
             if (open) buddy.OnTalkOpened();
         }
     }

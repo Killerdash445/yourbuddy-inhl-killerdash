@@ -166,6 +166,7 @@ namespace YourBuddy
             ExpireOrder();
             // Deadly air outranks an anomaly as it does an order. docs/invariants.md#survival-outranks-an-order
             if (anomaly.HasValue && !vanished && !AnomalyInBackground && lifeSupport.AirIsDangerous()) EndAnomaly("the air is dangerous");
+            if (!suit.Suited && lifeSupport.AirIsDangerous()) resources.Cancel("the air needs attention");
             if (TrySaveOwnLife()) return;
             if (Time.time < decideAt) return;
 
@@ -185,6 +186,9 @@ namespace YourBuddy
                 TraceDecider("standing down: " + standDown);
                 return;
             }
+            if (ResourceDuty.Enabled && TrySurvival()) return;
+            if ((suit.Suited || !lifeSupport.AirIsDangerous()) && resources.TryStart()) return;
+
             // Everything it might want, weighed against everything else. docs/behaviour.md §3
             ChooseAndAct(player);
         }

@@ -88,3 +88,10 @@ leave saves intact ([NPC.Core's invariants](https://github.com/bytenull1/npc-cor
 
 Fine, and the docs are written to help one. Point it at [AGENTS.md](AGENTS.md) first. Review what it
 writes into docs: remove status notes, dates and long narratives before committing.
+
+### Resource policy checks
+
+Run `dotnet run --project tools/ResourceChecks/ResourceChecks.csproj` after changing resource
+settings or spending rules. This links the production policy code and uses the same Newtonsoft
+serializer as the sidecar. It requires the local references described in [lib/README.md](YourBuddy/lib/README.md).
+The game's navigation, pickup and insertion physics still require a gameplay check.

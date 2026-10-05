@@ -11,6 +11,7 @@ namespace YourBuddy
     public sealed partial class BuddyBehaviour : IErrandBody
     {
         // Created in Awake, before the first frame.
+        private ResourceErrand resources = null!; // Initialized in Awake before the decider runs.
         private LifeSupport lifeSupport = null!;
         private BuddySuit suit = null!; // Awake; the agent's settings read it only from the slow phases on
         private SnackErrand snacks = null!;
@@ -25,6 +26,7 @@ namespace YourBuddy
             nearMonster = node => (node - lastMonsterPos).sqrMagnitude < FearRestraintDist * FearRestraintDist;
             inDockCorridor = InDockCorridor;
             nearMonsterOrCorridor = node => nearMonster(node) || InDockCorridor(node);
+            resources = new ResourceErrand(this);
             lifeSupport = new LifeSupport(this);
             suit = new BuddySuit(this, lifeSupport);
             snacks = new SnackErrand(this);
@@ -33,6 +35,37 @@ namespace YourBuddy
             play = new PlayErrand(this);
             suitFetch = new SuitFetchErrand(this, suit);
         }
+
+        internal string StartResourceAutomation()
+        {
+            if (IsDead || Asleep) return "Buddy is not available.";
+            ResourceDutySettings settings = ResourceDuty.Settings;
+            if (!settings.Oxygen.Enabled && !settings.Fuel.Enabled && !settings.Energy.Enabled)
+                return "No resource duty is enabled. Choose Oxygen, Fuel or Energy, then Enable duty before Start duties.";
+            YourBuddyPlugin.ConfigAutonomy.Value = true;
+            ResourceDuty.Settings.Paused = false;
+            RevokeOrder();
+            if (mode == BuddyMode.Route && fearState == FearState.Calm && !agent.LifeInDanger &&
+                !suit.RunActive && !lifeSupport.AirIsDangerous()) FinishRoute();
+            resources.CheckSoon();
+            ResourceDuty.Report("Resource check requested; close the conversation so Buddy can work.", "scheduler");
+            return "Duties will check when you close the conversation. Enable the resources you want serviced.";
+        }
+
+        internal string ResourceReadiness
+        {
+            get
+            {
+                if (!YourBuddyPlugin.ConfigAutonomy.Value) return "Autonomy is off. Choose Start duties.";
+                if (ResourceDuty.Settings.Paused) return "Resource duties are paused.";
+                if (OrderInForce) return "An order is holding Buddy. Choose Start duties to release it.";
+                if (IsOutside) return "Buddy is outside; resource work requires an interior route.";
+                if (fearState != FearState.Calm) return "Buddy needs to feel safe before working.";
+                if (reachTask != null) return "Current task: " + reachTask.Describe() + ".";
+                return ResourceDuty.Status;
+            }
+        }
+
 
         // Console and dialog commands. docs/behaviour.md
         internal string StartSnackNow() => snacks.StartNow("No snack: ");

@@ -25,10 +25,17 @@ greeting. An anomaly may add lines to the log while the window is shut.
 ## 2. The panel
 
 NPC.Core draws it ([interaction.md §2](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#2-the-panel)). The commands page lists
-`BuddyDialogCommands.NamesFor(buddy)`: Status is always listed first. Inside it also lists Follow,
-Wander, Stay, Hide, Outside, Unsuit (only while suited), Fetch suit, Tidy, Sell, Play, Snack, Goto, Decide,
-Password; outside, Follow, Wander, Stay, Inside, Goto, Decide; floating, Follow, Stay, Inside,
-Decide ([eva.md §7](eva.md#7-floating)).
+Status, Movement, Jobs, Suit & travel, Resources and Password. `BuddyCommandMenu` groups the
+context-appropriate actions from `BuddyDialogCommands.NamesFor`:
+
+- **Movement:** Follow, Stay, Wander, Hide, Goto, Decide.
+- **Jobs:** Tidy, Sell, Snack, Play.
+- **Suit & travel:** Fetch suit, Unsuit, Outside, Inside.
+- **Resources:** [resource duty controls](resources.md), state and settings.
+
+Unavailable actions remain hidden, including Unsuit without a suit and indoor jobs while outside.
+**Main menu** returns to the root. Existing typed orders work from ordinary menus.
+Resource number-entry prompts consume numeric input until completed or cancelled.
 
 ---
 

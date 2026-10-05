@@ -285,12 +285,14 @@ namespace YourBuddy
 
         void INpcBrain.OnInterrupted(string why)
         {
+            resources.Cancel(why);
             EndAnomaly(why);
             ForceLeaveHidingSpot(why);
         }
 
         void INpcBrain.OnDied()
         {
+            resources.Cancel("Buddy died");
             EndAnomaly("it died");
             suit.OnDied();
             mode = BuddyMode.Dead;

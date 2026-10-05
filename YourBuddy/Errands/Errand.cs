@@ -120,6 +120,13 @@ namespace YourBuddy
         /// When the decider next weighs it; below zero until its first round schedules one.
         /// </summary>
         public float DueAt = -1f;
+        private readonly ErrandCooldown cooldown = new();
+        internal bool CoolingDown => !cooldown.Ready(Time.time);
+        internal void RetryLater(float seconds)
+        {
+            cooldown.Hold(Time.time, seconds);
+            DueAt = Mathf.Max(DueAt, Time.time + seconds);
+        }
         /// <summary>
         /// How the last one went, or why there was none; for the HUD and buddy_dev mind.
         /// </summary>
@@ -169,7 +176,7 @@ namespace YourBuddy
         protected void Defer(Transform target, float seconds)
         {
             Skips.Skip(target, DeferSkipSeconds);
-            DueAt = Mathf.Max(DueAt, Time.time + Mathf.Max(seconds, RetryDelay));
+            RetryLater(Mathf.Max(seconds, RetryDelay));
         }
 
         /// <summary>

@@ -52,7 +52,8 @@ also revokes the current order, or switching it on would visibly do nothing.
 ## 3. The decider
 
 `UpdateAutonomy` owns stand-down and order bookkeeping; `BuddyBehaviour.Mind.cs` decides **what to
-do**. Every `DecideInterval` it scores competing **urges** and acts on one.
+do**. Every `DecideInterval`, after survival and stand-down checks, enabled [resource duties](resources.md)
+get a chance to start. Otherwise it scores competing **urges** and acts on one.
 
 It **stands down** (logged at level 2 every 15 s) while:
 
@@ -105,6 +106,8 @@ Any factor at zero vetoes; anything under `UrgeFloor` is not worth doing.
 
 - **Readiness is a ramp, not a gate:** `1 − (dueAt − now) / interval`, clamped. A task can run a
   little early when nothing else wants the buddy, or late when better things keep winning.
+  Failed errands have a separate hard retry delay; readiness cannot bypass it. Explicit job
+  orders can still request an immediate retry.
 - **Opportunity is distance:** `1 / (1 + dist / UrgeRangeSoftness)` - 1 at the feet, ½ at 8 m, ¼ at
   24 m. It never reaches zero, so distance loses arguments but never deletes candidates.
 - **Novelty:** the last urge acted on is worth `1 − UrgeRepeatPenalty`.

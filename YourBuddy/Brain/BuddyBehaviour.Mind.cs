@@ -193,7 +193,7 @@ namespace YourBuddy
         {
             if (errand.TryStart(out string report)) return true;
 
-            errand.DueAt = Time.time + errand.RetryDelay;
+            errand.RetryLater(errand.RetryDelay);
             if (NpcLog.Level >= 2)
             {
                 YourBuddyPlugin.Log.LogInfo($"[mind] {lead}{report} - trying again in {errand.RetryDelay:0}s");
@@ -258,7 +258,7 @@ namespace YourBuddy
         /// </summary>
         private void ScoreErrand(Urge urge, Errand errand, float weight, ref int scans)
         {
-            if (!errand.Enabled) return;
+            if (!errand.Enabled || errand.CoolingDown) return;
 
             // The first round only schedules; nothing is due the moment a buddy spawns.
             if (errand.DueAt < 0f)

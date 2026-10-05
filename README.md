@@ -300,3 +300,8 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 ![The buddy wandering along the nav graph, with debug visuals and the HUD enabled](docs/images/navigation.png)
 
 ![The node editor overlay: nodes as blue crosses, connections as yellow lines](docs/images/node-map.png)
+
+## Resource duties
+
+Talk to Buddy and choose **Commands > Resources** to configure optional refilling and purchases.
+See [resource duties](docs/resources.md) for controls, spending limits and prerequisites.
