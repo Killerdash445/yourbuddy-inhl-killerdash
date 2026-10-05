@@ -13,7 +13,7 @@ namespace YourBuddy
     public sealed partial class BuddyBehaviour
     {
         // Follow hysteresis in XZ. Start walking beyond the first, keep walking down to the second.
-        private const float FollowStartDistance = 2.0f;
+        private const float FollowStartDistance = 2.4f;
         private const float FollowStopDistance = 1.8f;
 
         /// <summary>

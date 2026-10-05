@@ -33,6 +33,10 @@ An order given during a flee is recorded at once but only replaces what the flee
 
 Neither order nor mode is saved. A loaded buddy starts in Follow with no order.
 
+On the player's deck, Follow starts walking beyond 2.4 m and keeps walking until nearer than
+1.8 m. This gap lets the player move a little without restarting the buddy at every small step.
+Deck changes still require catching up; floating follow and doorway clearance use their own rules.
+
 ---
 
 ## 2. Persistence

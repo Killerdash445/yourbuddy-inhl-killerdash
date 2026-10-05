@@ -17,16 +17,18 @@ NPC.Core adds that it lives and is loaded.
 Opening the window makes that buddy the **focus**, so console commands without a target go to it too
 ([reference.md §2](reference.md#2-debug-commands)). While it is open the buddy stands still and faces
 the player (`InDialog`). The title is the buddy's name - once in a while the wrong one ([anomalies.md](anomalies.md#wrongname)) -
-and the first line "Standing by.". An anomaly may add lines to the log while the window is shut.
+and the first line describes its current state. Fear takes priority over ordinary work in this
+greeting. An anomaly may add lines to the log while the window is shut.
 
 ---
 
 ## 2. The panel
 
 NPC.Core draws it ([interaction.md §2](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#2-the-panel)). The commands page lists
-`BuddyDialogCommands.NamesFor(buddy)`: inside, Follow, Wander, Stay, Hide, Outside, Unsuit (only while suited), Tidy,
-Sell, Play, Snack, Goto, Decide, Password; outside, Follow, Wander, Stay, Inside, Goto, Decide; floating,
-Follow, Stay, Inside, Decide ([eva.md §7](eva.md#7-floating)).
+`BuddyDialogCommands.NamesFor(buddy)`: Status is always listed first. Inside it also lists Follow,
+Wander, Stay, Hide, Outside, Unsuit (only while suited), Fetch suit, Oxygen on, Climate on, Tidy, Sell, Play, Snack, Goto, Decide,
+Password; outside, Follow, Wander, Stay, Inside, Goto, Decide; floating, Follow, Stay, Inside,
+Decide ([eva.md §7](eva.md#7-floating)).
 
 ---
 
@@ -41,16 +43,25 @@ order to every living, awake buddy, one reply line each ("everyone follow me"). 
 removed before matching. A password is told once: codes are shared
 ([door-knowledge-is-shared](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/invariants.md#door-knowledge-is-shared)).
 
-Matching order matters - it is a substring test ("trash box" contains "trash"). The one exception
-is a goto that names a room, which is tried right after "decide" ("go to the workshop" contains
-"work"):
+Keywords match whole words or phrases, so "whatever" does not request EVA and "display" does not
+request play. Matching order still matters: "trash box" includes "trash". A goto naming a room
+is tried after the airlock orders and before ordinary movement orders. "Come and tidy"
+starts tidying; "come" by itself means Follow. Life-support shortcuts only switch units on.
+
+"Status", "how are you", and "what are you doing" report the current state without giving an
+order. "Stop following" and "stop moving" mean Stay. Requests containing "don't", "dont", "do not", "not", "no" or
+"never" ask for a positive instruction instead of executing the action being forbidden.
 
 | Word | Console | Effect |
 |---|---|---|
+| status / how are you / what are you doing | — | reports current state without changing the order |
 | decide / yourself / your call | `buddy_order auto on` | `RevokeOrder` ([behaviour.md](behaviour.md)); matched **first** |
 | unsuit / take off the suit / remove the suit | `buddy_order suit off` | take the worn suit off - never outside or in an airlock ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)); before the airlock orders |
 | inside / come in / back in | `buddy_order inside` | from outside, walk into an airlock's chamber and wait for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the outside order |
 | outside / eva / space walk | `buddy_order outside` | suit up if a spare is free, then wait in an airlock (a station's, or the ship's own while undocked) for your cycle ([eva.md §4](eva.md#4-through-the-airlock)); before the room goto |
+| fetch suit / bring back the suit | `buddy_order fetchsuit` | retrieve an available suit from the docked station ([eva.md](eva.md#6-bringing-a-forgotten-suit-home)) |
+| oxygen on / turn on oxygen | `buddy_order terminal oxygen` | switch on the oxygen generator through its existing safety checks ([terminals.md](terminals.md)) |
+| climate on / turn on climate | `buddy_order terminal climate` | switch on climate control through its existing safety checks ([terminals.md](terminals.md)) |
 | hide / closet / locker / conceal | `buddy_order hide` | hide and stay until the next order ([fear.md §6](fear.md#6-hiding-in-a-closet-or-locker)) |
 | follow / come | `buddy_order follow` | `ApplyOrder(Follow)` |
 | wander / job | `buddy_order wander` | `ApplyOrder(Wander)` |
@@ -66,7 +77,7 @@ is a goto that names a room, which is tried right after "decide" ("go to the wor
 ([an-order-is-not-a-mode](invariants.md#an-order-is-not-a-mode)). Given during a flee, an order waits
 until the flee ends, and the reply says so ([fear-owns-the-buddy](invariants.md#fear-owns-the-buddy)).
 
-**Hide, Sell, Tidy, Play and Snack are tasks.** They start now, skipping schedule and config switch, and the
+**Hide, Sell, Tidy, Play, Snack, Fetch suit, Oxygen on and Climate on are tasks.** They start now, skipping schedule and config switch, and the
 buddy returns to its order afterwards. They refuse while asleep, scared, busy or on a goto. Hide is
 the exception: it works while Alert, and it interrupts an errand the buddy chose itself
 ([a-command-outranks-an-errand](invariants.md#a-command-outranks-an-errand)). An ordered hide ends

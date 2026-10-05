@@ -61,6 +61,7 @@ the buddy through a few `internal` members, never its fields.
 | `SkipList.cs` | what a task leaves out for a while, per object: `Skip`, `Has`, `Prune` | - | [items](items.md) |
 | `GameInternals.cs` | **every** reflection accessor YourBuddy needs into game types (NPC.Core has its own) | - | [game-model](game-model.md) |
 | `BuddyConversation.cs` | the buddy's side of NPC.Core's talk window: when it can talk, its title, commands and answers | `BuddyDialogCommands`, `BuddyManager` | [dialog](dialog.md) |
+| `BuddyBehaviour.Conversation.cs` | player-facing status for greetings and the Status command | `BuddyConversation`, `BuddyDialogCommands` | [dialog](dialog.md) |
 | `BuddyDialogCommands.cs` | keyword-matching typed text to an order, for one buddy or everyone | `BuddyCommands`, `BuddyRooms` | [dialog](dialog.md) |
 | `BuddyRooms.cs` | the buddy's words for NPC.Core's `StationRooms` (the docked station's rooms by name) | `StationRooms` | [dialog](dialog.md#goto-by-room) |
 | `BuddyCommands.cs` | the orders, shared by dialog and console, each for the buddy the caller chose; the only caller of `ApplyOrder` / `ApplyRouteOrder` / `RevokeOrder` | `BuddyBehaviour`, `NavGraph` | [behaviour](behaviour.md) |

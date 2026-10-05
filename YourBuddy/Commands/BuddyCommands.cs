@@ -43,7 +43,7 @@ namespace YourBuddy
             if (buddy.Floating) return buddy.Name + " has nothing to walk on out here - it can follow you or stay";
 
             return buddy.ApplyOrder(BuddyMode.Wander)
-                ? buddy.Name + " now does its own thing (uses nav nodes as points of interest)"
+                ? buddy.Name + " will have a look around"
                 : buddy.Name + " will do its own thing" + OnceSafe;
         }
 
@@ -102,13 +102,13 @@ namespace YourBuddy
                 if (plan is not { Count: > 0 }) continue;
 
                 return buddy.ApplyRouteOrder(plan.Value, target)
-                    ? buddy.Name + " walking to " + label + " (" + plan.Value.Count + " waypoints)"
+                    ? buddy.Name + " is on the way to " + label
                     : buddy.Name + " will walk to " + label + OnceSafe;
             }
 
             return NavGraph.LastPathBlockedByDoor
                 ? "No way to " + label + " that avoids a door I cannot open"
-                : "No path to " + label + " - are nodes connected?";
+                : "I can't find a way to " + label + ". Try another room or lead me closer.";
         }
 
         /// <summary>

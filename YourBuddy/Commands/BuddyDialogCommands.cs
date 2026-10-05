@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using NPC.Core;
@@ -16,17 +16,17 @@ namespace YourBuddy
         /// The list shown on the commands page, in the order it is drawn.
         /// </summary>
         internal static readonly string[] Names =
-            ["Follow", "Wander", "Stay", "Hide", "Outside", "Inside", "Unsuit", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
+            ["Status", "Follow", "Wander", "Stay", "Hide", "Outside", "Inside", "Unsuit", "Fetch suit", "Oxygen on", "Climate on", "Tidy", "Sell", "Play", "Snack", "Goto", "Decide", "Password"];
 
         /// <summary>
         /// Orders that only make sense outside. Every other job is inside. docs/eva.md
         /// </summary>
-        private static readonly string[] OutsideNames = ["Follow", "Wander", "Stay", "Inside", "Goto", "Decide"];
+        private static readonly string[] OutsideNames = ["Status", "Follow", "Wander", "Stay", "Inside", "Goto", "Decide"];
 
         /// <summary>
         /// Floating, there is nothing to walk on, so no wander and no goto. docs/eva.md#7-floating
         /// </summary>
-        private static readonly string[] FloatingNames = ["Follow", "Stay", "Inside", "Decide"];
+        private static readonly string[] FloatingNames = ["Status", "Follow", "Stay", "Inside", "Decide"];
 
         private static readonly Dictionary<bool, string[]> InsideNames = [];
 
@@ -69,8 +69,20 @@ namespace YourBuddy
             string lower = text.Trim().ToLowerInvariant();
             List<BuddyBehaviour> targets = Targets(buddy, ref lower);
 
+            if (Has(lower, "status", "how are you", "what are you doing"))
+            {
+                return ForAll(targets, b => b.Name + ": " + b.ConversationStatus);
+            }
+
+            // Do not turn a negated request into the action it forbids.
+            if (Has(lower, "don't", "don\u2019t", "do not", "never", "not", "no", "dont"))
+            {
+                return "Tell me what to do instead. Try 'stay', 'follow', or 'decide for yourself'.";
+            }
+            if (Has(lower, "stop following", "stop moving")) return ForAll(targets, BuddyCommands.Stay);
+
             // First, since "decide for yourself whether to follow" is not a follow order.
-            if (Has(lower, "decide", "yourself", "autonom", "your call", "own mind")) return ForAll(targets, BuddyCommands.DecideForYourself);
+            if (Has(lower, "decide", "yourself", "autonomy", "autonomous", "your call", "own mind")) return ForAll(targets, BuddyCommands.DecideForYourself);
 
             // Before the outside order, since "take the suit off outside" is an unsuit order.
             // docs/eva.md
@@ -79,14 +91,26 @@ namespace YourBuddy
                 return ForAll(targets, BuddyCommands.Unsuit);
             }
 
+            if (Has(lower, "fetch suit", "fetch a suit", "fetch the suit", "bring back a suit", "bring back the suit"))
+            {
+                return ForAll(targets, BuddyCommands.FetchSuit);
+            }
+            if (Has(lower, "oxygen on", "turn on oxygen", "switch on oxygen"))
+            {
+                return ForAll(targets, b => BuddyCommands.Terminal(b, "oxygen"));
+            }
+            if (Has(lower, "climate on", "turn on climate", "switch on climate"))
+            {
+                return ForAll(targets, b => BuddyCommands.Terminal(b, "climate"));
+            }
+
             // Before the room goto, since "go outside" and "come inside" are airlock walks, not rooms.
             // docs/eva.md
             if (Has(lower, "inside", "come in", "back in")) return ForAll(targets, BuddyCommands.GoInside);
 
             if (Has(lower, "outside", "eva", "space walk", "spacewalk")) return ForAll(targets, BuddyCommands.GoOutside);
 
-            // Before the rest, so "go to the workshop" is not a wander order ("work"). A goto that
-            // names no room falls through, so "stay, do not walk" is still a stay order.
+            // Resolve destinations before ordinary movement words. A bare goto asks for a room below.
             if (Has(lower, GotoWords) && BuddyRooms.TryResolve(lower, out StationRooms.Entry? room, out List<StationRooms.Entry>? several))
             {
                 return room != null
@@ -97,7 +121,7 @@ namespace YourBuddy
             // Before Follow, so "come and hide" is not a follow order.
             if (Has(lower, "hide", "closet", "locker", "conceal")) return ForAll(targets, BuddyCommands.Hide);
 
-            if (Has(lower, "follow", "come", "heel")) return ForAll(targets, BuddyCommands.Follow);
+            if (Has(lower, "follow", "heel")) return ForAll(targets, BuddyCommands.Follow);
 
             if (Has(lower, "job", "wander", "own thing", "work", "busy")) return ForAll(targets, BuddyCommands.Wander);
 
@@ -111,6 +135,9 @@ namespace YourBuddy
             if (Has(lower, "play", "toy")) return ForAll(targets, BuddyCommands.Play);
 
             if (Has(lower, "snack", "eat", "food", "hungry")) return ForAll(targets, BuddyCommands.Snack);
+
+            // A request such as "come and tidy" names the task, not a follow order.
+            if (Has(lower, "come")) return ForAll(targets, BuddyCommands.Follow);
 
             if (Has(lower, GotoWords)) return BuddyRooms.Prompt();
 
@@ -139,7 +166,7 @@ namespace YourBuddy
             bool group = false;
             foreach (string word in GroupWords)
             {
-                if (lower.IndexOf(word, StringComparison.Ordinal) < 0) continue;
+                if (!Has(lower, word)) continue;
 
                 lower = lower.Replace(word, " ");
                 group = true;
@@ -174,7 +201,16 @@ namespace YourBuddy
         {
             foreach (string k in keywords)
             {
-                if (text.IndexOf(k, StringComparison.Ordinal) >= 0) return true;
+                int from = 0;
+                while (from < text.Length)
+                {
+                    int at = text.IndexOf(k, from, StringComparison.Ordinal);
+                    if (at < 0) break;
+                    int end = at + k.Length;
+                    if ((at == 0 || !char.IsLetterOrDigit(text[at - 1])) &&
+                        (end == text.Length || !char.IsLetterOrDigit(text[end]))) return true;
+                    from = at + 1;
+                }
             }
             return false;
         }

@@ -18,7 +18,7 @@ namespace YourBuddy
         // Once, the wrong name. docs/anomalies.md#wrongname
         public string Title => buddy.TitleOverride ?? buddy.Name;
 
-        public string Greeting => "Standing by.";
+        public string Greeting => buddy.ConversationStatus;
 
         public IReadOnlyList<string> Commands => BuddyDialogCommands.NamesFor(buddy);
 
