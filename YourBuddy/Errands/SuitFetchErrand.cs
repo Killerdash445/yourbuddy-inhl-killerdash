@@ -179,7 +179,7 @@ namespace YourBuddy
         {
             if (CollectStranded(out _) == 0)
             {
-                report = "no suit is stranded away from the ship";
+                report = scanNote;
                 return false;
             }
 
