@@ -24,8 +24,8 @@ namespace YourBuddy
             point = default;
             if (index < 0 || index >= CandidateCount) return Blocked("no configured overflow slot");
             var offset = StorageOverflowLayout.ProbeOffset(index, area.Slots);
-            Vector3 candidate = room.transform.TransformPoint(localCenter + new Vector3(offset.X, 0, offset.Z));
-            if (!ResourceStorage.FindFloor(candidate, out RaycastHit floor)) return Blocked($"no supported ship floor at {candidate}");
+            Vector3 candidate = room.transform.TransformPoint(new Vector3(localCenter.x + offset.X, .1f, localCenter.z + offset.Z));
+            if (!ResourceStorage.FindFloor(candidate, out RaycastHit floor)) return Blocked($"no supported ship floor at {candidate}: {ResourceStorage.LastBlocker}");
             if (floor.collider.GetComponentInParent<CustomRoom>() != room) return Blocked($"floor belongs to another room at {candidate}");
             point = floor.point + Vector3.up * (half.y + .03f);
             return Clear(point, half, item);

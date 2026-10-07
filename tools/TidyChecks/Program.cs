@@ -271,8 +271,9 @@ for (int i=0;i<8 && s.Body.Hands.Stored == 0;i++) Step(s.Body);
 s.Item.transform.position = new(1,0,0); Step(s.Body);
 Check(s.Body.Finished && s.Errand.DueAt == Time.time + s.Errand.Interval, "drift failure lets other storage work continue after the short interval");
 s = StorageSetup(); s.Item.transform.rotation = new Quaternion { Degrees = 45 };
-s.Storage.Doors = [new Door { Opened = false }]; s.Storage.ReachClear = false;
-s.Errand.TryStart(out _); for (int i=0;i<7;i++) Step(s.Body);
+s.Storage.Doors = [new Door { Opened = false }];
+s.Errand.TryStart(out _); Step(s.Body); Step(s.Body); s.Storage.ReachClear = false;
+for (int i=0;i<5;i++) Step(s.Body);
 Check(s.Body.Hands.Item == s.Item && s.Body.Hands.ReachTarget == null && !s.Body.Finished,
     "placement retry restores carrying instead of leaving item pinned in world space");
 Check(s.Storage.Doors[0].Opened && Items.ClosedDoors == 0, "slot retry does not start a conflicting closing animation");
@@ -418,24 +419,25 @@ s.Errand.TryStart(out _); FinishStorage(s.Body); overflow.Inside.Add(s.Item); s.
 s.Errand.CancelRepack();
 Check(s.Errand.TryStart(out _) && s.Body.Leg!.Holds(s.Item.transform), "cancellation discards pending evacuation priority");
 s.Body.FinishRoute();
-s = StorageSetup(); s.Storage.Name = "fridge"; s.Storage.ReachClear = false; s.Storage.Untidy = true;
+s = StorageSetup(); s.Storage.Name = "fridge"; s.Storage.Untidy = true;
 s.Item.Extras[typeof(Food)] = new Food();
 messy = new() { CanTrash = false }; messy.Extras[typeof(Food)] = new Food(); messy.transform.position = new(.001f,0,0);
 s.Storage.Inside.Add(messy);
 overflow = new() { Name = "overflow area", Overflow = new StorageOverflow() }; StorageOverflow.Area = overflow;
-s.Errand.TryStart(out _); FinishStorage(s.Body);
+s.Errand.TryStart(out _); Step(s.Body); Step(s.Body); s.Storage.ReachClear = false; FinishStorage(s.Body);
 Check(s.Body.Hands.Pickups == 1 && s.Body.Hands.Stored == 1,
     "already carried incoming item is staged after repeated blocked insertion without being picked up twice");
 overflow.Inside.Add(s.Item); s.Storage.Inside.Remove(messy); s.Body.Finished = false;
 Check(s.Errand.TryStart(out _) && s.Body.Leg!.Holds(s.Item.transform),
     "player removing planned contents invalidates evacuation rather than chasing that item");
 s.Body.FinishRoute();
-s = StorageSetup(); s.Storage.Name = "fridge"; s.Storage.ReachClear = false;
+s = StorageSetup(); s.Storage.Name = "fridge";
 s.Item.Extras[typeof(Food)] = new Food();
 messy = new() { CanTrash = false }; messy.Extras[typeof(Food)] = new Food();
 s.Storage.Inside.Add(messy); s.Storage.LastBlockingItem = messy;
 overflow = new() { Name = "overflow area", Overflow = new StorageOverflow() }; StorageOverflow.Area = overflow;
-s.Errand.TryStart(out _); FinishStorage(s.Body); overflow.Inside.Add(s.Item); s.Body.Finished = false;
+s.Errand.TryStart(out _); Step(s.Body); Step(s.Body); s.Storage.ReachClear = false;
+FinishStorage(s.Body); overflow.Inside.Add(s.Item); s.Body.Finished = false;
 Check(s.Errand.TryStart(out _) && s.Body.Leg!.Holds(messy.transform),
     "aligned useful item blocking the opening is selected for evacuation");
 s.Body.FinishRoute();
@@ -555,7 +557,7 @@ foreach (var area in StorageOverflowLayout.Areas)
     }
 }
 s = StorageSetup(); s.Errand.TryStart(out _); Step(s.Body);
-Check(s.Body.Leg!.Reach == 1.1f && s.Body.Leg.StandOffs[0] == 1.05f,
+Check(s.Body.Leg!.Reach == 1.35f && s.Body.Leg.StandOffs[0] == 1.3f,
     "loose pickup plans a farther standing point and reaches logged chair-side item");
 Step(s.Body);
 Check(s.Body.Leg!.Reach == Items.SnackReachDist,
@@ -631,6 +633,44 @@ Check(StoragePolicy.Home(false,true,"chest") < StoragePolicy.Home(false,true,"ca
     "resource cells prefer chests over cupboards");
 Check(StoragePolicy.Home(false,false,"fridge") == int.MaxValue,
     "nonfood supplies cannot occupy food-priority fridges");
+// Logged open-door exit: clear the leaf before moving towards the carrier.
+Check(Math.Abs(StorageAccess.OutsideDoor(.44f, .39f, .18f, .14f) - .79f) < .0001f,
+    "exit plane includes open door and carried footprint");
+Check(StorageAccess.OutsideDoor(1f, .1f, .1f, .1f) == 1f,
+    "door behind the portal does not shorten the exit");
+s = StorageSetup(); s.Storage.Name = "fridge"; s.Storage.Fits = false; s.Storage.Untidy = true;
+s.Item.Extras[typeof(Food)] = new Food();
+messy = new() { CanTrash = false }; messy.Extras[typeof(Food)] = new Food();
+messy.transform.position = new(.01f,0,0); s.Storage.Inside.Add(messy);
+overflow = new() { Name = "overflow area", Overflow = new StorageOverflow() };
+StorageOverflow.Area = overflow; overflow.Inside.Add(s.Item);
+s.Errand.TryStart(out _); FinishStorage(s.Body);
+Check(s.Body.Hands.Pickups == 0, "already staged incoming item is not shuffled to another overflow slot");
+s.Body.Finished = false;
+Check(s.Errand.TryStart(out _) && s.Body.Leg!.Holds(messy.transform),
+    "overflow incoming triggers preferred-container evacuation");
+FinishStorage(s.Body);
+Check(s.Body.Hands.Stored == 1, "preferred container can be cleared for an already staged item");
+s = StorageSetup(); s.Storage.ReachClear = false;
+s.Errand.TryStart(out _); FinishStorage(s.Body);
+Check(s.Body.Hands.Pickups == 0, "longer pickup reach never pulls an item through furniture");
+s = StorageSetup(); s.Item.Extras[typeof(Food)] = new Food(); s.Storage.Name = "fridge";
+var sourceCabinet = new FurnitureStorage { Name = "cabinet" };
+sourceCabinet.Inside.Add(s.Item); FurnitureStorage.All.Add(sourceCabinet);
+s.Body.Blocked.Add(sourceCabinet.Root);
+Check(!s.Errand.TryStart(out var blockedPickup) && blockedPickup.Contains("a door I cannot open"),
+    "pickup preflight retains the actual route failure reason");
+Check(s.Storage.Probes == 0 && s.Body.Hands.Pickups == 0,
+    "unreachable source is rejected before scanning destination slots");
+s = StorageSetup(); s.Item.Extras[typeof(Food)] = new Food(); s.Storage.Name = "fridge";
+s.Storage.Fits = false; s.Storage.Untidy = true;
+sourceCabinet = new FurnitureStorage { Name = "cabinet" };
+sourceCabinet.Inside.Add(s.Item); FurnitureStorage.All.Add(sourceCabinet);
+messy = new() { CanTrash = false }; messy.Extras[typeof(Food)] = new Food();
+messy.transform.position = new(.01f,0,0); s.Storage.Inside.Add(messy);
+overflow = new() { Name = "overflow area", Overflow = new StorageOverflow() }; StorageOverflow.Area = overflow;
+s.Errand.TryStart(out _); FinishStorage(s.Body);
+Check(s.Body.Hands.Stored == 1, "item in a lower-priority cupboard may stage while its preferred home is repacked");
 Console.WriteLine($"{checks} tidy/storage state and policy checks passed.");
 
 sealed class Body : IErrandBody

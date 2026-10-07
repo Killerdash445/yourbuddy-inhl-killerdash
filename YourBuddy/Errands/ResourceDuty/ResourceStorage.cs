@@ -59,7 +59,7 @@ namespace YourBuddy
             floor = default;
             int count = Physics.RaycastNonAlloc(point + Vector3.up * .3f, Vector3.down, Hits, 1.8f,
                 NavProbe.ProbeLayers, QueryTriggerInteraction.Ignore);
-            if (count == Hits.Length) return false;
+            if (count == Hits.Length) return Blocked("floor ray buffer full");
             float nearest = float.MaxValue;
             for (int i = 0; i < count; i++)
             {
@@ -67,9 +67,12 @@ namespace YourBuddy
                 nearest = Hits[i].distance;
                 floor = Hits[i];
             }
-            return floor.collider != null && floor.normal.y > .98f &&
-                floor.collider.GetComponentInParent<Grabbable>() == null &&
-                (!shipOnly || NpcVessels.OwnerOfTransform(floor.collider.transform) == NavGraph.ShipOwner);
+            if (floor.collider == null) return Blocked($"floor ray missed from {point}");
+            if (floor.normal.y <= .98f) return Blocked($"sloped hit {floor.collider.name}, normal={floor.normal}");
+            if (floor.collider.GetComponentInParent<Grabbable>() != null) return Blocked($"item covers floor: {floor.collider.name}");
+            if (shipOnly && NpcVessels.OwnerOfTransform(floor.collider.transform) != NavGraph.ShipOwner)
+                return Blocked($"floor is not aboard ship: {floor.collider.name}");
+            return true;
         }
 
         internal static bool Clear(Vector3 center, Vector3 half, Transform? item, bool shipOnly = true)

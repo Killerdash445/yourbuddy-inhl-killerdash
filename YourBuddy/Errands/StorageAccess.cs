@@ -6,6 +6,9 @@ namespace YourBuddy
     {
         internal static float LiftHalfHeight(float measuredHalf) => System.Math.Max(.001f, measuredHalf - .002f);
 
+        internal static float OutsideDoor(float current, float doorCenter, float doorHalf, float itemHalf) =>
+            Math.Max(current, doorCenter + doorHalf + itemHalf + .08f);
+
         internal readonly record struct Portal(float OuterX, float OuterZ, float InnerX, float InnerZ);
         internal readonly record struct Slot(float X, float Z);
 

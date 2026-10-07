@@ -119,7 +119,7 @@ This is a bounded packing search, not a guarantee of the mathematical maximum ca
 Approach positions use the door collider centre transformed back to its closed pose, so
 starting with an open door does not move the target to its swung-out leaf. Buddy waits for
 the opening animation to finish. Side-opening furniture aligns with the slot outside the
-opening, then moves straight in along that lane; chests retain their over-the-rim path.
+opening, beyond the open door leaves, then moves straight in along that lane; chests retain their over-the-rim path.
 Every segment is swept using the planned item footprint, including extraction in reverse.
 A clear slot alone is not a clear insertion route.
 
@@ -173,8 +173,9 @@ retains its bounded wait. Walking speed, collision sweeps and the settling check
 
 ## Making room
 
-If an incoming loose item or an item being rearranged within its current container cannot
+If a loose item or a supply being moved from another storage area cannot
 use its preferred container, and that container has eligible untidy, misplaced or path-blocking contents, Buddy can stage the incoming item in checked overflow first.
+An incoming item already in overflow stays there while space is made.
 It then evacuates up to three useful items into separately checked overflow positions,
 returns those supplies to suitable normal storage, and retries the incoming item last.
 Each move uses the ordinary reservation, extraction, placement and settlement checks.
@@ -201,7 +202,7 @@ Hand waypoints require arrival within 1 cm before the next segment. Moving on wh
 above a shelf-height waypoint can cut diagonally into the shelf or frame. Movement speed
 and collision checks remain the same.
 
-Loose-supply pickup uses a 1.1 m reach and tries stand-off distances of 1.05 m and 0.95 m
+Loose-supply pickup uses a 1.35 m reach and tries stand-off distances of 1.3 m and 1.15 m
 before the closer alternatives. This avoids requiring the buddy to press against nearby
 furniture for an otherwise visible item. Line-of-sight, route, item ownership and height
 checks still apply. Furniture extraction and delivery keep their original reach.
@@ -216,3 +217,12 @@ A loose pickup must reach its normal carrying point before a rotation hold begin
 has a four-second timeout; failure uses ordinary carry cleanup instead of pinning it at floor height.
 
 Cupboard extraction starts with a checked 3 cm vertical lift. Only that initial lift uses measured vertical half-height with a 2 mm contact skin; lateral padding is retained. Later sweeps use the full padded footprint. A blocked lift or exit leaves the item in place.
+
+Pickup routes are checked before searching storage slots and checked again before walking.
+Loose-item pickup also sweeps a short lift and the path to the hand before taking the item;
+a visible item behind solid furniture is not pulled through it. A temporary blocker gets the
+ordinary bounded clearance wait.
+
+Overflow floor rays begin near the room's deck, below upper wall slopes. The complete item
+footprint still needs level support and clear space. Failed floor and shelf checks report
+which collider, slope or missing support prevented placement.

@@ -28,7 +28,7 @@ namespace YourBuddy
         private float deadline;
         private const float HandSpeed = .75f;
         private static readonly float[] ApproachOffsets = [.55f, .7f, .85f];
-        private static readonly float[] PickupOffsets = [1.05f, .95f, .85f, .7f, .55f];
+        private static readonly float[] PickupOffsets = [1.3f, 1.15f, 1.05f, .95f, .85f, .7f, .55f];
         public override bool Enabled => YourBuddyPlugin.ConfigStoring.Value && Body.IsAboardPlayerShip();
         public override float Interval => 3f;
         internal bool Running => Body.Leg is Leg;
@@ -138,6 +138,18 @@ namespace YourBuddy
                 report = "the item's size is unavailable";
                 return Failed(report);
             }
+            Leg pickupCheck = new(this, item, source != null && source.Overflow == null ? source.Approach : Items.ItemTop(item), Stage.Fetch);
+            if (Body.Hands.Item != item && !Body.InReach(pickupCheck))
+            {
+                string? unreachable = Body.PlanReach(pickupCheck, out _);
+                if (unreachable != null)
+                {
+                    Skips.Skip(item.transform, SkipSeconds);
+                    report = "cannot reach " + Items.ItemLabelOf(item) + ": " + unreachable;
+                    Trace(report);
+                    return Failed(report);
+                }
+            }
             half = originalHalf = bounds.extents + Vector3.one * .01f;
             shapeHalf = StorageShape.Measure(item, bounds);
             itemCenter = item.transform.InverseTransformPoint(bounds.center);
@@ -219,7 +231,7 @@ namespace YourBuddy
                     if (++orientationIndex < StorageShape.Orientations) { probeIndex = 0; continue; }
                     YourBuddyPlugin.Log.LogInfo($"[store] {destination.Name} in {destination.Room.name}: " +
                         (capacity == 0 ? "item is too large" : "no clear supported slot; last probe: " + destination.LastBlocker) + "; trying another container");
-                    if (TryBeginRepack(task.Item, destination)) return Vector3.zero;
+                    if (TryBeginRepack(task, destination)) return Vector3.zero;
                     containerIndex++; probeIndex = orientationIndex = 0;
                     continue;
                 }
@@ -384,6 +396,16 @@ namespace YourBuddy
                     task.Until = Time.time + 4f;
                     Body.Hands.ReachTo(task.ReachPoints[0], HandSpeed);
                     return Vector3.zero;
+                }
+                if (Time.time < task.ClearanceCheckAt) return Vector3.zero;
+                if (!Items.ColliderBounds(task.Item.gameObject, out Bounds looseBounds)) return Stop(task, "item bounds unavailable");
+                Vector3 liftedLoose = looseBounds.center + new Vector3(0, .03f, 0);
+                Vector3 liftHalf = new(originalHalf.x, StorageAccess.LiftHalfHeight(looseBounds.extents.y), originalHalf.z);
+                if (!destination.ClearReach(looseBounds.center, liftedLoose, liftHalf, task.Item.transform, Body.Transform) ||
+                    !destination.ClearReach(liftedLoose, Body.Hands.Point, originalHalf, task.Item.transform, Body.Transform))
+                {
+                    if (WaitForClearance(task)) return Vector3.zero;
+                    return Stop(task, "pickup path blocked: " + destination.LastBlocker);
                 }
                 if (!Body.Hands.PickUp(task.Item)) return Stop(task, "could not pick up the item");
                 Body.Hands.TurnWorld(rotation);
@@ -561,7 +583,7 @@ namespace YourBuddy
                 insertionFailures[task.Destination] = ++failures;
                 nextContainer = failures >= 3;
             }
-            if (nextContainer && (task.Destination == null || !TryBeginRepack(task.Item, task.Destination)))
+            if (nextContainer && (task.Destination == null || !TryBeginRepack(task, task.Destination)))
             { containerIndex++; probeIndex = orientationIndex = 0; }
             YourBuddyPlugin.Log.LogInfo("[store] " + why + "; checking alternative storage");
             Leg search = new(this, task.Item, Here, Stage.Search);
@@ -600,7 +622,7 @@ namespace YourBuddy
             internal int ReachIndex;
             public override string Name => Destination != null && Stage == Stage.Deliver ? Destination.Name : "loose item";
             private bool LoosePickup => Stage == Stage.Fetch && (errand.source == null || errand.source.Overflow != null);
-            public override float Reach => LoosePickup ? 1.1f : Items.SnackReachDist;
+            public override float Reach => LoosePickup ? 1.35f : Items.SnackReachDist;
             public override float ReachBelow => Items.SnackReachBelow;
             public override float[] StandOffs => LoosePickup ? PickupOffsets : ApproachOffsets;
             public override bool Waits => Stage == Stage.Search || Until > 0;

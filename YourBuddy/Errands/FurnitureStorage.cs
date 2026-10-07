@@ -36,6 +36,24 @@ namespace YourBuddy
                     margin.x, margin.z, target.x, target.z);
                 Vector3 outside = new(portal.OuterX, target.y, portal.OuterZ);
                 Vector3 opening = center + Zone.transform.rotation * outside;
+                // Clear the open door leaf before moving sideways. docs/storing.md#opening-geometry
+                bool alongX = Mathf.Abs(face.x) / size.x > Mathf.Abs(face.z) / size.z;
+                Vector3 normal = Zone.transform.rotation * (alongX
+                    ? new Vector3(Mathf.Sign(face.x), 0, 0) : new Vector3(0, 0, face.z < 0 ? -1 : 1));
+                float depth = Vector3.Dot(opening - center, normal);
+                float padding = ProjectedHalf(half, inverse)[alongX ? 0 : 2];
+                foreach (Door door in Doors)
+                {
+                    if (door == null) continue;
+                    foreach (Collider collider in door.GetComponentsInChildren<Collider>())
+                    {
+                        if (!collider.enabled || collider.isTrigger) continue;
+                        Bounds bounds = collider.bounds;
+                        float radius = Mathf.Abs(normal.x) * bounds.extents.x + Mathf.Abs(normal.z) * bounds.extents.z;
+                        depth = StorageAccess.OutsideDoor(depth, Vector3.Dot(bounds.center - center, normal), radius, padding);
+                    }
+                }
+                opening += normal * (depth - Vector3.Dot(opening - center, normal));
                 return [new Vector3(opening.x, from.y, opening.z), opening, point];
             }
             float above = Mathf.Max(from.y, center.y + size.y * .5f + half.y + .08f);
@@ -138,7 +156,8 @@ namespace YourBuddy
         internal int CandidateCount(Vector3 half)
         {
             if (Overflow != null) return Overflow.CandidateCount;
-            if (Zone == null || !GameInternals.StorageZoneAccess.TryRead(Zone, out Vector3 size, out _)) return 0;
+            if (Zone == null || !GameInternals.StorageZoneAccess.TryRead(Zone, out Vector3 size, out _))
+            { LastBlocker = "storage dimensions unavailable"; return 0; }
             Vector3 margin = ProjectedHalf(half, Quaternion.Inverse(Zone.transform.rotation));
             return margin.y * 2 > size.y ? 0 : StoragePolicy.ProbeColumns(size.x, margin.x) * StoragePolicy.ProbeColumns(size.z, margin.z) * 4;
         }
@@ -161,7 +180,8 @@ namespace YourBuddy
             StorageAccess.Slot slot = StorageAccess.PackingSlot(face.x, face.z, size.x, size.z, margin.x, margin.z, index);
             Vector3 local = new(slot.X, size.y * .5f - (index / (columns * rows)) * size.y / 4f, slot.Z);
             Vector3 ray = center + Zone.transform.rotation * local;
-            if (!Support(ray + Vector3.up * .02f, size.y / 4f + .04f, item, out RaycastHit support)) return false;
+            if (!Support(ray + Vector3.up * .02f, size.y / 4f + .04f, item, out RaycastHit support))
+            { LastBlocker = $"no shelf support at {ray}"; return false; }
             point = support.point + Vector3.up * (half.y + .015f);
             return Clear(point, half, item, true);
         }
@@ -192,7 +212,9 @@ namespace YourBuddy
 
         internal bool Clear(Vector3 point, Vector3 half, Transform item, bool closedDoors)
         {
-            if (!Available || !Contains(point, half)) return false;
+            LastBlockingItem = null;
+            if (!Available) { LastBlocker = "storage unavailable"; return false; }
+            if (!Contains(point, half)) { LastBlocker = $"outside storage bounds at {point}, half={half}"; return false; }
             if (Overflow != null)
             {
                 bool clear = Overflow.Clear(point, half, item);
@@ -205,10 +227,10 @@ namespace YourBuddy
                 Vector3 offset = i == 0 ? Vector3.zero : new Vector3((i % 2 == 0 ? 1 : -1) * half.x, 0, (i <= 2 ? -1 : 1) * half.z);
                 Vector3 bottom = point + offset - Vector3.up * half.y;
                 if (!Support(bottom + Vector3.up * .04f, .09f, item, out RaycastHit support) || Mathf.Abs(support.point.y - (bottom.y - .015f)) > .025f)
-                    return false;
+                { LastBlocker = $"missing or uneven shelf support at {bottom}"; return false; }
             }
             int count = Physics.OverlapBoxNonAlloc(point, half, Overlaps, Quaternion.identity, ~0, QueryTriggerInteraction.Collide);
-            if (count == Overlaps.Length) return false;
+            if (count == Overlaps.Length) { LastBlocker = "slot overlap buffer full"; return false; }
             int mask = NavProbe.CollisionMaskFor(item.gameObject.layer);
             int restricted = LayerMask.NameToLayer("PlaceRestriction");
             for (int i = 0; i < count; i++)
@@ -217,7 +239,12 @@ namespace YourBuddy
                 if (hit.transform.IsChildOf(item)) continue;
                 if (closedDoors && IsDoor(hit.transform)) continue;
                 if ((!hit.isTrigger && (mask & (1 << hit.gameObject.layer)) != 0) || hit.gameObject.layer == restricted ||
-                    hit.GetComponentInParent<ItemDetector>() != null || hit.GetComponentInParent<ItemDestroyer>() != null) return false;
+                    hit.GetComponentInParent<ItemDetector>() != null || hit.GetComponentInParent<ItemDestroyer>() != null)
+                {
+                    LastBlockingItem = hit.GetComponentInParent<Grabbable>();
+                    LastBlocker = $"slot blocked by {hit.name} at {point}";
+                    return false;
+                }
             }
             return true;
         }

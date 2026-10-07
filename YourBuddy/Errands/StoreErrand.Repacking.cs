@@ -15,10 +15,10 @@ namespace YourBuddy
             repack = null;
         }
 
-        private bool TryBeginRepack(Grabbable incoming, FurnitureStorage target)
+        private bool TryBeginRepack(Leg task, FurnitureStorage target)
         {
+            Grabbable incoming = task.Item;
             if (repack != null) return RepackRefused(target, "sequence already active");
-            if (source != null && source.Root != target.Root) return RepackRefused(target, "incoming item belongs to another storage area");
             if (target.Overflow != null) return RepackRefused(target, "target is overflow");
             if (!target.Available) return RepackRefused(target, "target unavailable");
             if (repackSkips.Has(target.Root)) return RepackRefused(target, "target repack cooldown");
@@ -60,6 +60,15 @@ namespace YourBuddy
             }
             repack = new StorageRepackPlan(target.Root, incoming, contents, Time.time);
             repackSkips.Skip(target.Root, 300f);
+            if (source?.Overflow != null && Body.Hands.Item != incoming)
+            {
+                repack.Advance(incoming, true);
+                task.Completed = true;
+                DueAt = Time.time + Interval;
+                YourBuddyPlugin.Log.LogInfo("[store] Making room: incoming item already in overflow; clearing preferred storage first");
+                Body.FinishRoute();
+                return true;
+            }
             containers.Clear();
             containers.AddRange(staging);
             containerIndex = probeIndex = orientationIndex = 0;
