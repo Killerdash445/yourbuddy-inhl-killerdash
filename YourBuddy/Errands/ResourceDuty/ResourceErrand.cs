@@ -303,14 +303,16 @@ namespace YourBuddy
 
         private int ShipStock()
         {
-            int count = 0;
+            ResourceContainer? inserted = loader != null ? GameInternals.ResourceAccess.Current(loader) : null;
+            int count = inserted != null && inserted.Data != null && inserted.Type == TypeOf(kind) && inserted.Value > 0 ? 1 : 0;
             foreach (ResourceContainer candidate in ResourceScan.Cells())
             {
+                if (candidate == inserted) continue;
                 if (candidate == null || candidate.Data == null || candidate.Type != TypeOf(kind) || candidate.Value <= 0) continue;
                 if (NpcVessels.OwnerOfTransform(candidate.transform) != NavGraph.ShipOwner) continue;
                 // A cell Buddy failed to reach lately is no stock: it must not stop a purchase.
                 if (Skips.Has(candidate.transform)) continue;
-                if (Items.Loadable(candidate) || (loader != null && GameInternals.ResourceAccess.Current(loader) == candidate)) count++;
+                if (Items.Loadable(candidate)) count++;
             }
             return count;
         }

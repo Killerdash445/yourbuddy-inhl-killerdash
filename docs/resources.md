@@ -21,7 +21,8 @@ An enabled duty refills at or below 30% towards 80%. Oxygen means stored ship ox
 not room atmosphere. The game's fixed transfer increments can overshoot the target.
 With Buying on and fewer than one usable matching cell aboard, Buddy recovers a loose
 station cell or buys one. A cell aboard he failed to reach in the last minute does not count. A shop cell priced over the allowance or your cash is named in the
-report with its price. Existing supplies are preferred; closed containers are not opened.
+report with its price. Supplies aboard are preferred, then reachable loose supplies; closed containers are not opened.
+A charged cell in the loader counts once, even before the cached scene scan includes it.
 When a refill is due, the cell it recovers or buys goes straight into the loader; otherwise
 it is stored aboard as a spare.
 A run brings back one cell. Every purchase must fit both the remaining allowance and the
