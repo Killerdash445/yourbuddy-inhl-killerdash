@@ -248,7 +248,7 @@ being found. A stored claim can outlive the errand that made it; a derived one c
 
 **Rule.** At most one resource duty runs across all buddies. Its live leg claims its cell and
 loader under [one-buddy-per-target](#one-buddy-per-target). Refilling starts only with an empty loader; restocking leaves any inserted cell alone. A duty
-ejects only the cell it supplied, including on interruption or before a save snapshot.
+ejects only the cell it supplied, on interruption. Saving leaves an active refill and its cell in place.
 Purchases need an enabled resource rule, explicit purchase permission, enough shared remaining
 allowance and enough cash. These conditions are checked
 again immediately before spending. An uncertain purchase pauses the duties.
@@ -260,4 +260,4 @@ delivery must not substitute an unchecked forward drop.
 spending, and taking over a player's inserted cell would interrupt their work.
 
 **Enforced in.** `ResourceDuty`, `ResourceErrand`, `ResourceDutySettings.CanBuy`,
-`ResourceErrand.Leg.Holds`, and the `SaveParser.OnFileSaveInitiated` cleanup listener.
+`ResourceErrand.Leg.Holds`.

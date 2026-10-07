@@ -32,13 +32,17 @@ fear and survival priorities. Resource buttons do not change the Autonomy config
 release a standing order. **Decide** on the normal orders page uses the existing autonomy order.
 
 Only one buddy owns the shared loader duty. It never takes over the player's inserted cell;
-interruption ejects only its own cell. Purchases and deliveries are rechecked before acting.
+an occupied loader (including a spent cell) blocks refilling and is reported without selecting
+that refill in the decider. Remove the cell to resume. Restocking remains independent.
+Interruption ejects only its own cell; saving does not interrupt a run. Purchases and deliveries are rechecked before acting.
 An uncertain purchase pauses duties; interrupted purchase verification turns Buying off.
 Inspect the shop and cash before enabling work again.
 
 ## Scans and storage
 
 Resource and shop searches use `SceneScan.ThisFrame`, sharing each frame's snapshot.
+Cell candidates reuse a list; staged-item membership refreshes twice per second, immediately
+before buying, and is checked live before pickup.
 After buying, verification waits for the next frame's snapshot instead of forcing a new scan.
 Storage uses active ship nodes and the carried item's footprint. A shared budget permits at
 most four candidate probes per frame; a pending search holds its errand while continuing

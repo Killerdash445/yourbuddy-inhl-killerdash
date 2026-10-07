@@ -194,6 +194,7 @@ Everything else is grouped: each category is one command, and the first word aft
 
 | Subcommand | Arguments | Description |
 |------------|-----------|-------------|
+| `drain` | `<oxygen\|fuel\|energy>` | Lower that ship resource to 20% for testing; leaves duty settings unchanged. |
 | `goto` | `<node_index> [@who]` | Walk the buddy to a specific nav-graph node (the dialog takes room names instead). |
 | `speed` | `<value> [@who]` | Set movement speed (0.5–10 m/s). |
 | `mind` | `[@who]` | Show what the buddy is weighing and when it acts next (the HUD's Mind / Why / Air / Snack / Tidy / Sell / Play / Fetch suit lines). |

@@ -195,7 +195,7 @@ namespace YourBuddy
         /// <summary>
         /// For the HUD and buddy_dev mind.
         /// </summary>
-        public string Describe()
+        public virtual string Describe()
         {
             string last = Last != null ? " (last: " + Last + ")" : "";
             if (!Enabled) return $"off - {Command} still works" + last;

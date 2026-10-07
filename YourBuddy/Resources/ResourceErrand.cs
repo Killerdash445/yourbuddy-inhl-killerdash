@@ -27,6 +27,9 @@ namespace YourBuddy
         private readonly bool[] needed = new bool[3];
         private readonly HashSet<int> beforePurchase = [];
         private readonly HashSet<Grabbable> stagedItems = [];
+        private readonly List<ResourceContainer> candidates = [];
+        private Comparison<ResourceContainer>? candidateOrder;
+        private float stagedRefresh;
         private float deadline;
         private int kind;
         private int nextKind;
@@ -84,6 +87,33 @@ namespace YourBuddy
         protected override string Command => "Resources";
         protected override string Topic => "Resources";
 
+        public override string Describe()
+        {
+            if (ResourceDuty.Owner == this) return "active - " + ResourceDuty.Status;
+            if (ResourceDuty.Owner != null) return "waiting for another buddy's resource run";
+            if (!ResourceDuty.Enabled) return "off - enable duties on the Resources page";
+            if (Body.IsOutside) return "waiting to come inside";
+            return base.Describe();
+        }
+
+        private bool PrepareLoader()
+        {
+            if (!GameInternals.ResourceAccess.Ready) return Waiting("loader support unavailable");
+            loader = ship != null ? ship.CellController : null;
+            if (loader == null || !loader.Initialized) return Waiting("ship loader is not initialized");
+            slot = GameInternals.ResourceAccess.Slot(loader);
+            if (slot == null || !Items.Loadable(slot)) return Waiting("ship loader room is unavailable");
+            return true;
+        }
+
+        private string? RefillBlocked()
+        {
+            ResourceContainer? inserted = loader != null ? GameInternals.ResourceAccess.Current(loader) : null;
+            return inserted == null ? null : inserted.Value <= 0
+                ? "loader occupied by a spent cell; remove it to refill"
+                : "loader occupied; remove its cell to refill";
+        }
+
         public override int Count(out float nearest)
         {
             nearest = 0f;
@@ -92,14 +122,18 @@ namespace YourBuddy
             if (Body.Hands.Item != null) return 0;
             ship = GameManager.Instance.PlayerShip;
             if (ship == null || (!Body.IsAboardPlayerShip() && string.IsNullOrEmpty(ship.Autopilot.DockedStation))) return 0;
-            loader = ship.CellController;
-            if (loader == null) return 0;
+            if (!PrepareLoader() || loader == null) return 0;
+            string? blocked = RefillBlocked();
             nearest = Mathf.Sqrt(Items.FlatDistanceSq(loader.transform.position, Here));
             for (int i = 0; i < 3; i++)
             {
                 ResourceRule rule = ResourceDuty.Settings.Rule(i);
                 if (!rule.Enabled) continue;
-                if (rule.NeedsRefill(Percent(i), needed[i])) return 1;
+                if (rule.NeedsRefill(Percent(i), needed[i]))
+                {
+                    if (blocked == null) return 1;
+                    Waiting(blocked);
+                }
                 kind = i;
                 if (ResourceDuty.Settings.Buying && ShipStock() < ResourceRule.MinCells) return 1;
             }
@@ -133,10 +167,9 @@ namespace YourBuddy
             if (ship == null || !GameInternals.ResourceAccess.Ready) return Waiting("ship or loader support unavailable");
             if (!Body.IsAboardPlayerShip() && string.IsNullOrEmpty(ship.Autopilot.DockedStation))
                 return Waiting("Buddy must be aboard or at the docked station");
-            loader = ship.CellController;
-            if (loader == null || !loader.Initialized) return Waiting("ship loader is not initialized");
-            slot = GameInternals.ResourceAccess.Slot(loader);
-            if (slot == null || !Items.Loadable(slot)) return Waiting("ship loader room is unavailable");
+            if (!PrepareLoader() || loader == null || slot == null) return false;
+            string? blocked = RefillBlocked();
+            stagedRefresh = 0f;
             Body.LoadRoomOf(slot.transform);
             for (int n = 0; n < 3; n++)
             {
@@ -148,7 +181,7 @@ namespace YourBuddy
                 storageAttempts = 0;
                 rejectedStorage.Clear();
                 storageFailure = null;
-                if (needed[kind] && GameInternals.ResourceAccess.Current(loader) == null &&
+                if (needed[kind] && blocked == null &&
                     Plan(new Leg(this, slot.GetComponent<BoxCollider>().bounds.center, loader.transform, Phase.Insert), false) &&
                     FindCell()) { Start(); return true; }
                 int stock = ShipStock();
@@ -158,7 +191,8 @@ namespace YourBuddy
                     stockGoal = stock + ResourceRule.BuyQuantity;
                     if (FindCell() || FindShop() || BeginStorageSearch()) { Start(); return true; }
                 }
-                if (needed[kind] || (ResourceDuty.Settings.Buying && stock < ResourceRule.MinCells))
+                if (needed[kind] && blocked != null) Waiting(blocked);
+                else if (needed[kind] || (ResourceDuty.Settings.Buying && stock < ResourceRule.MinCells))
                     ResourceDuty.Report(storageFailure ?? $"Waiting: no reachable {ResourceDutySettings.Label(kind)} supply or affordable shop; {stock} usable cells aboard.", ResourceDutySettings.Label(kind));
             }
             return false;
@@ -195,10 +229,16 @@ namespace YourBuddy
 
         private bool FindCell()
         {
-            stagedItems.Clear();
-            foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>()) stagedItems.UnionWith(detector.Items);
-            List<ResourceContainer> candidates = [];
-            // Only on a scheduled search or immediately before purchase, never in the movement loop.
+            if (Time.time >= stagedRefresh)
+            {
+                stagedItems.Clear();
+                foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>())
+                {
+                    if (detector != null) stagedItems.UnionWith(detector.Items);
+                }
+                stagedRefresh = Time.time + .5f;
+            }
+            candidates.Clear();
             foreach (ResourceContainer candidate in SceneScan.ThisFrame<ResourceContainer>())
             {
                 if (candidate == null || candidate.Data == null || candidate.Type != TypeOf(kind) || candidate.Value <= 0 || !Items.Loadable(candidate)) continue;
@@ -210,9 +250,7 @@ namespace YourBuddy
                 candidates.Add(candidate);
             }
             // Use partially spent cells first, preserving full cells when possible.
-            candidates.Sort((a, b) => a.Value != b.Value ? a.Value.CompareTo(b.Value) :
-                (a.transform.position - Body.Transform.position).sqrMagnitude.CompareTo(
-                    (b.transform.position - Body.Transform.position).sqrMagnitude));
+            candidates.Sort(candidateOrder ??= CompareCells);
             int attempts = 0;
             foreach (ResourceContainer candidate in candidates)
             {
@@ -228,6 +266,10 @@ namespace YourBuddy
             }
             return false;
         }
+
+        private int CompareCells(ResourceContainer a, ResourceContainer b) =>
+            a.Value != b.Value ? a.Value.CompareTo(b.Value) :
+                (a.transform.position - Here).sqrMagnitude.CompareTo((b.transform.position - Here).sqrMagnitude);
 
         private bool FindShop()
         {
@@ -392,7 +434,7 @@ namespace YourBuddy
                 ResourceDuty.Report("Resource run interrupted; checking again shortly.", "scheduler");
             try
             {
-                // Eject only our own cell, including before the game's save snapshot.
+                // Eject only our own cell when the job ends; saving does not end the job.
                 if (loader != null && cell != null && GameInternals.ResourceAccess.Current(loader) == cell)
                     loader.TryTakeOut();
                 if (cell != null && Body.Hands.Item == cell.GetComponent<Grabbable>()) PutDownSafely();
@@ -455,6 +497,10 @@ namespace YourBuddy
             Grabbable item = cell!.GetComponent<Grabbable>();
             if (leg.Stage == Phase.Fetch)
             {
+                foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>())
+                {
+                    if (detector != null && detector.Items.Contains(item)) return Stop("cell was placed in another slot");
+                }
                 if (Items.TakeBlocker(item, Body.Hands.Item) != null || Body.TakenByAnother(item.transform) ||
                     (Items.ItemTop(item) - leg.TargetPoint).sqrMagnitude > 0.5f) return Stop("cell moved or was taken");
                 if (!Body.Hands.PickUp(item)) return Stop("could not pick up the cell");
@@ -529,6 +575,7 @@ namespace YourBuddy
             if (outlet == null) return Stop("shop outlet unavailable");
             if (restocking && (ShipStock() >= stockGoal || PurchasesLeft <= 0)) return Stop("restock quantity reached");
             // A cell may have appeared while Buddy walked to the shop; recheck before spending.
+            stagedRefresh = 0f;
             if (FindCell()) return Vector3.zero;
             if (!ResourceDuty.Settings.CanBuy(Rule, product.BuyPrice, player.CashSystem.Cash))
                 return Stop("no more cells affordable within your limits");
