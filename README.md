@@ -35,10 +35,9 @@ bit unnerving. Try it yourself.
 
 1. Install **[BepInEx 5](https://github.com/BepInEx/BepInEx/releases)** (Windows x64,
    `BepInEx_win_x64_5.x.x.zip`), extracted next to `Isolated Inhale.exe`.
-2. Download `YourBuddy.dll` from [Releases](https://github.com/bytenull1/yourbuddy-inhl/releases) and
-   `NPC.Core.dll` from [NPC.Core's releases](https://github.com/bytenull1/npc-core-inhl/releases) - the shared
-   NPC library the buddy walks with.
-3. Put both into `BepInEx/plugins/` and launch the game.
+2. Download the zip from [Releases](https://github.com/bytenull1/yourbuddy-inhl/releases) (contains
+   `YourBuddy.dll` and `NPC.Core.dll`) and extract it into `BepInEx/plugins/`.
+3. Launch the game.
 
 > To see the log while playing, set `Enabled = true` under `[Logging.Console]` in `BepInEx/config/BepInEx.cfg`.
 
@@ -74,6 +73,11 @@ closes the window. Wording is matched loosely: "follow me" and "wait here" work 
 **Orders and its own mind.** With no order in force - which is how it starts, and how it comes back after loading a save - the buddy decides for itself every few seconds. It scores everything it might do: switching the life support back on (which always wins), selling trash boxes, tidying up, a snack, messing about with something, wandering off, or coming back to you. Each score is made of how overdue the thing is, how much of it there is, and how far away - so distance makes something *less* attractive rather than invisible, and it will cross a room or two for the only job going. Then it picks between the best few **at random**, which is why it does not repeat itself.
 
 `follow`, `wander`, `stay`, `goto` and `decide for yourself` are orders; `hide`, `tidy up`, `sell` and `play` just start that job now. An order holds until you give another one or tell it to decide for itself; with `OrderPersistence = Expires` it also runs out, and a `goto` ends when the buddy arrives. An order given while it is running from the Breathless is carried out once it has got away. `Autonomy = false` turns its own decisions off.
+
+**Resource duties.** In the window, **Resources** opens a page of switches: refill the ship's oxygen, fuel and
+energy, buy cells when none are aboard, and a spending limit. All are off by default and saved with your game;
+every buddy shares them. A refill starts at 30% and stops at 80%. In the console: `buddy_order resources`. More in
+[resource duties](docs/resources.md).
 
 **Doors.** The buddy only uses codes you gave it, and only on keypads whose own code matches; the window tells you straight away whether a code opens any door it knows about. Codes are saved with your game. It plans a route around doors it cannot open, and if there is no other way, it waits for you.
 
@@ -186,6 +190,7 @@ Everything else is grouped: each category is one command, and the first word aft
 | `suit` | `<on\|off> [@who]` | Make the buddy put a spare suit on, or take the worn one off, right now. It keeps the suit on outside and in an airlock. |
 | `fetchsuit` | `[@who]` | Make the buddy fetch a suit you left on the docked station right now, even with `SuitFetch` off. Says why when there is none to fetch. |
 | `terminal` | `<oxygen\|climate> [@who]` | Make the buddy switch that unit on now, whatever the air (for testing; only if it is off and not broken or faulted). |
+| `resources` | `[oxygen\|fuel\|energy\|buying [on\|off]]` or `[limit <amount>]` | Without arguments, show the resource duties. A duty or `buying` toggles it (or sets it with `on`/`off`); `limit` sets the remaining spending allowance. Shared by every buddy and saved with your game. |
 | `password` | `<code>` | Tell the buddies a door PIN code - all of them learn it. It is used only on keypads whose own code matches, and is saved with your game. |
 
 **`buddy_anomaly`** `[<kind>|end|roll|list|forget] [@who]` - with no argument, the current state and what this save has had; `list` names every kind and whether it can come now; a kind starts it now (it still says why when it does not fit); `end` stops the running one; `roll` draws one as the mod would; `forget` lets this save have every one again.
@@ -301,8 +306,3 @@ Then came endless bug fixes: strict checks broke valid paths, relaxing them intr
 ![The buddy wandering along the nav graph, with debug visuals and the HUD enabled](docs/images/navigation.png)
 
 ![The node editor overlay: nodes as blue crosses, connections as yellow lines](docs/images/node-map.png)
-
-## Resource duties
-
-Talk to Buddy and choose **Commands > Resources** to configure optional refilling and purchases.
-See [resource duties](docs/resources.md) for controls, spending limits and prerequisites.

@@ -248,5 +248,50 @@ namespace YourBuddy
                 ? "Got it - that opens a door I know about"
                 : "Noted, but no door I know of uses that code";
         }
+
+        internal const string ResourcesUsage = "Usage: buddy_order resources [oxygen|fuel|energy|buying [on|off]] | [limit <amount>]";
+
+        /// <summary>
+        /// The console's Resources page: shared duty settings, not per buddy. A change resumes paused
+        /// duties, as the dialog's buttons do. docs/resources.md
+        /// </summary>
+        internal static string Resources(string[] args)
+        {
+            ResourceDutySettings s = ResourceDuty.Settings;
+            if (args.Length == 0)
+            {
+                return $"Resource duties: oxygen {OnOff(s.Oxygen.Enabled)}, fuel {OnOff(s.Fuel.Enabled)}, " +
+                       $"energy {OnOff(s.Energy.Enabled)}; buying {OnOff(s.Buying)}, limit {s.Budget}" +
+                       (s.Paused ? "; paused - change a setting to resume" : "");
+            }
+
+            string what = args[0].ToLowerInvariant();
+            if (what == "limit")
+            {
+                if (args.Length < 2 || !int.TryParse(args[1], out int budget) || budget < 0) return ResourcesUsage;
+
+                s.Budget = budget;
+                s.Paused = false;
+                return $"Spending limit: {s.Budget}.";
+            }
+            if (what == "buying")
+            {
+                s.Buying = NpcConsole.Toggle(args, 1, s.Buying);
+                s.Paused = false;
+                return s.Buying ? "Buying allowed within the limit." : "Buying off.";
+            }
+            for (int kind = 0; kind < 3; kind++)
+            {
+                if (what != ResourceDutySettings.Label(kind)) continue;
+
+                ResourceRule rule = s.Rule(kind);
+                rule.Enabled = NpcConsole.Toggle(args, 1, rule.Enabled);
+                s.Paused = false;
+                return $"{ResourceDutySettings.Label(kind)} duty {OnOff(rule.Enabled)}.";
+            }
+            return ResourcesUsage;
+        }
+
+        private static string OnOff(bool on) => on ? "on" : "off";
     }
 }

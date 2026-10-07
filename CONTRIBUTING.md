@@ -73,6 +73,35 @@ The decompile and exports are the game developer's work and must never be commit
 - **Update the docs** that own the subject, following [AGENTS.md §4](AGENTS.md#4-documentation-rules):
   describe the code as it is, short sentences, no dates or status notes.
 
+### Branches and pull requests
+
+Pull requests are squash-merged: each becomes one new commit on `main`, and the branch's own commits
+never reach `main`.
+
+- **Start every branch from an up-to-date `main`**, not from another feature branch:
+  ```bash
+  git switch main
+  git pull
+  git switch -c my-fix
+  ```
+- **One pull request, one problem.** Unrelated fixes go in separate branches.
+- **Keep a branch current** with `git rebase origin/main`, not by merging `main` into it.
+
+**A pull request that needs another one** (B needs A's code):
+
+1. Branch B from A's branch and open B with A's branch as its base, so its diff shows only B's
+   changes. Say "Depends on #A" in the description.
+2. After A is squash-merged, A's commits are still in B's history but not in `main`. Drop them by
+   replaying only B's own commits onto `main`:
+   ```bash
+   git fetch origin
+   git rebase --onto origin/main branch-a branch-b
+   git push --force-with-lease
+   ```
+3. Set B's base to `main` (GitHub does this when A's branch is deleted) and check the diff again.
+
+If B does not need A's code, start it from `main` instead. Avoid chains longer than two.
+
 ### Changing the shipped nav graph
 
 The graph ships with NPC.Core; see [its CONTRIBUTING](https://github.com/bytenull1/npc-core-inhl/blob/main/CONTRIBUTING.md#changing-the-shipped-nav-graph).

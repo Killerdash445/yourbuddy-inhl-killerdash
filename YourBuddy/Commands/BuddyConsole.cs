@@ -73,6 +73,9 @@ namespace YourBuddy
                     (b, rest) => rest.Length < 1 ? "Usage: buddy_order suit <on|off> [@who]" : BuddyCommands.Suit(b, rest[0])),
                 ["terminal"] = PerBuddy("<oxygen|climate>", "switch that unit on now, if it is off",
                     (b, rest) => rest.Length < 1 ? "Usage: buddy_order terminal <oxygen|climate> [@who]" : BuddyCommands.Terminal(b, rest[0])),
+                ["resources"] = new("[oxygen|fuel|energy|buying [on|off]] | [limit <amount>]",
+                    "show or change the resource duties every buddy shares",
+                    args => Print(BuddyCommands.Resources(Array.FindAll(args, a => !a.StartsWith("@"))))),
                 ["password"] = new("<code>", "tell every buddy a door code",
                     args => Print(args.Length < 1 ? "Usage: buddy_order password <code>" : BuddyCommands.GivePassword(args[0]))),
             }));

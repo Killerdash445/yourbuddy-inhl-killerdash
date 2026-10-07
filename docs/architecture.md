@@ -20,7 +20,7 @@ the buddy through a few `internal` members, never its fields.
 | Folder | What is in it |
 |---|---|
 | `YourBuddy/` | `YourBuddyPlugin.cs`, the entry point |
-| `Resources/` | resource duty settings, conversation controls and the shared refill/purchase routine; [resources](resources.md) |
+| `Errands/ResourceDuty/` | resource duty settings, conversation controls and the shared refill/purchase routine; [resources](resources.md) |
 | `Core/` | the buddies' list and save, spawning, skins, settings, `GameInternals` |
 | `Brain/` | `BuddyBehaviour` and its partials, but for the anomalies |
 | `Anomalies/` | the director, the catalogue, and `BuddyBehaviour.Anomaly.*.cs`: one partial per set piece |

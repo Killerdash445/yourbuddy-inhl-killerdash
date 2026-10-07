@@ -12,6 +12,9 @@ Buttons update in place with NPC.Core's optional command-page interface. Replies
 Back shows the conversation log. There is no number editor: typed orders and door codes keep
 working. Duties and buying default off; the spending allowance defaults to zero.
 
+The console has the same page: `buddy_order resources` shows the settings; `oxygen`, `fuel`,
+`energy` and `buying` toggle (or take `on`/`off`); `limit <amount>` sets any allowance.
+
 ## Policy and saves
 
 An enabled duty refills at or below 30% towards 80%. Oxygen means stored ship oxygen,
