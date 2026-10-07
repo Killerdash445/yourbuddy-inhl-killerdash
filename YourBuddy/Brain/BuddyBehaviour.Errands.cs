@@ -11,6 +11,7 @@ namespace YourBuddy
     public sealed partial class BuddyBehaviour : IErrandBody
     {
         // Created in Awake, before the first frame.
+        private ResourceErrand resources = null!; // Initialized in Awake before the decider runs.
         private LifeSupport lifeSupport = null!;
         private BuddySuit suit = null!; // Awake; the agent's settings read it only from the slow phases on
         private SnackErrand snacks = null!;
@@ -25,6 +26,7 @@ namespace YourBuddy
             nearMonster = node => (node - lastMonsterPos).sqrMagnitude < FearRestraintDist * FearRestraintDist;
             inDockCorridor = InDockCorridor;
             nearMonsterOrCorridor = node => nearMonster(node) || InDockCorridor(node);
+            resources = new ResourceErrand(this);
             lifeSupport = new LifeSupport(this);
             suit = new BuddySuit(this, lifeSupport);
             snacks = new SnackErrand(this);

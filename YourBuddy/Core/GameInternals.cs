@@ -47,6 +47,40 @@ namespace YourBuddy
             }
         }
 
+        internal static class ResourceAccess
+        {
+            private const string Feature = "resource duties";
+            private static readonly FieldInfo? Cell = Field<ResourceContainer>(typeof(ResourceController), "currentCell", Feature);
+            private static readonly FieldInfo? Detector = Field<ItemDetector>(typeof(ResourceController), "itemDetector", Feature);
+            private static readonly FieldInfo? Loading = Field<bool>(typeof(ResourceController), "loading", Feature);
+            internal static bool Ready => Cell != null && Detector != null && Loading != null;
+            internal static ResourceContainer? Current(ResourceController controller) => Get<ResourceContainer>(Cell, controller);
+            internal static ItemDetector? Slot(ResourceController controller) => Get<ItemDetector>(Detector, controller);
+            internal static bool IsLoading(ResourceController controller) => GetValue<bool>(Loading, controller) == true;
+        }
+
+        internal static class ShopAccess
+        {
+            private const string Feature = "resource purchases";
+            private static readonly FieldInfo? Items = Field<Grabbable[]>(typeof(Shop), "items", Feature);
+            private static readonly FieldInfo? Selection = Field<int>(typeof(Shop), "currentItem", Feature);
+            private static readonly FieldInfo? Spawn = Field<Transform>(typeof(Shop), "spawnPoint", Feature);
+            internal static Grabbable[]? Stock(Shop shop) => Get<Grabbable[]>(Items, shop);
+            internal static Transform? Outlet(Shop shop) => Get<Transform>(Spawn, shop);
+            internal static bool Ready => Items != null && Selection != null && Spawn != null;
+            internal static void Buy(Shop shop, int index, Player player)
+            {
+                if (Selection == null) return;
+                object old = Selection.GetValue(shop);
+                try
+                {
+                    Selection.SetValue(shop, index);
+                    shop.TryBuyChosenItem(player);
+                }
+                finally { Selection.SetValue(shop, old); }
+            }
+        }
+
         private const BindingFlags MemberFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
 
         /// <summary>

@@ -17,6 +17,7 @@ and the rules several NPC mods share are
 | [dialog.md](dialog.md) | the order words, and when the buddy can be talked to |
 | [behaviour.md](behaviour.md) | orders vs. modes, the decider, bouts |
 | [fear.md](fear.md) | seeing the Breathless, stress, fleeing, hiding |
+| [resources.md](resources.md) | player-configured oxygen, fuel and energy refilling and purchases |
 | [terminals.md](terminals.md) | switching on oxygen and climate control |
 | [eva.md](eva.md) | the EVA suit, going outside and back in through a station airlock, fetching a forgotten suit home |
 | [anomalies.md](anomalies.md) | strange and frightening moments: when, how far, each one |

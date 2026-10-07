@@ -82,6 +82,8 @@ namespace YourBuddy
 
             Add(new Category("buddy_dev", "testing and debugging", new()
             {
+                ["drain"] = new("<oxygen|fuel|energy>", "lower a ship resource to 20% for testing",
+                    args => Print(BuddyResourceDebug.Drain(args))),
                 ["goto"] = PerBuddy("<node>", "walk to that nav node",
                     (b, rest) => rest.Length < 1 || !int.TryParse(rest[0], out int node)
                         ? "Usage: buddy_dev goto <node> [@who]"

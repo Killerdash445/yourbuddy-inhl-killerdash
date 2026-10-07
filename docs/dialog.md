@@ -24,11 +24,12 @@ greeting. An anomaly may add lines to the log while the window is shut.
 
 ## 2. The panel
 
-NPC.Core draws it ([interaction.md §2](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#2-the-panel)). The commands page lists
-`BuddyDialogCommands.NamesFor(buddy)`: Status is always listed first. Inside it also lists Follow,
-Wander, Stay, Hide, Outside, Unsuit (only while suited), Fetch suit, Tidy, Sell, Play, Snack, Goto, Decide,
-Password; outside, Follow, Wander, Stay, Inside, Goto, Decide; floating, Follow, Stay, Inside,
-Decide ([eva.md §7](eva.md#7-floating)).
+NPC.Core draws it ([interaction.md §2](https://github.com/bytenull1/npc-core-inhl/blob/main/docs/interaction.md#2-the-panel)).
+The flat orders from `BuddyDialogCommands.NamesFor` remain context-sensitive. **Resources** opens
+one [resource controls page](resources.md), with toggles and a spending preset button.
+`INpcCommandPage` keeps these controls open and refreshes their labels after a click.
+**Orders** returns to the flat page. Typed orders and door codes use the normal parser;
+resource controls never capture numeric input.
 
 ---
 

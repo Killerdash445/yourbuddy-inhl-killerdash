@@ -8,8 +8,12 @@ namespace YourBuddy
     /// One buddy's side of NPC.Core's talk window. The orders are in BuddyDialogCommands.
     /// See docs/dialog.md.
     /// </summary>
-    internal sealed class BuddyConversation(BuddyBehaviour buddy) : INpcConversation
+    internal sealed class BuddyConversation(BuddyBehaviour buddy) : INpcConversation, INpcCommandPage
     {
+        private readonly ResourceDutyMenu resources = new();
+
+        public bool KeepCommandsOpen => resources.KeepPage;
+
         public INpc Npc => buddy.Agent;
 
         // Not while it is gone or frozen staring at you. docs/anomalies.md
@@ -20,9 +24,9 @@ namespace YourBuddy
 
         public string Greeting => buddy.ConversationStatus;
 
-        public IReadOnlyList<string> Commands => BuddyDialogCommands.NamesFor(buddy);
+        public IReadOnlyList<string> Commands => resources.Commands(BuddyDialogCommands.NamesFor(buddy));
 
-        public string Answer(string text) => BuddyDialogCommands.Run(buddy, text);
+        public string Answer(string text) => resources.Answer(text) ?? BuddyDialogCommands.Run(buddy, text);
 
         /// <summary>
         /// While open, untargeted console commands mean this buddy, and it holds still facing you.
@@ -33,6 +37,7 @@ namespace YourBuddy
 
             if (open) BuddyManager.SetFocus(buddy);
             buddy.InDialog = open;
+            if (!open) resources.Reset();
             if (open) buddy.OnTalkOpened();
         }
     }

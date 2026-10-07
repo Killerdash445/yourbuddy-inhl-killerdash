@@ -342,6 +342,8 @@ game. `buddy_spawn`, `buddy_despawn`, `buddy_kill` and `buddy_list` are commands
 is one console command whose first non-`@` argument picks the subcommand (`BuddyConsole.Dispatch`). Why
 categories: about 30 flat `buddy_*` names made the console list hard to read. Commands live in
 `BuddyConsole.cs`; order bodies live in `BuddyCommands.cs` so the [dialog](dialog.md) shares them.
+`buddy_dev drain <oxygen|fuel|energy>` lowers stored ship reserves to 20% through the game's
+resource controllers. It does not enable duties or alter purchase permissions.
 `buddy_dev goto` calls `FindPath` then `ApplyRouteOrder`, so `NavPath` changes must update it.
 
 **Which buddy.** A per-buddy command takes `@2` (a number), `@buddy2` (a name, case and spaces

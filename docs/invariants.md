@@ -243,3 +243,22 @@ being found. A stored claim can outlive the errand that made it; a derived one c
 `NearestSellStation`, `LifeSupport.TryStartTerminal`, `HideSpotBlocker`.
 
 ---
+
+### resource-duties-own-only-their-cell
+
+**Rule.** At most one resource duty runs across all buddies. Its live leg claims its cell and
+loader under [one-buddy-per-target](#one-buddy-per-target). Refilling starts only with an empty loader or a spent cell in it, which the duty ejects on
+arrival; restocking leaves any inserted cell alone. A charged cell it did not supply is never
+ejected; its own is ejected on interruption. Saving leaves an active refill and its cell in place.
+Purchases need an enabled resource rule, explicit purchase permission, enough shared remaining
+allowance and enough cash. These conditions are checked
+again immediately before spending. An uncertain purchase pauses the duties.
+Spare-cell delivery targets reachable floor storage independently of the insertion slot.
+Its footprint must have level support and clear space immediately before release; a failed
+delivery must not substitute an unchecked forward drop.
+
+**Why.** The ship has one cell slot. Independent per-buddy allowances would multiply permitted
+spending, and taking over a player's inserted cell would interrupt their work.
+
+**Enforced in.** `ResourceDuty`, `ResourceErrand`, `ResourceDutySettings.CanBuy`,
+`ResourceErrand.Leg.Holds`.

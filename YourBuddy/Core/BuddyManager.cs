@@ -416,6 +416,7 @@ namespace YourBuddy
             _pendingSpawn = null;
             BuddyCryoSpawn.ArmReopen(null);
             AnomalyMemory.Load(null);
+            ResourceDuty.Load(null);
             if (!YourBuddyPlugin.ConfigSaveSupport.Value) return;
 
             if (string.IsNullOrEmpty(saveFileName)) return;
@@ -423,6 +424,7 @@ namespace YourBuddy
             BuddySaveFile? data = ReadSidecar(saveFileName);
             BuddyCryoSpawn.ArmReopen(data?.OpenedCapsule);
             AnomalyMemory.Load(data);
+            ResourceDuty.Load(data?.ResourceDuties);
             if (data is { Exists: true })
             {
                 _pendingSpawn = data;

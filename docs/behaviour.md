@@ -52,7 +52,8 @@ also revokes the current order, or switching it on would visibly do nothing.
 ## 3. The decider
 
 `UpdateAutonomy` owns stand-down and order bookkeeping; `BuddyBehaviour.Mind.cs` decides **what to
-do**. Every `DecideInterval` it scores competing **urges** and acts on one.
+do**. Every `DecideInterval`, after survival and stand-down checks, it scores competing **urges**,
+including enabled [resource duties](resources.md), and acts on one.
 
 It **stands down** (logged at level 2 every 15 s) while:
 
@@ -96,6 +97,7 @@ Any factor at zero vetoes; anything under `UrgeFloor` is not worth doing.
 | `Terminal` | 1.00 | air in a band a unit could fix (`LifeSupport.AirIsDangerous`) | - | - |
 | `Suit` | 0.90 | the air is dangerous, no terminal is being tried, a spare suit is free ([eva.md §5](eva.md#5-suiting-up-for-deadly-air)) | - | - |
 | `Sell` | 0.75 | `0.4 + 0.2 ×` boxes | nearest box | since last look / `SellCheckInterval` |
+| `Resources` | 0.70 | an enabled refill or restock is due | ship loader | resource interval |
 | `Tidy` | 0.65 | `0.5 + 0.25 ×` (pieces − 1) | nearest piece | since last round / `TidyIntervalMinutes` |
 | `Snack` | 0.55 | 1 | nearest food | since last snack / `SnackIntervalMinutes` |
 | `SuitFetch` | 0.50 | 1 | nearest suit left on the station ([eva.md §6](eva.md#6-bringing-a-forgotten-suit-home)) | since last look / 120 s |

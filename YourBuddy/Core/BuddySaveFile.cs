@@ -15,6 +15,8 @@ namespace YourBuddy
         /// </summary>
         public BuddyState[]? Buddies { get; init; }
 
+        public ResourceDutySettings? ResourceDuties { get; init; }
+
         // The first buddy again, so a mod version from before Buddies still restores one.
         public bool Exists { get; init; }
         public bool Alive { get; init; }
@@ -62,6 +64,7 @@ namespace YourBuddy
             return data with
             {
                 Buddies = [.. buddies],
+                ResourceDuties = ResourceDuty.Settings,
                 KnownPinCodes = codes,
                 OpenedCapsule = openedCapsule,
                 AnomaliesHappened = AnomalyMemory.HappenedNow,
