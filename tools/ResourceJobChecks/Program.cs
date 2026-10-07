@@ -44,7 +44,9 @@ Check(!job.TryStart(out string report) && report.Contains("loader occupied"), "s
 Check(loader.Ejections == 0, "player cell left untouched");
 job.DueAt = 0;
 ResourceDuty.Settings.Buying = true;
-Check(job.Count(out _) == 1, "occupied loader does not block independent restocking");
+Check(job.Count(out _) == 0, "usable inserted cell counts as onboard stock");
+loader.Current = new ResourceContainer { Value = 0 };
+Check(job.Count(out _) == 1, "spent occupied loader does not block independent restocking");
 ResourceDuty.Settings.Buying = false;
 loader.Current = null;
 loader.Loading = false;
