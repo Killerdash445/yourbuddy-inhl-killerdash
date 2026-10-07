@@ -47,14 +47,14 @@ Check(!settings.CanBuy(settings.Oxygen, 0, 100) && !settings.CanBuy(settings.Oxy
 settings.Buying = false;
 Check(!settings.CanBuy(settings.Oxygen, 1, 100), "buying permission enforced");
 settings.Budget = 0;
-foreach (int expected in new[] {100, 250, 500, 1000, 0})
+foreach (int expected in new[] {1500, 3000, 6000, 12000, 0})
 {
     settings.CycleBudget();
     Check(settings.Budget == expected, "click cycles spending presets");
 }
 settings.Budget = 170;
 settings.CycleBudget();
-Check(settings.Budget == 250, "partly spent budget cycles to next preset");
+Check(settings.Budget == 1500, "partly spent budget cycles to next preset");
 ResourceDutyMenu menu = new();
 BuddyBehaviour buddy = new() { IsOutside = false, Floating = false, SuitSuited = false, IsDead = false, Asleep = false, Hiding = false, ReachDescription = null };
 string Answer(string text) => menu.Answer(text) ?? BuddyDialogCommands.Run(buddy, text);

@@ -247,8 +247,9 @@ being found. A stored claim can outlive the errand that made it; a derived one c
 ### resource-duties-own-only-their-cell
 
 **Rule.** At most one resource duty runs across all buddies. Its live leg claims its cell and
-loader under [one-buddy-per-target](#one-buddy-per-target). Refilling starts only with an empty loader; restocking leaves any inserted cell alone. A duty
-ejects only the cell it supplied, on interruption. Saving leaves an active refill and its cell in place.
+loader under [one-buddy-per-target](#one-buddy-per-target). Refilling starts only with an empty loader or a spent cell in it, which the duty ejects on
+arrival; restocking leaves any inserted cell alone. A charged cell it did not supply is never
+ejected; its own is ejected on interruption. Saving leaves an active refill and its cell in place.
 Purchases need an enabled resource rule, explicit purchase permission, enough shared remaining
 allowance and enough cash. These conditions are checked
 again immediately before spending. An uncertain purchase pauses the duties.

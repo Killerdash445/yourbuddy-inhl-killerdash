@@ -4,7 +4,8 @@ The normal orders stay on one page. Choose **Resources** for six buttons:
 
 - **oxygen**, **fuel**, **energy**: toggle each duty.
 - **Buying**: allow or forbid purchases for enabled duties.
-- **Limit**: cycle the remaining shared spending allowance through 0, 100, 250, 500 and 1000.
+- **Limit**: cycle the remaining shared spending allowance through 0, 1500, 3000, 6000 and 12000.
+  One cell costs 750-1050 at the default price multiplier.
 - **Orders**: return to the flat orders page.
 
 Buttons update in place with NPC.Core's optional command-page interface. Replies are one line;
@@ -16,7 +17,8 @@ working. Duties and buying default off; the spending allowance defaults to zero.
 An enabled duty refills at or below 30% towards 80%. Oxygen means stored ship oxygen,
 not room atmosphere. The game's fixed transfer increments can overshoot the target.
 With Buying on and fewer than one usable matching cell aboard, Buddy recovers a loose
-station cell or buys one. Existing supplies are preferred; closed containers are not opened.
+station cell or buys one. A shop cell priced over the allowance or your cash is named in the
+report with its price. Existing supplies are preferred; closed containers are not opened.
 A run brings back one cell. Every purchase must fit both the remaining allowance and the
 player's cash. Spending reduces the allowance; toggling Buying does not replenish it.
 
@@ -31,9 +33,12 @@ planning, skip list and deferral helpers. It requires autonomy and respects exis
 fear and survival priorities. Resource buttons do not change the Autonomy configuration or
 release a standing order. **Decide** on the normal orders page uses the existing autonomy order.
 
-Only one buddy owns the shared loader duty. It never takes over the player's inserted cell;
-an occupied loader (including a spent cell) blocks refilling and is reported without selecting
-that refill in the decider. Remove the cell to resume. Restocking remains independent.
+Only one buddy owns the shared loader duty. It never takes over a charged cell the player
+inserted: that blocks refilling and is reported without selecting that refill in the decider.
+Remove the cell to resume. A spent cell does not block: Buddy ejects it at the loader, then
+inserts its own. Restocking remains independent.
+The loader is used from inside its airlock: a stand point on the far side of one of the airlock's
+floor-level doors is refused, since the walk to it ends in the docking collar.
 Interruption ejects only its own cell; saving does not interrupt a run. Purchases and deliveries are rechecked before acting.
 An uncertain purchase pauses duties; interrupted purchase verification turns Buying off.
 Inspect the shop and cash before enabling work again.

@@ -19,7 +19,8 @@ namespace YourBuddy
         public ResourceRule Fuel { get; set; } = new();
         public ResourceRule Energy { get; set; } = new();
         internal bool Paused;
-        private static readonly int[] Limits = [0, 100, 250, 500, 1000];
+        // One cell costs 750-1050 at the default price multiplier.
+        private static readonly int[] Limits = [0, 1500, 3000, 6000, 12000];
 
         internal ResourceRule Rule(int kind) => kind switch { 0 => Oxygen, 1 => Fuel, _ => Energy };
         internal static string Label(int kind) => kind switch { 0 => "oxygen", 1 => "fuel", _ => "energy" };

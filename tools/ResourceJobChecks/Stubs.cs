@@ -18,10 +18,12 @@ namespace UnityEngine
         public T GetComponentInParent<T>() => GetComponent<T>();
         public bool TryGetComponent<T>(out T value) { value = GetComponent<T>(); return value is not null; }
         public int GetInstanceID() => GetHashCode();
+        public List<Component> Children = [];
+        public void GetComponentsInChildren<T>(bool inactive, List<T> into) { foreach (Component c in Children) if (c is T t) into.Add(t); }
     }
     public class Transform : Component
     {
-        public Vector3 position;
+        public Vector3 position, forward;
         public Transform() { transform = this; }
         public Vector3 TransformPoint(Vector3 v) => v + position;
         public Vector3 InverseTransformPoint(Vector3 v) => v - position;
@@ -31,6 +33,7 @@ namespace UnityEngine
     {
         public float x=x, y=y, z=z;
         public float sqrMagnitude => x*x+y*y+z*z;
+        public static float Dot(Vector3 a, Vector3 b) => a.x*b.x+a.y*b.y+a.z*b.z;
         public static Vector3 zero => new();
         public static Vector3 one => new(1,1,1);
         public static Vector3 up => new(0,1,0);
@@ -74,9 +77,11 @@ public class ResourceController : Component
     public void TryTakeOut() { Ejections++; Current = null; }
     public void SwitchLoading() { Loading = !Loading; }
 }
+public class Gate : Component { }
+public class Airlock : Component { }
 public class ItemDetector : Component { public HashSet<Grabbable> Items = []; }
 public class Room : Component { public Transform ContentParent = new(); }
-public class Shop : Component { }
+public class Shop : Component { public Grabbable[]? Items; }
 public class Player { public Wallet CashSystem = new(); public Control Controller = new(); }
 public class Wallet { public int Cash = 1000; }
 public class Control { public bool IsControlling; }
@@ -162,6 +167,7 @@ namespace YourBuddy
         public Transform Own = own;
         public abstract string Name { get; }
         public virtual float ReachBelow => 0;
+        public virtual bool StandAllowed(Vector3 point) => true;
         public virtual bool Waits => false;
         public abstract Vector3 Approach(out bool move);
         public abstract string Describe();
@@ -220,7 +226,7 @@ namespace YourBuddy
         internal static class ShopAccess
         {
             internal static bool Ready = true;
-            internal static Grabbable[]? Stock(Shop s) => null;
+            internal static Grabbable[]? Stock(Shop s) => s.Items;
             internal static Transform? Outlet(Shop s) => null;
             internal static void Buy(Shop s, int n, Player p) { }
         }

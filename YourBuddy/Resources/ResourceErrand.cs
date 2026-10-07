@@ -35,6 +35,8 @@ namespace YourBuddy
         private int nextKind;
         private SpaceShip? ship;
         private ResourceController? loader;
+        private ResourceController? gatesOf;
+        private readonly List<Gate> loaderGates = [];
         private ResourceContainer? cell;
         private ItemDetector? slot;
         private bool startedLoading;
@@ -44,6 +46,8 @@ namespace YourBuddy
         private int purchasesMade;
         private int purchaseFrame = -1;
         private int purchasePrice;
+        private int cheapestOverLimit;
+        private float ejectedAt = -10f;
         private long purchaseSpent;
         private bool purchaseUncertain;
         private Vector3 purchaseOutlet;
@@ -103,15 +107,35 @@ namespace YourBuddy
             if (loader == null || !loader.Initialized) return Waiting("ship loader is not initialized");
             slot = GameInternals.ResourceAccess.Slot(loader);
             if (slot == null || !Items.Loadable(slot)) return Waiting("ship loader room is unavailable");
+            if (gatesOf != loader)
+            {
+                gatesOf = loader;
+                loaderGates.Clear();
+                Airlock? airlock = loader.GetComponentInParent<Airlock>();
+                if (airlock != null) airlock.GetComponentsInChildren(true, loaderGates);
+            }
+            return true;
+        }
+
+        // The loader is used from its own side of the airlock's floor-level doors; a stand point
+        // beyond one is in the docking collar. docs/resources.md#errands-and-interruptions
+        internal bool InLoaderRoom(Vector3 point, Vector3 target)
+        {
+            foreach (Gate gate in loaderGates)
+            {
+                if (gate == null || gate.transform.position.y >= target.y) continue;
+                Vector3 forward = gate.transform.forward;
+                Vector3 origin = gate.transform.position;
+                if (Vector3.Dot(target - origin, forward) * Vector3.Dot(point - origin, forward) < 0f) return false;
+            }
             return true;
         }
 
         private string? RefillBlocked()
         {
+            // A spent cell is taken out on arrival. docs/invariants.md#resource-duties-own-only-their-cell
             ResourceContainer? inserted = loader != null ? GameInternals.ResourceAccess.Current(loader) : null;
-            return inserted == null ? null : inserted.Value <= 0
-                ? "loader occupied by a spent cell; remove it to refill"
-                : "loader occupied; remove its cell to refill";
+            return inserted == null || inserted.Value <= 0 ? null : "loader occupied; remove its cell to refill";
         }
 
         public override int Count(out float nearest)
@@ -177,6 +201,7 @@ namespace YourBuddy
                 if (!Rule.Enabled) continue;
                 needed[kind] = Rule.NeedsRefill(Percent(kind), needed[kind]);
                 restocking = false;
+                cheapestOverLimit = 0;
                 purchasesMade = 0;
                 storageAttempts = 0;
                 rejectedStorage.Clear();
@@ -193,9 +218,19 @@ namespace YourBuddy
                 }
                 if (needed[kind] && blocked != null) Waiting(blocked);
                 else if (needed[kind] || (ResourceDuty.Settings.Buying && stock < ResourceRule.MinCells))
-                    ResourceDuty.Report(storageFailure ?? $"Waiting: no reachable {ResourceDutySettings.Label(kind)} supply or affordable shop; {stock} usable cells aboard.", ResourceDutySettings.Label(kind));
+                    ResourceDuty.Report(storageFailure ?? OverLimit() ?? $"Waiting: no reachable {ResourceDutySettings.Label(kind)} supply or affordable shop; {stock} usable cells aboard.", ResourceDutySettings.Label(kind));
             }
             return false;
+        }
+
+        private string? OverLimit()
+        {
+            if (cheapestOverLimit <= 0) return null;
+            int cash = NpcPlayer.Pilot != null ? NpcPlayer.Pilot.CashSystem.Cash : 0;
+            string limit = cheapestOverLimit > ResourceDuty.Settings.Budget
+                ? $"spending allowance is {ResourceDuty.Settings.Budget} (Limit on the Resources page)"
+                : $"you have {cash}";
+            return $"Waiting: a {ResourceDutySettings.Label(kind)} cell costs {cheapestOverLimit}; {limit}.";
         }
 
         private bool Waiting(string reason)
@@ -284,7 +319,13 @@ namespace YourBuddy
                 {
                     Grabbable product = stock[i];
                     if (product == null || !product.TryGetComponent(out ResourceContainer resource) ||
-                        resource.Type != TypeOf(kind) || (!restocking && !Fits(resource)) || !ResourceDuty.Settings.CanBuy(Rule, product.BuyPrice, player.CashSystem.Cash)) continue;
+                        resource.Type != TypeOf(kind) || (!restocking && !Fits(resource))) continue;
+                    if (!ResourceDuty.Settings.CanBuy(Rule, product.BuyPrice, player.CashSystem.Cash))
+                    {
+                        if (!ResourceDuty.Settings.Paused && product.BuyPrice > 0 && (cheapestOverLimit == 0 || product.BuyPrice < cheapestOverLimit))
+                            cheapestOverLimit = product.BuyPrice;
+                        continue;
+                    }
                     Body.LoadRoomOf(shop.transform);
                     if (restocking && !PlanStorage(false, product)) continue;
                     Leg leg = new(this, shop.transform.position, shop.transform, Phase.Buy) { Shop = shop, Product = i };
@@ -469,7 +510,7 @@ namespace YourBuddy
                 return Stop("no reachable clear storage");
             }
             ResourceContainer? current = GameInternals.ResourceAccess.Current(loader);
-            if (!restocking && current != null && current != cell) return Stop("the player is using the loader");
+            if (!restocking && current != null && current != cell && current.Value > 0) return Stop("the player is using the loader");
             if (leg.Stage == Phase.Insert && cell != null && current == cell)
             {
                 if (Body.Hands.Item == cell.GetComponent<Grabbable>()) Body.Hands.Release();
@@ -546,8 +587,19 @@ namespace YourBuddy
             }
             else
             {
-                if (Body.Hands.Item != item) return Stop("cell left Buddy's hands");
-                if (!slot.isActiveAndEnabled) return Stop("loader slot is unavailable");
+                // The loader registers a released cell a few frames later; the branch above takes it from there.
+                if (Body.Hands.Item != item)
+                    return leg.InsertUntil > 0 && Time.time <= leg.InsertUntil ? Vector3.zero
+                        : Stop(leg.InsertUntil > 0 ? "cell did not enter the loader" : "cell left Buddy's hands");
+                if (current != null && current != cell)
+                {
+                    loader.TryTakeOut();
+                    ejectedAt = Time.time;
+                    YourBuddyPlugin.Log.LogInfo("[resources] Took a spent cell out of the loader");
+                    return Vector3.zero;
+                }
+                // Taking a cell out switches the slot off for a second.
+                if (!slot.isActiveAndEnabled) return Time.time < ejectedAt + 2f ? Vector3.zero : Stop("loader slot is unavailable");
                 if (leg.InsertUntil == 0)
                 {
                     Body.Hands.ReachTo(slot.GetComponent<BoxCollider>().bounds.center);
@@ -647,6 +699,8 @@ namespace YourBuddy
             internal Vector3 FloorPoint;
             public override string Name => Stage == Phase.Buy ? "resource shop" : Stage == Phase.Fetch ? "resource cell" : Stage == Phase.Deliver ? "ship storage" : "ship loader";
             public override float ReachBelow => 0.5f;
+            public override bool StandAllowed(Vector3 point) =>
+                base.StandAllowed(point) && (Stage != Phase.Insert || job.InLoaderRoom(point, TargetPoint));
             public override bool Waits => Stage == Phase.Search || InsertUntil > 0 || job.startedLoading || job.purchaseFrame >= 0;
             public override Vector3 Approach(out bool wantMove) => job.Approach(this, out wantMove);
             public override string Describe() => (job.restocking ? "restocking " : "refilling ") + ResourceDutySettings.Label(job.kind);
