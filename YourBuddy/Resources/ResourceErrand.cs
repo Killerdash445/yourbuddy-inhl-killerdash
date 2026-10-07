@@ -21,6 +21,12 @@ namespace YourBuddy
         private bool storagePending;
         private string? storageFailure;
         private readonly List<Vector3> rejectedStorage = [];
+        // The shortest walk among the first few reachable spots, kept while a search spans frames.
+        private const int StorageChoices = 4;
+        private Leg? storageBest;
+        private NavPath? storageBestRoute;
+        private float storageBestLength;
+        private int storageBestIndex, storageFound;
         private Grabbable? awaitingSafeDrop;
         private bool endReported;
 
@@ -36,12 +42,21 @@ namespace YourBuddy
         private SpaceShip? ship;
         private ResourceController? loader;
         private ResourceController? gatesOf;
+        private Airlock? loaderAirlock;
         private readonly List<Gate> loaderGates = [];
         private ResourceContainer? cell;
         private ItemDetector? slot;
         private bool startedLoading;
         private bool finishing;
         private bool restocking;
+        // A refill is due: the fetched or bought cell goes into the loader, not to storage.
+        private bool insertAfter;
+        // A refill ended with charge left: the ejected cell is stored as a spare, not left in the airlock.
+        private bool puttingAway;
+        // The cell was already in the loader: an interruption leaves it there.
+        private bool borrowed;
+        private bool NeedsStorage => (restocking && !insertAfter) || puttingAway;
+        private const float SettleSeconds = 1.5f;
         private int stockGoal;
         private int purchasesMade;
         private int purchaseFrame = -1;
@@ -111,8 +126,8 @@ namespace YourBuddy
             {
                 gatesOf = loader;
                 loaderGates.Clear();
-                Airlock? airlock = loader.GetComponentInParent<Airlock>();
-                if (airlock != null) airlock.GetComponentsInChildren(true, loaderGates);
+                loaderAirlock = loader.GetComponentInParent<Airlock>();
+                if (loaderAirlock != null) loaderAirlock.GetComponentsInChildren(true, loaderGates);
             }
             return true;
         }
@@ -131,11 +146,17 @@ namespace YourBuddy
             return true;
         }
 
+        // The loader's airlock lists what lies on its floor; that is not a slot.
+        private bool IsChamber(ItemDetector detector) =>
+            detector != slot && loaderAirlock != null && detector.GetComponentInParent<Airlock>() == loaderAirlock;
+
         private string? RefillBlocked()
         {
-            // A spent cell is taken out on arrival. docs/invariants.md#resource-duties-own-only-their-cell
+            // Only a cell that is loading blocks; a spent or idle one is dealt with at the loader.
+            // docs/invariants.md#resource-duties-own-only-their-cell
             ResourceContainer? inserted = loader != null ? GameInternals.ResourceAccess.Current(loader) : null;
-            return inserted == null || inserted.Value <= 0 ? null : "loader occupied; remove its cell to refill";
+            return inserted == null || inserted.Value <= 0 || !GameInternals.ResourceAccess.IsLoading(loader!)
+                ? null : "loader occupied: it is loading a cell";
         }
 
         public override int Count(out float nearest)
@@ -201,26 +222,52 @@ namespace YourBuddy
                 if (!Rule.Enabled) continue;
                 needed[kind] = Rule.NeedsRefill(Percent(kind), needed[kind]);
                 restocking = false;
+                insertAfter = false;
+                puttingAway = false;
+                borrowed = false;
                 cheapestOverLimit = 0;
                 purchasesMade = 0;
                 storageAttempts = 0;
                 rejectedStorage.Clear();
+                storageBest = null;
+                storageFound = 0;
                 storageFailure = null;
-                if (needed[kind] && blocked == null &&
-                    Plan(new Leg(this, slot.GetComponent<BoxCollider>().bounds.center, loader.transform, Phase.Insert), false) &&
-                    FindCell()) { Start(); return true; }
+                bool insert = needed[kind] && blocked == null &&
+                    Plan(new Leg(this, slot.GetComponent<BoxCollider>().bounds.center, loader.transform, Phase.Insert), false);
+                if (insert && UseInserted()) return true;
+                if (insert && FindCell()) { Start(); return true; }
                 int stock = ShipStock();
                 if (ResourceDuty.Settings.Buying && stock < ResourceRule.MinCells)
                 {
                     restocking = true;
+                    insertAfter = insert;
                     stockGoal = stock + ResourceRule.BuyQuantity;
                     if (FindCell() || FindShop() || BeginStorageSearch()) { Start(); return true; }
                 }
                 if (needed[kind] && blocked != null) Waiting(blocked);
                 else if (needed[kind] || (ResourceDuty.Settings.Buying && stock < ResourceRule.MinCells))
-                    ResourceDuty.Report(storageFailure ?? OverLimit() ?? $"Waiting: no reachable {ResourceDutySettings.Label(kind)} supply or affordable shop; {stock} usable cells aboard.", ResourceDutySettings.Label(kind));
+                    ResourceDuty.Report(storageFailure ?? OverLimit() ?? $"Waiting: no reachable {ResourceDutySettings.Label(kind)} supply or affordable shop; {stock} usable cells aboard{(ResourceDuty.Settings.Buying ? "" : "; Buying is off")}.", ResourceDutySettings.Label(kind));
             }
             return false;
+        }
+
+        // An idle charged cell in the loader: loaded if it is the due kind, else taken out and stored first.
+        private bool UseInserted()
+        {
+            ResourceContainer? inserted = loader != null ? GameInternals.ResourceAccess.Current(loader) : null;
+            if (loader == null || slot == null || inserted == null || inserted.Value <= 0) return false;
+            bool same = inserted.Type == TypeOf(kind) && Fits(inserted);
+            Leg leg = new(this, slot.GetComponent<BoxCollider>().bounds.center, loader.transform, same ? Phase.Insert : Phase.Clear);
+            if (!Plan(leg, true)) return false;
+            cell = inserted;
+            borrowed = true;
+            Start();
+            if (!same)
+            {
+                nextKind = kind;
+                ResourceDuty.Report($"Clearing the loader for {ResourceDutySettings.Label(kind)}: storing its {(inserted.Type == TypeOf(0) ? "oxygen" : inserted.Type == TypeOf(1) ? "fuel" : "energy")} cell as a spare.", ResourceDutySettings.Label(kind));
+            }
+            return true;
         }
 
         private string? OverLimit()
@@ -246,17 +293,20 @@ namespace YourBuddy
             deadline = Time.time + 240f;
             startedLoading = false;
             nextKind = (kind + 1) % 3;
-            if (restocking) ResourceDuty.Report($"Restocking {ResourceDutySettings.Label(kind)}: up to {PurchasesLeft} cells.", ResourceDutySettings.Label(kind));
+            if (insertAfter) ResourceDuty.Report($"Getting {Article(kind)} {ResourceDutySettings.Label(kind)} cell for the loader at {Percent(kind):0.0}%.", ResourceDutySettings.Label(kind));
+            else if (restocking) ResourceDuty.Report($"Restocking {ResourceDutySettings.Label(kind)}: up to {PurchasesLeft} cells.", ResourceDutySettings.Label(kind));
             else ResourceDuty.Report($"Refilling {ResourceDutySettings.Label(kind)} at {Percent(kind):0.0}% towards {ResourceRule.Target}%.", ResourceDutySettings.Label(kind));
         }
 
         private int ShipStock()
         {
             int count = 0;
-            foreach (ResourceContainer candidate in SceneScan.ThisFrame<ResourceContainer>())
+            foreach (ResourceContainer candidate in ResourceScan.Cells())
             {
                 if (candidate == null || candidate.Data == null || candidate.Type != TypeOf(kind) || candidate.Value <= 0) continue;
                 if (NpcVessels.OwnerOfTransform(candidate.transform) != NavGraph.ShipOwner) continue;
+                // A cell Buddy failed to reach lately is no stock: it must not stop a purchase.
+                if (Skips.Has(candidate.transform)) continue;
                 if (Items.Loadable(candidate) || (loader != null && GameInternals.ResourceAccess.Current(loader) == candidate)) count++;
             }
             return count;
@@ -269,12 +319,12 @@ namespace YourBuddy
                 stagedItems.Clear();
                 foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>())
                 {
-                    if (detector != null) stagedItems.UnionWith(detector.Items);
+                    if (detector != null && !IsChamber(detector)) stagedItems.UnionWith(detector.Items);
                 }
                 stagedRefresh = Time.time + .5f;
             }
             candidates.Clear();
-            foreach (ResourceContainer candidate in SceneScan.ThisFrame<ResourceContainer>())
+            foreach (ResourceContainer candidate in ResourceScan.Cells())
             {
                 if (candidate == null || candidate.Data == null || candidate.Type != TypeOf(kind) || candidate.Value <= 0 || !Items.Loadable(candidate)) continue;
                 if (restocking && NpcVessels.OwnerOfTransform(candidate.transform) == NavGraph.ShipOwner) continue;
@@ -293,7 +343,7 @@ namespace YourBuddy
                 Body.LoadRoomOf(candidate.transform);
                 Grabbable item = candidate.GetComponent<Grabbable>();
                 if (Items.TakeBlocker(item, Body.Hands.Item) != null) continue;
-                if (restocking && !PlanStorage(false, item)) continue;
+                if (NeedsStorage && !PlanStorage(false, item)) continue;
                 Leg leg = new(this, Items.ItemTop(item), candidate.transform, Phase.Fetch);
                 if (!Plan(leg, true)) continue;
                 cell = candidate;
@@ -310,7 +360,7 @@ namespace YourBuddy
         {
             Player? player = NpcPlayer.Pilot;
             if (player == null || !GameInternals.ShopAccess.Ready || !ResourceDuty.Settings.Buying) return false;
-            foreach (Shop shop in SceneScan.ThisFrame<Shop>())
+            foreach (Shop shop in ResourceScan.Shops())
             {
                 if (shop == null || !Items.Loadable(shop) || Skips.Has(shop.transform)) continue;
                 Grabbable[]? stock = GameInternals.ShopAccess.Stock(shop);
@@ -327,7 +377,7 @@ namespace YourBuddy
                         continue;
                     }
                     Body.LoadRoomOf(shop.transform);
-                    if (restocking && !PlanStorage(false, product)) continue;
+                    if (NeedsStorage && !PlanStorage(false, product)) continue;
                     Leg leg = new(this, shop.transform.position, shop.transform, Phase.Buy) { Shop = shop, Product = i };
                     if (Plan(leg, true)) return true;
                 }
@@ -362,6 +412,8 @@ namespace YourBuddy
             {
                 ResourceStorage.Candidates(loader.transform.position, storagePoints);
                 storageCursor = 0;
+                storageBest = null;
+                storageFound = 0;
                 storageHalf = half;
                 storageRefresh = Time.time + 30f;
             }
@@ -387,27 +439,103 @@ namespace YourBuddy
                     FloorPoint = floor.collider.transform.InverseTransformPoint(point)
                 };
                 if (++plans > 12) break;
+                NavPath? route = null;
+                float length = 0f;
                 if (!Body.InReach(leg))
                 {
-                    string? failure = Body.PlanReach(leg, out NavPath route);
+                    string? failure = Body.PlanReach(leg, out NavPath planned);
                     if (failure != null) { blocker = failure; continue; }
-                    if (walk) Body.Walk(leg, route);
+                    route = planned;
+                    length = RouteLength(planned, point);
                 }
-                else
+                else leg.Node = leg.StandPoint = Body.Transform.position;
+                // A prospective check needs only one reachable spot.
+                if (!walk) { storageCursor--; return true; }
+                if (storageBest == null || length < storageBestLength)
                 {
-                    leg.Node = leg.StandPoint = Body.Transform.position;
-                    if (walk) Body.Walk(leg, null);
+                    storageBest = leg;
+                    storageBestRoute = route;
+                    storageBestLength = length;
+                    storageBestIndex = storageCursor - 1;
                 }
-                storageCursor--;
-                if (walk) storageAttempts++;
-                if (walk) YourBuddyPlugin.Log.LogInfo($"[resources] Carrying cell to clear ship storage at {point}");
-                return true;
+                if (++storageFound >= StorageChoices || length <= 0f) break;
+            }
+            if (walk && storageBest != null)
+            {
+                if (WalkToStorage(half)) return true;
+                return PlanStorage(true);
             }
             storageFailure = clear > 0 ? "Waiting: clear storage exists, but Buddy cannot reach it. Check the ship's doors and approach." :
                 "Waiting: no clear floor storage found aboard. Make room for a spare cell.";
             ResourceDuty.Trace($"Storage scan: {floors} supported, {clear} clear, {plans} route checks; half-size {half}; {blocker}.", "storage scan");
             ResourceDuty.Report(storageFailure, "storage");
             return false;
+        }
+
+        // Walks to the chosen spot; false after rejecting it. The route's switched-off rooms are loaded
+        // first, so their furniture is in the checks. docs/resources.md#scans-and-storage
+        private bool WalkToStorage(Vector3 half)
+        {
+            // Only called with a chosen spot.
+            Leg leg = storageBest!;
+            NavPath? route = storageBestRoute;
+            storageBest = null;
+            storageFound = 0;
+            storageCursor = storageBestIndex;
+            Transform? carried = Body.Hands.Item != null ? Body.Hands.Item.transform : null;
+            if (route.HasValue && LoadRouteRooms(route.Value, leg.TargetPoint))
+            {
+                NavPath replanned = default;
+                string? failure = ResourceStorage.Clear(leg.TargetPoint, half, carried)
+                    ? Body.PlanReach(leg, out replanned) : ResourceStorage.LastBlocker;
+                if (failure != null)
+                {
+                    ResourceDuty.Trace($"Storage at {leg.TargetPoint} dropped once its route's rooms loaded: {failure}.", "storage scan");
+                    rejectedStorage.Add(leg.TargetPoint);
+                    storageCursor = 0;
+                    return false;
+                }
+                route = replanned;
+            }
+            Body.Walk(leg, route);
+            storageAttempts++;
+            YourBuddyPlugin.Log.LogInfo($"[resources] Carrying cell to clear ship storage at {leg.TargetPoint}");
+            return true;
+        }
+
+        private float RouteLength(NavPath route, Vector3 end)
+        {
+            float length = 0f;
+            Vector3 from = Here;
+            for (int i = 0; i <= route.Count; i++)
+            {
+                Vector3 to = i < route.Count ? route[i] : end;
+                length += Mathf.Sqrt((to - from).sqrMagnitude);
+                from = to;
+            }
+            return length;
+        }
+
+        // Ship rooms under the route, sampled every metre; true when one was switched on.
+        private bool LoadRouteRooms(NavPath route, Vector3 end)
+        {
+            bool loaded = false;
+            Vector3 from = Here;
+            for (int i = 0; i <= route.Count; i++)
+            {
+                Vector3 to = i < route.Count ? route[i] : end;
+                int steps = Mathf.CeilToInt(Mathf.Sqrt((to - from).sqrMagnitude));
+                for (int k = 1; k <= steps; k++)
+                {
+                    if (!ResourceStorage.FindFloor(from + (to - from) * ((float)k / steps), out RaycastHit floor)) continue;
+                    Room? room = floor.collider.GetComponentInParent<Room>();
+                    if (room == null || room.ContentEnabled) continue;
+                    Body.LoadRoomOf(room.ContentParent);
+                    loaded |= room.ContentEnabled;
+                }
+                from = to;
+            }
+            return loaded;
         }
 
         private bool PlanDelivery() => PlanStorage(true) || BeginStorageSearch();
@@ -453,7 +581,7 @@ namespace YourBuddy
                 return;
             }
             if (restocking && !ResourceDuty.Settings.Buying) { Cancel("purchase permission disabled"); return; }
-            if (!restocking && Percent(kind) >= ResourceRule.Target) { needed[kind] = false; Cancel("target reached"); }
+            if (!restocking && !puttingAway && Percent(kind) >= ResourceRule.Target) { needed[kind] = false; PutAway("target reached"); }
         }
 
         internal void Cancel(string why)
@@ -476,7 +604,7 @@ namespace YourBuddy
             try
             {
                 // Eject only our own cell when the job ends; saving does not end the job.
-                if (loader != null && cell != null && GameInternals.ResourceAccess.Current(loader) == cell)
+                if (!borrowed && loader != null && cell != null && GameInternals.ResourceAccess.Current(loader) == cell)
                     loader.TryTakeOut();
                 if (cell != null && Body.Hands.Item == cell.GetComponent<Grabbable>()) PutDownSafely();
             }
@@ -491,6 +619,8 @@ namespace YourBuddy
                 purchaseFrame = -1;
                 beforePurchase.Clear();
                 startedLoading = false;
+                puttingAway = false;
+                borrowed = false;
                 if (ResourceDuty.Owner == this) ResourceDuty.Owner = null;
                 DueAt = Time.time + 30f;
                 finishing = false;
@@ -501,7 +631,8 @@ namespace YourBuddy
         {
             wantMove = false;
             Tick();
-            if (ResourceDuty.Owner != this) return Vector3.zero;
+            // Tick may have ended the run or moved it to a new leg.
+            if (ResourceDuty.Owner != this || Body.Leg != leg) return Vector3.zero;
             if (loader == null || slot == null) return Stop("loader unavailable");
             if (leg.Stage == Phase.Search)
             {
@@ -509,7 +640,23 @@ namespace YourBuddy
                 if (ready || storagePending) return Vector3.zero;
                 return Stop("no reachable clear storage");
             }
+            if (leg.Stage == Phase.Settle)
+            {
+                if (Time.time < ejectedAt + SettleSeconds) return Vector3.zero;
+                if (cell == null || !cell.gameObject.activeInHierarchy) return Stop("ejected cell unavailable");
+                if (!Plan(new Leg(this, Items.ItemTop(cell.GetComponent<Grabbable>()), cell.transform, Phase.Fetch), true))
+                    return Stop("cannot reach the ejected cell; it stays by the loader");
+                return Vector3.zero;
+            }
             ResourceContainer? current = GameInternals.ResourceAccess.Current(loader);
+            if (leg.Stage == Phase.Clear)
+            {
+                if (!Body.StepIntoReach(leg, out Vector3 reach, out wantMove)) return reach;
+                if (cell == null || current != cell) return Stop("the loader's cell changed");
+                if (GameInternals.ResourceAccess.IsLoading(loader)) return Stop("the loader started loading");
+                PutAway("clearing the loader");
+                return Vector3.zero;
+            }
             if (!restocking && current != null && current != cell && current.Value > 0) return Stop("the player is using the loader");
             if (leg.Stage == Phase.Insert && cell != null && current == cell)
             {
@@ -517,11 +664,11 @@ namespace YourBuddy
                 if (cell.Value <= 0) return Stop("cell empty; checking again shortly");
                 if (!startedLoading)
                 {
-                    if (!Fits(cell)) return Stop("not enough room for another loading increment");
+                    if (!Fits(cell)) { PutAway("not enough room for another loading increment"); return Vector3.zero; }
                     if (!GameInternals.ResourceAccess.IsLoading(loader)) loader.SwitchLoading();
                     startedLoading = true;
                 }
-                else if (!GameInternals.ResourceAccess.IsLoading(loader)) return Stop("loader stopped; checking again shortly");
+                else if (!GameInternals.ResourceAccess.IsLoading(loader)) { PutAway("loader stopped"); return Vector3.zero; }
                 Body.StandFacing(leg.TargetPoint);
                 return Vector3.zero;
             }
@@ -540,14 +687,14 @@ namespace YourBuddy
             {
                 foreach (ItemDetector detector in SceneScan.ThisFrame<ItemDetector>())
                 {
-                    if (detector != null && detector.Items.Contains(item)) return Stop("cell was placed in another slot");
+                    if (detector != null && !IsChamber(detector) && detector.Items.Contains(item)) return Stop("cell was placed in another slot");
                 }
                 if (Items.TakeBlocker(item, Body.Hands.Item) != null || Body.TakenByAnother(item.transform) ||
                     (Items.ItemTop(item) - leg.TargetPoint).sqrMagnitude > 0.5f) return Stop("cell moved or was taken");
                 if (!Body.Hands.PickUp(item)) return Stop("could not pick up the cell");
                 storageAttempts = 0;
                 rejectedStorage.Clear();
-                if (restocking)
+                if ((restocking || puttingAway) && !InsertBought())
                 {
                     if (!PlanDelivery()) return Stop("no reachable clear ship storage space");
                     return Vector3.zero;
@@ -580,6 +727,7 @@ namespace YourBuddy
                 }
                 cell = null;
                 int stock = ShipStock();
+                if (puttingAway) return Stop($"spare stored; {stock} usable cells aboard");
                 if (stock >= stockGoal || PurchasesLeft <= 0) return Stop($"restock complete; {stock} usable cells aboard");
                 deadline = Time.time + 240f;
                 if (FindCell() || FindShop()) return Vector3.zero;
@@ -611,6 +759,42 @@ namespace YourBuddy
             return Vector3.zero;
         }
 
+        // A cell got for a due refill goes straight into the loader, if it still may.
+        private bool InsertBought()
+        {
+            needed[kind] = Rule.NeedsRefill(Percent(kind), needed[kind]);
+            if (!insertAfter || !needed[kind] || RefillBlocked() != null || cell == null || !Fits(cell)) return false;
+            restocking = false;
+            ResourceDuty.Report($"Refilling {ResourceDutySettings.Label(kind)} at {Percent(kind):0.0}% with the new cell.", ResourceDutySettings.Label(kind));
+            return true;
+        }
+
+        // Ejects our charged cell and goes on to store it. docs/invariants.md#resource-duties-own-only-their-cell
+        private void PutAway(string why)
+        {
+            if (loader == null || cell == null || GameInternals.ResourceAccess.Current(loader) != cell || cell.Value <= 0)
+            {
+                Cancel(why);
+                return;
+            }
+            loader.TryTakeOut();
+            ejectedAt = Time.time;
+            startedLoading = false;
+            puttingAway = true;
+            borrowed = false;
+            insertAfter = false;
+            deadline = Time.time + 240f;
+            storageAttempts = 0;
+            rejectedStorage.Clear();
+            storageBest = null;
+            storageFound = 0;
+            ResourceDuty.Report($"{ResourceDutySettings.Label(kind)}: {why}; storing the cell as a spare.", ResourceDutySettings.Label(kind));
+            // The eject pushes the cell out; it is fetched once it has come to rest.
+            Leg settle = new(this, Here, loader.transform, Phase.Settle);
+            settle.Node = settle.StandPoint = Here;
+            Body.Walk(settle, null);
+        }
+
         private Vector3 Buy(Leg leg)
         {
             Player? player = NpcPlayer.Pilot;
@@ -631,7 +815,7 @@ namespace YourBuddy
             if (FindCell()) return Vector3.zero;
             if (!ResourceDuty.Settings.CanBuy(Rule, product.BuyPrice, player.CashSystem.Cash))
                 return Stop("no more cells affordable within your limits");
-            if (restocking && !PlanStorage(false, product))
+            if (NeedsStorage && !PlanStorage(false, product))
             {
                 if (BeginStorageSearch()) return Vector3.zero;
                 return Stop("no clear storage route; purchase cancelled before spending");
@@ -687,8 +871,9 @@ namespace YourBuddy
             return Vector3.zero;
         }
 
+        private static string Article(int index) => index == 1 ? "a" : "an";
         private Vector3 Stop(string why) { Cancel(why); return Vector3.zero; }
-        private enum Phase { Fetch, Insert, Buy, Deliver, Search }
+        private enum Phase { Fetch, Insert, Buy, Deliver, Search, Settle, Clear }
         private sealed class Leg(ResourceErrand job, Vector3 point, Transform own, Phase stage) : ErrandLeg(point, own)
         {
             internal readonly Phase Stage = stage;
@@ -700,10 +885,11 @@ namespace YourBuddy
             public override string Name => Stage == Phase.Buy ? "resource shop" : Stage == Phase.Fetch ? "resource cell" : Stage == Phase.Deliver ? "ship storage" : "ship loader";
             public override float ReachBelow => 0.5f;
             public override bool StandAllowed(Vector3 point) =>
-                base.StandAllowed(point) && (Stage != Phase.Insert || job.InLoaderRoom(point, TargetPoint));
-            public override bool Waits => Stage == Phase.Search || InsertUntil > 0 || job.startedLoading || job.purchaseFrame >= 0;
+                base.StandAllowed(point) && (Stage is not (Phase.Insert or Phase.Clear) || job.InLoaderRoom(point, TargetPoint));
+            public override bool Waits => Stage == Phase.Search || Stage == Phase.Settle || InsertUntil > 0 || job.startedLoading || job.purchaseFrame >= 0;
             public override Vector3 Approach(out bool wantMove) => job.Approach(this, out wantMove);
-            public override string Describe() => (job.restocking ? "restocking " : "refilling ") + ResourceDutySettings.Label(job.kind);
+            public override string Describe() =>
+                (Stage == Phase.Clear ? "clearing the loader for " : job.puttingAway ? "putting away " : job.restocking ? "restocking " : "refilling ") + ResourceDutySettings.Label(job.kind);
             public override void Defer(float seconds)
             {
                 job.Defer(Own, seconds);

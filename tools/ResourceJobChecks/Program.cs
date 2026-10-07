@@ -36,7 +36,8 @@ foreach (int value in new[] { 0, -1 })
     Check(job.Count(out _) == 1, "a spent cell does not block refilling");
 }
 loader.Current = new ResourceContainer { Value = 10 };
-Check(job.Count(out _) == 0, "occupied loader is not a refill candidate");
+loader.Loading = true;
+Check(job.Count(out _) == 0, "a loader that is loading is not a refill candidate");
 Check(ResourceDuty.Status.Contains("loader occupied"), "occupied diagnostic is precise");
 job.DueAt = 0;
 Check(!job.TryStart(out string report) && report.Contains("loader occupied"), "start agrees with count and reports loader");
@@ -46,6 +47,7 @@ ResourceDuty.Settings.Buying = true;
 Check(job.Count(out _) == 1, "occupied loader does not block independent restocking");
 ResourceDuty.Settings.Buying = false;
 loader.Current = null;
+loader.Loading = false;
 loader.Initialized = false;
 Check(job.Count(out _) == 0 && !job.TryStart(out _), "uninitialized loader rejected by both entry points");
 loader.Initialized = true;
@@ -118,6 +120,101 @@ ejectBody.Leg!.Approach(out _); // Picking up planned the insert leg.
 Check(loader.Ejections == ejections + 1 && loader.Current == null && ResourceDuty.Owner == ejectJob, "spent cell ejected, run continues");
 ejectJob.Cancel("check done");
 ResourceDuty.Settings.Paused = false; // The stub has no floor to put the cell down on.
+// A refill that reaches its target ejects the charged cell and stores it as a spare.
+Grabbable spareItem = new() { transform = new() };
+ResourceContainer spare = new() { transform = spareItem.transform };
+spare.Components[typeof(Grabbable)] = spareItem;
+SceneScan.Snapshot<ResourceContainer>.Items = [spare];
+loader.Current = null;
+ship.OxygenController.Value = 20;
+IErrandBody spareBody = new();
+ResourceErrand spareJob = new(spareBody);
+Check(spareJob.TryStart(out _) && spareBody.Leg != null, "refill starts for the spare check");
+spareBody.Leg!.Approach(out _); // Fetch leg: picks up and plans the insert leg.
+loader.Current = spare;
+spareBody.Leg!.Approach(out _); // Insert leg: the loader holds the cell; loading starts.
+ship.OxygenController.Value = 90;
+ejections = loader.Ejections;
+spareBody.Leg!.Approach(out _); // Target reached.
+Check(loader.Ejections == ejections + 1 && ResourceDuty.Owner == spareJob && spareBody.Leg!.Describe().StartsWith("putting away"),
+    "charged cell ejected at the target and the run goes on to store it");
+Time.time += 2f;
+spareBody.Leg!.Approach(out _); // Settled: plans the fetch.
+Check(spareBody.Leg!.Name == "resource cell", "settled cell is fetched for storage");
+spareJob.Cancel("check done");
+ship.OxygenController.Value = 20;
+ResourceDuty.Settings.Paused = false;
+// An idle charged cell of the due kind is loaded where it is, not ejected.
+ResourceContainer idle = new() { transform = new(), Type = ResourceType.Oxygen };
+loader.Current = idle;
+ship.OxygenController.Value = 20;
+ejections = loader.Ejections;
+IErrandBody idleBody = new();
+ResourceErrand idleJob = new(idleBody);
+Check(idleJob.Count(out _) == 1 && idleJob.TryStart(out _) && idleBody.Leg!.Describe().StartsWith("refilling"),
+    "an idle cell of the due kind is used");
+idleBody.Leg!.Approach(out _); // At the loader: loading starts.
+Check(loader.Loading && loader.Ejections == ejections && loader.Current == idle, "the idle cell is loaded in place");
+idleJob.Cancel("check done");
+Check(loader.Current == idle, "an interruption leaves a cell that was already in the loader");
+loader.Loading = false;
+// An idle charged cell of another kind is taken out and stored first.
+ResourceContainer other = new() { transform = new(), Type = ResourceType.Fuel };
+other.Components[typeof(Grabbable)] = new Grabbable { transform = other.transform };
+loader.Current = other;
+IErrandBody otherBody = new();
+ResourceErrand otherJob = new(otherBody);
+Check(otherJob.TryStart(out _) && otherBody.Leg!.Describe().StartsWith("clearing the loader"), "an idle cell of another kind is cleared");
+otherBody.Leg!.Approach(out _); // At the loader: eject.
+Check(loader.Ejections == ejections + 1 && otherBody.Leg!.Describe().StartsWith("putting away"), "the cleared cell is stored as a spare");
+otherJob.Cancel("check done");
+ResourceDuty.Settings.Paused = false;
+loader.Current = null;
+// With a refill due and no cell anywhere, a bought cell goes straight to the loader, needing no storage.
+Grabbable boughtItem = new() { transform = new() };
+ResourceContainer boughtCell = new() { transform = boughtItem.transform };
+boughtCell.Components[typeof(Grabbable)] = boughtItem;
+NpcVessels.Owners[boughtItem.transform] = "station";
+Grabbable product = new() { BuyPrice = 750 };
+product.Components[typeof(ResourceContainer)] = new ResourceContainer();
+SceneScan.Snapshot<Shop>.Items = [new Shop { transform = new(), Outlet = new(), Items = [product], Sells = boughtCell }];
+SceneScan.Snapshot<ResourceContainer>.Items = [];
+loader.Current = null;
+NpcPlayer.Pilot = new Player();
+ResourceDuty.Settings.Buying = true;
+ResourceDuty.Settings.Budget = 1500;
+IErrandBody refillBody = new();
+ResourceErrand refillJob = new(refillBody);
+Check(refillJob.TryStart(out _) && refillBody.Leg != null, "due refill with no cell starts a purchase without ship storage");
+refillBody.Leg!.Approach(out _); // The preceding check established the shop leg.
+Time.frameCount++;
+refillBody.Leg!.Approach(out _); // Buying kept the shop leg; this verifies the purchase.
+refillBody.Leg!.Approach(out _); // Verifying planned the fetch leg.
+Check(refillBody.Hands.Item == boughtItem && refillBody.Leg != null && refillBody.Leg.Describe().StartsWith("refilling"),
+    "bought cell is taken to the loader, not to storage");
+refillJob.Cancel("check done");
+ResourceDuty.Settings.Paused = false;
+ResourceDuty.Settings.Buying = false;
+// A ship cell Buddy could not reach does not count as stock, so he still buys one.
+Grabbable stuckItem = new() { transform = new() };
+ResourceContainer stuck = new() { transform = stuckItem.transform };
+stuck.Components[typeof(Grabbable)] = stuckItem;
+SkipList.Skipped.Add(stuckItem.transform);
+SceneScan.Snapshot<ResourceContainer>.Items = [stuck];
+ship.OxygenController.Value = 20;
+ResourceDuty.Settings.Buying = true;
+NpcPlayer.Pilot = new Player();
+ResourceDuty.Settings.Budget = 1500;
+IErrandBody stuckBody = new();
+ResourceErrand stuckJob = new(stuckBody);
+Check(stuckJob.TryStart(out _) && stuckBody.Leg != null && stuckBody.Leg.Name == "resource shop",
+    "an unreachable ship cell does not block buying");
+stuckJob.Cancel("check done");
+ResourceDuty.Settings.Paused = false;
+ResourceDuty.Settings.Buying = false;
+SkipList.Skipped.Clear();
+SceneScan.Snapshot<Shop>.Items = [];
+NpcPlayer.Pilot = null;
 // A shop cell priced over the allowance is named in the report, not hidden behind "no supply".
 NpcPlayer.Pilot = new Player();
 Grabbable cylinder = new() { BuyPrice = 1050 };

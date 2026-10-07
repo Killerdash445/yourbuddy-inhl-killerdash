@@ -46,6 +46,7 @@ namespace UnityEngine
     {
         public const float PI = MathF.PI;
         public static float Sqrt(float x) => MathF.Sqrt(x);
+        public static int CeilToInt(float x) => (int)MathF.Ceiling(x);
         public static float Cos(float x) => MathF.Cos(x);
         public static float Sin(float x) => MathF.Sin(x);
     }
@@ -74,14 +75,14 @@ public class ResourceController : Component
     public ResourceContainer? Current;
     public ItemDetector? Slot;
     public int Ejections;
-    public void TryTakeOut() { Ejections++; Current = null; }
+    public void TryTakeOut() { Ejections++; Current = null; Loading = false; }
     public void SwitchLoading() { Loading = !Loading; }
 }
 public class Gate : Component { }
 public class Airlock : Component { }
 public class ItemDetector : Component { public HashSet<Grabbable> Items = []; }
-public class Room : Component { public Transform ContentParent = new(); }
-public class Shop : Component { public Grabbable[]? Items; }
+public class Room : Component { public Transform ContentParent = new(); public bool ContentEnabled = true; }
+public class Shop : Component { public Grabbable[]? Items; public Transform? Outlet; public ResourceContainer? Sells; }
 public class Player { public Wallet CashSystem = new(); public Control Controller = new(); }
 public class Wallet { public int Cash = 1000; }
 public class Control { public bool IsControlling; }
@@ -119,12 +120,16 @@ namespace NPC.Core
 }
 namespace NPC.Core.World
 {
-    public static class NpcVessels { public static string OwnerOfTransform(Transform t) => NavGraph.ShipOwner; }
+    public static class NpcVessels
+    {
+        public static Dictionary<Transform, string> Owners = new();
+        public static string OwnerOfTransform(Transform t) => Owners.TryGetValue(t, out string? o) ? o : NavGraph.ShipOwner;
+    }
     public static class NpcPlayer { public static Player? Pilot; }
 }
 namespace NPC.Core.Navigation
 {
-    public class NavPath { }
+    public struct NavPath { public int Count => 0; public Vector3 this[int i] => default; }
     public static class NavGraph { public const string ShipOwner = "ship"; }
     public static class NavProbe { public static bool WalkLos(Vector3 a, Vector3 b, float c) => true; }
 }
@@ -176,7 +181,7 @@ namespace YourBuddy
         public virtual void End() { }
         public virtual bool Holds(Transform t) => t == Own;
     }
-    internal class SkipList { public void Prune() { } public bool Has(Transform t) => false; }
+    internal class SkipList { public static HashSet<Transform> Skipped = []; public void Prune() { } public bool Has(Transform t) => Skipped.Contains(t); }
     internal abstract class Errand(IErrandBody body)
     {
         protected IErrandBody Body = body;
@@ -227,9 +232,19 @@ namespace YourBuddy
         {
             internal static bool Ready = true;
             internal static Grabbable[]? Stock(Shop s) => s.Items;
-            internal static Transform? Outlet(Shop s) => null;
-            internal static void Buy(Shop s, int n, Player p) { }
+            internal static Transform? Outlet(Shop s) => s.Outlet;
+            internal static void Buy(Shop s, int n, Player p)
+            {
+                if (s.Sells == null || s.Items == null) return;
+                p.CashSystem.Cash -= s.Items[n].BuyPrice;
+                NPC.Core.SceneScan.Snapshot<ResourceContainer>.Items = [.. NPC.Core.SceneScan.Snapshot<ResourceContainer>.Items, s.Sells];
+            }
         }
+    }
+    internal static class ResourceScan
+    {
+        internal static Shop[] Shops() => NPC.Core.SceneScan.ThisFrame<Shop>();
+        internal static List<ResourceContainer> Cells() => [.. NPC.Core.SceneScan.ThisFrame<ResourceContainer>()];
     }
     internal static class ResourceStorage
     {
